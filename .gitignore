@@ -52,3 +52,14 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+SSSMCR/SSSMCR.ApiService/appsettings.Development.json
+
+SSSMCR/SSSMCR.ApiService/appsettings.json
+
+SSSMCR/SSSMCR.AppHost/appsettings.json
+
+SSSMCR/SSSMCR.Web/appsettings.Development.json
+
+SSSMCR/SSSMCR.Web/appsettings.json
+
+SSSMCR/SSSMCR.AppHost/appsettings.Development.json
