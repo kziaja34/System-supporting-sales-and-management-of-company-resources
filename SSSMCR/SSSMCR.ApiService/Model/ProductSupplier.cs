@@ -9,10 +9,13 @@ public class ProductSupplier
     public int Id { get; set; }
 
     [ForeignKey("Product")]
-    public int? Product_id { get; set; }
+    public int ProductId { get; set; }
 
     [ForeignKey("Supplier")]
-    public int? Supplier_id { get; set; }
+    public int SupplierId { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public Product Product { get; set; }
+    public Supplier Supplier { get; set; }
 }

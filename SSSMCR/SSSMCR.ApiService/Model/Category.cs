@@ -11,5 +11,7 @@ public class Category
     [MaxLength(255)]
     public string Name { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public ICollection<StockAlert> StockAlerts { get; set; } = new List<StockAlert>();
 }

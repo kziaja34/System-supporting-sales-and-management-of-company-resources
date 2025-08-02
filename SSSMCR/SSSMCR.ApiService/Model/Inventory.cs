@@ -9,14 +9,19 @@ public class Inventory
     public int Id { get; set; }
 
     [ForeignKey("Product")]
-    public int? Product_id { get; set; }
+    public int ProductId { get; set; }
 
     [ForeignKey("Branch")]
-    public int? Branch_id { get; set; }
+    public int BranchId { get; set; }
 
-    public int? Quantity { get; set; }
+    public int Quantity { get; set; }
 
-    public int? Critical_threshold { get; set; }
+    public int CriticalThreshold { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public Product Product { get; set; }
+    public Branch Branch { get; set; }
+    
+    public ICollection<StockAlert> StockAlerts { get; set; } = new List<StockAlert>();
 }

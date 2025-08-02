@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using SSSMCR.ApiService.Model.Common;
 
 namespace SSSMCR.ApiService.Model;
 
@@ -9,17 +10,18 @@ public class Order
 
     [Required]
     [MaxLength(255)]
-    public string Customer_name { get; set; }
+    public string CustomerName { get; set; }
 
     [Required]
     [MaxLength(255)]
-    public string Customer_email { get; set; }
+    public string CustomerEmail { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Required]
-    [MaxLength(255)]
-    public string Status { get; set; }
+    public OrderStatus Status { get; set; }
 
-    public int? Priority { get; set; }
+    public int Priority { get; set; }
+    
+    public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }

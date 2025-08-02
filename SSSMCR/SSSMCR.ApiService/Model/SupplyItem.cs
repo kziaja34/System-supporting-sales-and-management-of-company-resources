@@ -9,16 +9,19 @@ public class SupplyItem
     public int Id { get; set; }
 
     [ForeignKey("SupplyOrder")]
-    public int? Supply_order_id { get; set; }
+    public int SupplyOrderId { get; set; }
 
     [ForeignKey("Product")]
-    public int? Product_id { get; set; }
+    public int ProductId { get; set; }
 
-    public int? Quantity { get; set; }
+    public int Quantity { get; set; }
 
     [Required]
-    [MaxLength(255)]
-    public string Unit_price { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal UnitPrice { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public SupplyOrder SupplyOrder { get; set; }
+    public Product Product { get; set; }
 }

@@ -12,8 +12,12 @@ public class Branch
     public string Name { get; set; }
 
     [Required]
-    [MaxLength(255)]
+    [MaxLength(500)]
     public string Location { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
+    public ICollection<SupplyOrder> SupplyOrders { get; set; } = new List<SupplyOrder>();
+    public ICollection<User> Users { get; set; } = new List<User>();
 }

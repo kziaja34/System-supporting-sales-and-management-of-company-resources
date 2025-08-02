@@ -11,5 +11,7 @@ public class Role
     [MaxLength(255)]
     public string Name { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public ICollection<User> Users { get; set; } = new List<User>();
 }

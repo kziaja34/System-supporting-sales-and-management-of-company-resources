@@ -10,25 +10,28 @@ public class User
 
     [Required]
     [MaxLength(255)]
-    public string First_name { get; set; }
+    public string FirstName { get; set; }
 
     [Required]
     [MaxLength(255)]
-    public string Last_name { get; set; }
+    public string LastName { get; set; }
 
     [Required]
     [MaxLength(255)]
-    public string Password_hash { get; set; }
+    public string PasswordHash { get; set; }
 
     [Required]
     [MaxLength(255)]
     public string Email { get; set; }
 
     [ForeignKey("Role")]
-    public int? Role_id { get; set; }
+    public int RoleId { get; set; }
 
     [ForeignKey("Branch")]
-    public int? Branch_id { get; set; }
+    public int BranchId { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public Role Role { get; set; }
+    public Branch Branch { get; set; }
 }

@@ -13,15 +13,17 @@ public class Product
     public string Name { get; set; }
 
     [Required]
-    [MaxLength(255)]
+    [MaxLength(1000)]
     public string Description { get; set; }
 
     [Required]
-    [MaxLength(255)]
-    public string Unit_price { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal UnitPrice { get; set; }
 
     [ForeignKey("Category")]
-    public int? Category_id { get; set; }
+    public int CategoryId { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public Category Category { get; set; }
 }

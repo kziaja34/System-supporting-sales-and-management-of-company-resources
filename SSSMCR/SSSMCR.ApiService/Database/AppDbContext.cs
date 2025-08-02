@@ -21,4 +21,38 @@ public class AppDbContext : DbContext
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<StockAlert> StockAlerts => Set<StockAlert>();
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Branch → Users
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.Branch)
+            .WithMany(b => b.Users)
+            .HasForeignKey(u => u.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Branch → Inventory
+        modelBuilder.Entity<Inventory>()
+            .HasOne(i => i.Branch)
+            .WithMany(b => b.Inventories)
+            .HasForeignKey(i => i.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Branch → SupplyOrder
+        modelBuilder.Entity<SupplyOrder>()
+            .HasOne(so => so.Branch)
+            .WithMany(b => b.SupplyOrders)
+            .HasForeignKey(so => so.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Inventory → StockAlert (jeśli miałeś cascade tutaj)
+        modelBuilder.Entity<StockAlert>()
+            .HasOne(sa => sa.Inventory)
+            .WithMany(i => i.StockAlerts)
+            .HasForeignKey(sa => sa.InventoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+
 }

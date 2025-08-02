@@ -16,8 +16,6 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-Console.WriteLine("CS: " + builder.Configuration["ConnectionStrings:DefaultConnection"]);
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

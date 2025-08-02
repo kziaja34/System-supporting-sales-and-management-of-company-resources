@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using SSSMCR.ApiService.Model.Common;
 
 namespace SSSMCR.ApiService.Model;
 
@@ -9,14 +10,17 @@ public class SupplyOrder
     public int Id { get; set; }
 
     [ForeignKey("Supplier")]
-    public int? Supplier_id { get; set; }
+    public int SupplierId { get; set; }
 
     [ForeignKey("Branch")]
-    public int? Branch_id { get; set; }
+    public int BranchId { get; set; }
 
     [Required]
-    [MaxLength(255)]
-    public string Status { get; set; }
+    public SupplyOrderStatus Status { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public Supplier Supplier { get; set; }
+    public Branch Branch { get; set; }
+    public ICollection<SupplyItem> Items { get; set; } = new List<SupplyItem>();
 }

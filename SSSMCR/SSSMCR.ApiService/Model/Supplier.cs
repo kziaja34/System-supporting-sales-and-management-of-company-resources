@@ -13,15 +13,17 @@ public class Supplier
 
     [Required]
     [MaxLength(255)]
-    public string Contact_email { get; set; }
+    public string ContactEmail { get; set; }
 
     [Required]
-    [MaxLength(255)]
+    [MaxLength(50)]
     public string Phone { get; set; }
 
     [Required]
-    [MaxLength(255)]
+    [MaxLength(500)]
     public string Address { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public ICollection<ProductSupplier> ProductSuppliers { get; set; } = new List<ProductSupplier>();
 }

@@ -9,11 +9,14 @@ public class StockAlert
     public int Id { get; set; }
 
     [ForeignKey("Inventory")]
-    public int? Inventory_id { get; set; }
+    public int InventoryId { get; set; }
 
-    public bool? Seen { get; set; }
+    public bool Seen { get; set; } = false;
 
-    public int? Seen_by { get; set; }
+    public int? SeenBy { get; set; }
 
-    public DateTime? Created_at { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public Inventory Inventory { get; set; }
+    public User SeenByUser { get; set; }
 }
