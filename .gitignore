@@ -63,3 +63,5 @@ SSSMCR/SSSMCR.Web/appsettings.Development.json
 SSSMCR/SSSMCR.Web/appsettings.json
 
 SSSMCR/SSSMCR.AppHost/appsettings.Development.json
+
+SSSMCR/SSSMCR.ApiService/Migrations/
