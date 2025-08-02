@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Services.Interfaces;
@@ -41,4 +42,11 @@ public class GenericService<T> : IGenericService<T> where T : class
         _dbSet.Update(entity);
         await _context.SaveChangesAsync();
     }
+=======
+﻿namespace SSSMCR.ApiService.Services;
+
+public class GenericService
+{
+    
+>>>>>>> origin/main
 }
