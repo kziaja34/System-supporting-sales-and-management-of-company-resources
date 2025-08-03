@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SSSMCR.ServiceDefaults\SSSMCR.ServiceDefaults.csproj"/>
+        <ProjectReference Include="..\SSSMCR.Shared\SSSMCR.Shared.csproj" />
     </ItemGroup>
 
 </Project>

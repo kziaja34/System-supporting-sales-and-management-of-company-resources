@@ -22,7 +22,6 @@ builder.Services.AddScoped(typeof(IGenericService<>), typeof(GenericService<>));
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ISupplyOrderService, SupplyOrderService>();
-builder.Services.AddScoped<IStockAlertService, StockAlertService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 builder.Services.AddControllers();
@@ -56,6 +55,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapDefaultEndpoints();
+app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();

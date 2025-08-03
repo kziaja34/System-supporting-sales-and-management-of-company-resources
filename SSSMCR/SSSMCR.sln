@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SSSMCR.ApiService", "SSSMCR
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SSSMCR.Web", "SSSMCR.Web\SSSMCR.Web.csproj", "{06BB18A9-C49D-4BAE-9C66-8C88C13CFF02}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SSSMCR.Shared", "SSSMCR.Shared\SSSMCR.Shared.csproj", "{5F38938F-B4CC-4843-80F8-6CDEDEFAA570}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{06BB18A9-C49D-4BAE-9C66-8C88C13CFF02}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06BB18A9-C49D-4BAE-9C66-8C88C13CFF02}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06BB18A9-C49D-4BAE-9C66-8C88C13CFF02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F38938F-B4CC-4843-80F8-6CDEDEFAA570}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F38938F-B4CC-4843-80F8-6CDEDEFAA570}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F38938F-B4CC-4843-80F8-6CDEDEFAA570}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F38938F-B4CC-4843-80F8-6CDEDEFAA570}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
