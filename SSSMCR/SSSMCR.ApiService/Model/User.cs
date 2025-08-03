@@ -29,8 +29,7 @@ public class User
 
     [ForeignKey("Branch")]
     public int BranchId { get; set; }
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
     
     public Role Role { get; set; }
     public Branch Branch { get; set; }

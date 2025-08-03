@@ -14,8 +14,6 @@ public class Branch
     [Required]
     [MaxLength(500)]
     public string Location { get; set; }
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
     public ICollection<SupplyOrder> SupplyOrders { get; set; } = new List<SupplyOrder>();

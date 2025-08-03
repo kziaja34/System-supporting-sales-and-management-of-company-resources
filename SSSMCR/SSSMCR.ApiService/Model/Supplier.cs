@@ -22,8 +22,4 @@ public class Supplier
     [Required]
     [MaxLength(500)]
     public string Address { get; set; }
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
-    public ICollection<ProductSupplier> ProductSuppliers { get; set; } = new List<ProductSupplier>();
 }

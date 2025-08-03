@@ -11,16 +11,13 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<Product> Products => Set<Product>();
-    public DbSet<Category> Categories => Set<Category>();
     public DbSet<Inventory> Inventory => Set<Inventory>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
-    public DbSet<ProductSupplier> ProductSuppliers => Set<ProductSupplier>();
     public DbSet<SupplyOrder> SupplyOrders => Set<SupplyOrder>();
     public DbSet<SupplyItem> SupplyItems => Set<SupplyItem>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
-    public DbSet<StockAlert> StockAlerts => Set<StockAlert>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,13 +42,6 @@ public class AppDbContext : DbContext
             .HasOne(so => so.Branch)
             .WithMany(b => b.SupplyOrders)
             .HasForeignKey(so => so.BranchId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Inventory → StockAlert (jeśli miałeś cascade tutaj)
-        modelBuilder.Entity<StockAlert>()
-            .HasOne(sa => sa.Inventory)
-            .WithMany(i => i.StockAlerts)
-            .HasForeignKey(sa => sa.InventoryId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 

@@ -11,13 +11,11 @@ public class Invoice
     [ForeignKey("Order")]
     public int OrderId { get; set; }
 
-    public DateTime GeneratedAt { get; set; }
+    public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
 
     [Required]
     [MaxLength(500)]
     public string FilePath { get; set; }
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public Order Order { get; set; }
 }

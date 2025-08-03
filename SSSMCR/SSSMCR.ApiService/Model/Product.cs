@@ -20,10 +20,5 @@ public class Product
     [Column(TypeName = "decimal(18,2)")]
     public decimal UnitPrice { get; set; }
 
-    [ForeignKey("Category")]
-    public int CategoryId { get; set; }
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
-    public Category Category { get; set; }
 }

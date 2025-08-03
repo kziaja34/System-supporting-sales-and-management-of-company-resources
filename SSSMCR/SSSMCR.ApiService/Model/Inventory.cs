@@ -22,6 +22,4 @@ public class Inventory
     
     public Product Product { get; set; }
     public Branch Branch { get; set; }
-    
-    public ICollection<StockAlert> StockAlerts { get; set; } = new List<StockAlert>();
 }

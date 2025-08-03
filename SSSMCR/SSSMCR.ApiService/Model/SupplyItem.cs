@@ -16,10 +16,6 @@ public class SupplyItem
 
     public int Quantity { get; set; }
 
-    [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal UnitPrice { get; set; }
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public SupplyOrder SupplyOrder { get; set; }
