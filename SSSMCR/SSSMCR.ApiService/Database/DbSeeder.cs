@@ -1,0 +1,117 @@
+﻿using Azure.Core;
+using SSSMCR.ApiService.Model;
+
+namespace SSSMCR.ApiService.Database;
+
+public static class DbSeeder
+{
+    public static void Seed(AppDbContext context)
+    {
+        if (context.Roles.Any()) return; // seed only once
+
+        // Roles
+        var adminRole = new Role { Name = "Administrator" };
+        var managerRole = new Role { Name = "Kierownik Oddziału" };
+        var sellerRole = new Role { Name = "Handlowiec" };
+        var warehouseRole = new Role { Name = "Magazynier" };
+        context.Roles.AddRange(adminRole, managerRole, sellerRole, warehouseRole);
+
+        // Branches
+        var branch1 = new Branch { Name = "Oddział Katowice", Location = "Katowice, ul. Główna 1" };
+        var branch2 = new Branch { Name = "Oddział Gliwice", Location = "Gliwice, ul. Słoneczna 2" };
+        context.Branches.AddRange(branch1, branch2);
+
+        // Users
+        var admin = new User
+        {
+            FirstName = "Admin",
+            LastName = "System",
+            Email = "admin@example.com",
+            PasswordHash = "hashed123",
+            Role = adminRole,
+            Branch = branch1
+        };
+        var seller = new User
+        {
+            FirstName = "Anna",
+            LastName = "Sprzedawczyni",
+            Email = "anna@example.com",
+            PasswordHash = "hashed456",
+            Role = sellerRole,
+            Branch = branch1
+        };
+        var warehouseman = new User
+        {
+            FirstName = "Piotr",
+            LastName = "Magazynier",
+            Email = "piotr@example.com",
+            PasswordHash = "hashed789",
+            Role = warehouseRole,
+            Branch = branch2
+        };
+        context.Users.AddRange(admin, seller, warehouseman);
+
+        // Products
+        var product1 = new Product { Name = "Laptop X", Description = "Laptop 15 cali", UnitPrice = 2500m };
+        var product2 = new Product { Name = "Monitor Y", Description = "Monitor 24 cale", UnitPrice = 800m };
+        var product3 = new Product { Name = "Mysz Z", Description = "Mysz bezprzewodowa", UnitPrice = 120m };
+        context.Products.AddRange(product1, product2, product3);
+
+        // Inventory
+        context.Inventory.AddRange(
+            new Inventory { Product = product1, Branch = branch1, Quantity = 10, CriticalThreshold = 3 },
+            new Inventory { Product = product2, Branch = branch1, Quantity = 5, CriticalThreshold = 2 },
+            new Inventory { Product = product3, Branch = branch2, Quantity = 20, CriticalThreshold = 5 }
+        );
+
+        // Supplier
+        var supplier1 = new Supplier
+        {
+            Name = "TechSupplies Ltd",
+            ContactEmail = "kontakt@techsupplies.pl",
+            Phone = "123-456-789",
+            Address = "Warszawa, ul. Nowa 3"
+        };
+        context.Suppliers.Add(supplier1);
+
+        // SupplyOrder + SupplyItem
+        var supplyOrder1 = new SupplyOrder
+        {
+            Branch = branch1,
+            Supplier = supplier1,
+            Status = Model.Common.SupplyOrderStatus.Ordered
+        };
+        context.SupplyOrders.Add(supplyOrder1);
+
+        context.SupplyItems.AddRange(
+            new SupplyItem { SupplyOrder = supplyOrder1, Product = product1, Quantity = 5 },
+            new SupplyItem { SupplyOrder = supplyOrder1, Product = product2, Quantity = 3 }
+        );
+
+        // Order + OrderItem
+        var order1 = new Order
+        {
+            CustomerName = "Jan Kowalski",
+            CustomerEmail = "jan.kowalski@example.com",
+            Status = Model.Common.OrderStatus.Pending,
+            Priority = 1
+        };
+        context.Orders.Add(order1);
+
+        context.OrderItems.AddRange(
+            new OrderItem { Order = order1, Product = product1, Quantity = 1 },
+            new OrderItem { Order = order1, Product = product3, Quantity = 2 }
+        );
+
+        // Invoice (opcjonalnie)
+        var invoice1 = new Invoice
+        {
+            Order = order1,
+            FilePath = "/invoices/invoice1.pdf",
+            GeneratedAt = DateTime.UtcNow
+        };
+        context.Invoices.Add(invoice1);
+
+        context.SaveChanges();
+    }
+}
