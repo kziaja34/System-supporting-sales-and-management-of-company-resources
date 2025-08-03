@@ -12,6 +12,12 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddOutputCache();
 
+builder.Services.AddScoped(sp =>
+{
+    var apiBase = new Uri("https://localhost:7524/");
+    return new HttpClient { BaseAddress = apiBase };
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Services.Interfaces;
 
@@ -9,7 +8,7 @@ public class GenericService<T> : IGenericService<T> where T : class
 {
     protected readonly AppDbContext _context;
     protected readonly DbSet<T> _dbSet;
-    
+
     public GenericService(AppDbContext context)
     {
         _context = context;
@@ -42,11 +41,4 @@ public class GenericService<T> : IGenericService<T> where T : class
         _dbSet.Update(entity);
         await _context.SaveChangesAsync();
     }
-=======
-﻿namespace SSSMCR.ApiService.Services;
-
-public class GenericService
-{
-    
->>>>>>> origin/main
 }

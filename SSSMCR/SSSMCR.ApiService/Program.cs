@@ -2,6 +2,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using SSSMCR.ApiService.Database;
+using SSSMCR.ApiService.Services;
+using SSSMCR.ApiService.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,15 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped(typeof(IGenericService<>), typeof(GenericService<>));
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<ISupplyOrderService, SupplyOrderService>();
+builder.Services.AddScoped<IStockAlertService, StockAlertService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+
+builder.Services.AddControllers();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -26,6 +37,8 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API service for SSSMCR application"
     });
 });
+
+
 
 var app = builder.Build();
 
@@ -43,5 +56,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapDefaultEndpoints();
+app.MapControllers();
 
 app.Run();
