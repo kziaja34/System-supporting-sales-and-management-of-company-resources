@@ -1,23 +1,112 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">SSSMCR</a>
-    </div>
-</div>
+﻿<MudNavMenu>
+    <MudDivider Class="my-2" />
+    <MudList T="object" Dense="true">
+        @if (!string.IsNullOrEmpty(_email))
+        {
+            <MudNavLink Href="/panel">
+                <MudListItem >
+                    <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Class="mr-2" />
+                    <MudText>@(string.IsNullOrWhiteSpace(_email) ? "" : _email)</MudText>
+                </MudListItem>
+            </MudNavLink>
+        }
+        @if (!string.IsNullOrWhiteSpace(_email))
+        {
+            <MudListItem> 
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Logout"
+                           OnClick="Logout">
+                    Logout
+                </MudButton>
+            </MudListItem>
+        }
+        @if (string.IsNullOrWhiteSpace(_email)){
+            <MudListItem>
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.Logout"
+                           OnClick="RedirectToLogin">
+                    Login
+                </MudButton>
+            </MudListItem>
+        }
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+    </MudList>
+    
+    <MudNavGroup Title="Sprzedaż" Icon="@Icons.Material.Filled.PointOfSale" Expanded="false">
+        <MudNavLink Href="order" Icon="@Icons.Material.Filled.Receipt" Match="NavLinkMatch.Prefix">Zamówienia</MudNavLink>
+        <MudNavLink Href="invoices" Icon="@Icons.Material.Filled.ReceiptLong">Faktury</MudNavLink>
+    </MudNavGroup>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+    <MudNavGroup Title="Magazyn" Icon="@Icons.Material.Filled.Inventory2">
+        <MudNavLink Href="stock">Stany</MudNavLink>
+        <MudNavLink Href="suppliers">Dostawcy</MudNavLink>
+    </MudNavGroup>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-    </nav>
-</div>
+
+</MudNavMenu>
+
+
+@code {
+    [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
+    [Inject] IAuthService Auth { get; set; } = default!;
+    [Inject] NavigationManager Nav { get; set; } = default!;
+    private string? _email;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            _email = await LocalStorage.GetItemAsStringAsync("user_email");
+        }
+        catch (InvalidOperationException)
+        {
+            
+        }
+        StateHasChanged();
+    }
+    
+    private async Task Logout()
+    {
+        await Auth.LogoutAsync();
+        _email = null;
+        StateHasChanged();
+        Nav.NavigateTo("login", replace: true);
+    }
+
+    private async Task RedirectToLogin()
+    {
+        StateHasChanged();
+         Nav.NavigateTo("/login");
+    }
+    
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    
+    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        try
+        {
+            _email = await LocalStorage.GetItemAsStringAsync("user_email");
+        }
+        catch (InvalidOperationException)
+        {
+        
+        }
+        StateHasChanged();
+    }
+
+    
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+
+}

@@ -11,4 +11,10 @@
         <ProjectReference Include="..\SSSMCR.Shared\SSSMCR.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+      <PackageReference Include="MudBlazor" Version="8.11.0" />
+      <PackageReference Include="MudBlazor.ThemeManager" Version="3.0.0" />
+    </ItemGroup>
+
 </Project>

@@ -45,6 +45,20 @@ public class CategoryDto
     // StockAlerts pomijamy na razie
 }
 
+public sealed class LoginRequest
+{
+    public string Email { get; set; } = "";
+    public string Password { get; set; } = "";
+    public bool RememberMe { get; set; } = false;
+}
+
+public sealed class TokenResponse
+{
+    public string AccessToken { get; set; } = "";
+    public string? RefreshToken { get; set; }
+    public DateTime? ExpiresAtUtc { get; set; }
+}
+
 public enum OrderStatusDto
 {
     Pending,

@@ -1,12 +1,19 @@
 ﻿using Azure.Core;
+using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Model;
+using SSSMCR.ApiService.Services.Interfaces;
 
 namespace SSSMCR.ApiService.Database;
 
 public static class DbSeeder
 {
-    public static void Seed(AppDbContext context)
+    public static async Task Seed(AppDbContext context, IServiceProvider services)
     {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        
+        
         if (context.Roles.Any()) return; // seed only once
 
         // Roles
@@ -27,7 +34,7 @@ public static class DbSeeder
             FirstName = "Admin",
             LastName = "System",
             Email = "admin@example.com",
-            PasswordHash = "hashed123",
+            PasswordHash = hasher.Hash("hashed123"),
             Role = adminRole,
             Branch = branch1
         };

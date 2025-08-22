@@ -1,29 +1,35 @@
+using Blazored.LocalStorage;
+using MudBlazor;
 using SSSMCR.Web;
 using SSSMCR.Web.Components;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
-builder.AddServiceDefaults();
-
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddOutputCache();
+builder.Services.AddMudServices();
+builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddScoped<AuthHandler>();
+builder.Services.AddHttpClient("api", c =>
+    {
+        c.BaseAddress = new Uri("http://localhost:5506/");
+        c.DefaultRequestHeaders.Accept.Clear();
+        c.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        c.Timeout = TimeSpan.FromSeconds(30);
+    })
+    .AddHttpMessageHandler<AuthHandler>();
 
-builder.Services.AddScoped(sp =>
-{
-    var apiBase = new Uri("https://localhost:7524/");
-    return new HttpClient { BaseAddress = apiBase };
-});
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.AddServiceDefaults();
+
 
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -31,13 +37,10 @@ app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
-app.UseOutputCache();
 
 app.MapStaticAssets();
-
+app.MapDefaultEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
-app.MapDefaultEndpoints();
 
 app.Run();

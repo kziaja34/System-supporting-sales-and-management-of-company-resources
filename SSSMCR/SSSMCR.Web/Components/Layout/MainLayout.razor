@@ -1,23 +1,101 @@
 ﻿@inherits LayoutComponentBase
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@using MudBlazor
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+<MudThemeProvider Theme="_theme" @bind-IsDarkMode="_dark" />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<MudLayout>
+    <MudAppBar Elevation="0">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       OnClick="@ToggleDrawer"
+                       Edge="Edge.Start" /><MudText Typo="Typo.h6" Class="ml-2">SSSMCR</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(_dark ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                       OnClick="@ToggleDark" />
+    </MudAppBar>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+    <MudDrawer @bind-Open="_drawerOpen"
+               Variant="DrawerVariant.Responsive"
+               Elevation="1"
+               ClipMode="DrawerClipMode.Never">
+        <NavMenu />
+    </MudDrawer>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-</div>
+    <MudMainContent>
+        <MudContainer Class="pa-4">@Body</MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+    bool _dark = false;
+
+    MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = Colors.Indigo.Default,
+            Secondary = Colors.Pink.Default
+        },
+        PaletteDark = new PaletteDark
+        {
+            Black = "#27272f",
+            Background = Colors.Gray.Darken3,
+            Surface = Colors.Gray.Darken3,
+            Primary = Colors.Indigo.Default,
+            Secondary = Colors.Pink.Default,
+            AppbarBackground = Colors.Gray.Darken4,
+            TextPrimary = Colors.Shades.White
+        }
+    };
+
+
+    const string DrawerKey = "drawer_open";
+    const string DarkKey = "pref_dark";
+
+    async Task ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+        try
+        {
+            await LocalStorage.SetItemAsync(DrawerKey, _drawerOpen);
+        }
+        catch {  }
+    }
+
+    async Task ToggleDark()
+    {
+        _dark = !_dark;
+        try
+        {
+            await LocalStorage.SetItemAsync(DarkKey, _dark);
+        }
+        catch {  }
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            var savedDrawer = await LocalStorage.GetItemAsync<bool?>(DrawerKey);
+            if (savedDrawer.HasValue) _drawerOpen = savedDrawer.Value;
+            else await LocalStorage.SetItemAsync(DrawerKey, _drawerOpen);
+            
+            var savedDark = await LocalStorage.GetItemAsync<bool?>(DarkKey);
+            if (savedDark.HasValue) _dark = savedDark.Value;
+            else await LocalStorage.SetItemAsync(DarkKey, _dark);
+        }
+        catch
+        {
+            
+        }
+
+        StateHasChanged();
+    }
+}

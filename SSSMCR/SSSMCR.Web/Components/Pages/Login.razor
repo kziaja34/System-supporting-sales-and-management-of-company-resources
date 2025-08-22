@@ -1,0 +1,168 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+@using SSSMCR.Shared.Model
+@inject IAuthService Auth
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-12">
+    <MudPaper Class="pa-6">
+        <MudText Typo="Typo.h5" Class="mb-4">Logowanie pracownika</MudText>
+        
+        <EditForm EditContext="_editContext" OnValidSubmit="HandleLogin"
+                  OnInvalidSubmit="@(()=> Snackbar.Add("Formularz nie przeszedł walidacji", Severity.Warning))">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <MudTextField @bind-Value="_model.Email"
+                          Label="Email"
+                          Required="true"
+                          RequiredError="Email jest wymagany"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AlternateEmail"
+                          Variant="Variant.Outlined" />
+            <ValidationMessage For="() => _model.Email" />
+
+            <MudTextField @bind-Value="_model.Password"
+                          Label="Hasło"
+                          Required="true"
+                          RequiredError="Hasło jest wymagane"
+                          InputType="@(_show ? InputType.Text : InputType.Password)"
+                          Variant="Variant.Outlined">
+                <AdornmentEndContent>
+                    <MudIconButton Size="Size.Small"
+                                   Icon="@(_show ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                   OnClick="@(()=> _show = !_show)" />
+                </AdornmentEndContent>
+            </MudTextField>
+            <ValidationMessage For="() => _model.Password" />
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-2">
+                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Disabled="@_busy">
+                    @if (_busy) { <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" /> }
+                    Zaloguj
+                </MudButton>
+            </MudStack>
+        </EditForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    EditContext? _editContext;
+    ValidationMessageStore? _messages;
+
+    LoginRequest _model = new();
+    bool _busy, _show;
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(_model);
+        _messages = new ValidationMessageStore(_editContext);
+        
+        _editContext.OnFieldChanged += (_, e) => ValidateField(e.FieldIdentifier);
+        _editContext.OnValidationRequested += (_, __) => ValidateAll();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            var email = await LocalStorage.GetItemAsStringAsync("user_email");
+            if (!string.IsNullOrEmpty(email))
+            {
+                Nav.NavigateTo("/", replace: true);
+            }
+        }
+        catch
+        {
+            
+        }
+    }
+
+    private void ValidateField(in FieldIdentifier field)
+    {
+        if (_messages is null || _editContext is null) return;
+        
+        _messages.Clear(field);
+
+        if (field.FieldName == nameof(_model.Email))
+        {
+            var email = _model.Email?.Trim();
+            if (string.IsNullOrWhiteSpace(email))
+                _messages.Add(field, "Email jest wymagany");
+            else if (!new EmailAddressAttribute().IsValid(email))
+                _messages.Add(field, "Nieprawidłowy adres email");
+        }
+        else if (field.FieldName == nameof(_model.Password))
+        {
+            foreach (var err in PasswordStrength(_model.Password))
+                _messages.Add(field, err);
+        }
+
+        _editContext.NotifyValidationStateChanged();
+    }
+
+    private void ValidateAll()
+    {
+        if (_messages is null || _editContext is null) return;
+
+        _messages.Clear();
+        ValidateField(new FieldIdentifier(_model, nameof(_model.Email)));
+        ValidateField(new FieldIdentifier(_model, nameof(_model.Password)));
+    }
+
+    private IEnumerable<string> PasswordStrength(string? pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw))
+        {
+            yield return "Hasło jest wymagane";
+            yield break;
+        }
+        if (pw.Length < 8)
+            yield return "Hasło musi mieć co najmniej 8 znaków";
+        if (!Regex.IsMatch(pw, @"[0-9]"))
+            yield return "Hasło musi zawierać co najmniej jedną cyfrę";
+    }
+
+    async Task HandleLogin()
+    {
+        _busy = true;
+        try
+        {
+            Snackbar.Add("Wysyłam login…", Severity.Info);
+
+            var ok = await Auth.LoginAsync(_model);
+
+            if (!ok)
+            {
+                Snackbar.Add("Nieprawidłowe dane logowania.", Severity.Error);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_model.Email))
+            {
+                await LocalStorage.SetItemAsStringAsync("user_email", _model.Email.Trim());
+            }
+
+            Snackbar.Add("Zalogowano.", Severity.Success);
+            await Task.Delay(100);
+
+            Nav.NavigateTo("/", replace: true);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Błąd logowania: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}
