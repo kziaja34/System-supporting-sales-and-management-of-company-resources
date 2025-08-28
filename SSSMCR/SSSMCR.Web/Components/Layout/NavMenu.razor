@@ -3,7 +3,7 @@
     <MudList T="object" Dense="true">
         @if (!string.IsNullOrEmpty(_email))
         {
-            <MudNavLink Href="/panel">
+            <MudNavLink Href="/userpanel">
                 <MudListItem >
                     <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Class="mr-2" />
                     <MudText>@(string.IsNullOrWhiteSpace(_email) ? "" : _email)</MudText>

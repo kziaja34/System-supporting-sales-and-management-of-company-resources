@@ -1,7 +1,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var apiService = builder.AddProject<Projects.SSSMCR_ApiService>("apiservice")
-    .WithHttpHealthCheck("/health");
+    .WithHttpHealthCheck("/health")
+    .WithExternalHttpEndpoints();
 
 builder.AddProject<Projects.SSSMCR_Web>("webfrontend")
     .WithExternalHttpEndpoints()

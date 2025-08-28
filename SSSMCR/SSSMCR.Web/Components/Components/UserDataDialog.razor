@@ -1,0 +1,80 @@
+﻿@using SSSMCR.Shared.Model
+@inject IUserService Users
+@inject ISnackbar Snackbar
+
+@code {
+    [CascadingParameter] 
+    public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public UserDto? User { get; set; }
+    [Parameter] public bool Editable { get; set; }
+
+    private UserUpdateRequest _edit = new();
+    private bool _busy;
+
+    protected override void OnParametersSet()
+    {
+        if (User is null) return;
+        _edit = new UserUpdateRequest
+        {
+            FirstName = User.FirstName,
+            LastName  = User.LastName
+        };
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            _busy = true;
+            await Users.UpdateMeAsync(_edit);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+}
+<MudDialogContent>
+    @if (User is null)
+    {
+        <MudText>Missing data.</MudText>
+    }
+    else
+    {
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.subtitle1">Credentials</MudText>
+            <MudTextField Value="@User.Email" Label="Email" ReadOnly="true" />
+            <MudTextField Value="@User.Roles"  Label="Role"  ReadOnly="true" />
+
+            <MudDivider Class="my-2" />
+            <MudText Typo="Typo.subtitle1">Profile</MudText>
+
+            @if (!Editable)
+            {
+                <MudTextField Value="@User.FirstName" Label="First name" ReadOnly="true" />
+                <MudTextField Value="@User.LastName"  Label="Last name"  ReadOnly="true" />
+            }
+            else
+            {
+                <EditForm Model="_edit" OnValidSubmit="Save">
+                    <DataAnnotationsValidator />
+                    <MudStack Spacing="1">
+                        <MudTextField @bind-Value="_edit.FirstName" Label="First name" Required="true" />
+                        <MudTextField @bind-Value="_edit.LastName"  Label="Last name"  Required="true" />
+                        <ValidationSummary />
+                    </MudStack>
+                </EditForm>
+            }
+        </MudStack>
+    }
+</MudDialogContent>
+
+<MudDialogActions>
+    @if (Editable)
+    {
+        <MudButton Color="Color.Primary" Disabled="_busy" OnClick="Save">Save</MudButton>
+    }
+    <MudButton Variant="Variant.Outlined" OnClick="MudDialog.Cancel">Close</MudButton>
+</MudDialogActions>
