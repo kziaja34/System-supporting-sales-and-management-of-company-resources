@@ -1,0 +1,177 @@
+﻿@page "/userpanel"
+@rendermode InteractiveServer
+@using Blazored.LocalStorage
+@using Blazored.LocalStorage.StorageOptions
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Components.Components
+@inject IAuthService Auth
+@inject IUserService UserService
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager Nav
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mx-auto my-10">
+    <MudText Typo="Typo.h4" Class="mb-6">User panel</MudText>
+
+    @if (_loading)
+    {
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="py-16">
+            <MudProgressCircular Indeterminate="true" />
+        </MudStack>
+    }
+    else if (_me is not null)
+    {
+        <MudPaper Class="pa-4 mb-6">
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
+                <div>
+                    <MudText Typo="Typo.h6">@_me.FullName (@_me.Email)</MudText>
+                    <MudText Color="Color.Secondary" Typo="Typo.body2">
+                        Role: @_me.Roles.FirstOrDefault()
+                    </MudText>
+                </div>
+                <MudSpacer />
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Refresh"
+                           OnClick="Reload">Refresh</MudButton>
+            </MudStack>
+        </MudPaper>
+
+        <MudGrid Justify="Justify.Center" GutterSize="GutterSize.Small">
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="cursor-pointer hover:shadow-lg" @onclick="OpenChangePassword">
+                    <MudCardContent>
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Password" Size="Size.Large" />
+                            <MudText Typo="Typo.h6">Change password</MudText>
+                            <MudText Typo="Typo.body2" Align="Align.Center">
+                                Update your account password
+                            </MudText>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="cursor-pointer hover:shadow-lg" @onclick="OpenShowData">
+                    <MudCardContent>
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Large" />
+                            <MudText Typo="Typo.h6">Show data</MudText>
+                            <MudText Typo="Typo.body2" Align="Align.Center">
+                                View your profile & credentials
+                            </MudText>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="cursor-pointer hover:shadow-lg" @onclick="OpenEditData">
+                    <MudCardContent>
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Large" />
+                            <MudText Typo="Typo.h6">Edit data</MudText>
+                            <MudText Typo="Typo.body2" Align="Align.Center">
+                                Update your profile info
+                            </MudText>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="cursor-pointer hover:shadow-lg" Color="Color.Error" @onclick="Logout">
+                    <MudCardContent>
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Large" />
+                            <MudText Typo="Typo.h6">Logout</MudText>
+                            <MudText Typo="Typo.body2" Align="Align.Center">
+                                Sign out from this device
+                            </MudText>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Error">Can’t load user data.</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    private UserDto? _me;
+    private bool _loading = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            var email = await LocalStorage.GetItemAsStringAsync("user_email");
+            if (string.IsNullOrEmpty(email))
+            {
+                Nav.NavigateTo("/login", replace: true);
+            }
+        }
+        catch
+        {
+            
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMe();
+    }
+
+    private async Task LoadMe()
+    {
+        try
+        {
+            _loading = true;
+            _me = await UserService.GetMeAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load profile: {ex.Message}", Severity.Error);
+        }
+        finally { _loading = false; }
+    }
+
+    private Task Reload() => LoadMe();
+
+    private async Task OpenChangePassword()
+    {
+        var dialog = await Dialogs.ShowAsync<ChangePasswordDialog>("Change password");
+        var result = await dialog.Result;
+        if (!result.Canceled) Snackbar.Add("Password changed.", Severity.Success);
+    }
+
+    private async Task OpenShowData()
+    {
+        var parameters = new DialogParameters { ["User"] = _me, ["Editable"] = false };
+        await Dialogs.ShowAsync<UserDataDialog>("Your data", parameters);
+    }
+
+    private async Task OpenEditData()
+    {
+        var parameters = new DialogParameters { ["User"] = _me, ["Editable"] = true };
+        var dialog = await Dialogs.ShowAsync<UserDataDialog>("Edit profile", parameters);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            Snackbar.Add("Profile updated.", Severity.Success);
+            await LoadMe();
+        }
+    }
+
+    private async Task Logout()
+    {
+        await Auth.LogoutAsync();
+        Nav.NavigateTo("/login", forceLoad: true);
+    }
+}

@@ -65,6 +65,31 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API service for SSSMCR application"
     });
+    
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 
@@ -90,6 +115,8 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = "swagger";
     });
 }
+
+app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.MapDefaultEndpoints();
 app.UseHttpsRedirection();

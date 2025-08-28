@@ -1,0 +1,119 @@
+﻿@using SSSMCR.Shared.Model
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-12">
+    <MudPaper Class="pa-6">
+        <MudText Typo="Typo.h5" Class="mb-4">Worker login</MudText>
+
+        <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmit"
+                  OnInvalidSubmit="@(()=> Snackbar?.Add("Form is not valid", Severity.Warning))">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <MudTextField @bind-Value="_model.Email"
+                          Label="Email"
+                          Required="true"
+                          RequiredError="Email is necessary"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AlternateEmail"
+                          Variant="Variant.Outlined"
+                          Disabled="@IsBusy" />
+            <ValidationMessage For="() => _model.Email" />
+
+            <MudTextField @bind-Value="_model.Password"
+                          Label="Password"
+                          Required="true"
+                          RequiredError="Password is necessary"
+                          InputType="@(_show ? InputType.Text : InputType.Password)"
+                          Variant="Variant.Outlined"
+                          Disabled="@IsBusy">
+                <AdornmentEndContent>
+                    <MudIconButton Size="Size.Small"
+                                   Icon="@(_show ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                   OnClick="@(()=> _show = !_show)" />
+                </AdornmentEndContent>
+            </MudTextField>
+            <ValidationMessage For="() => _model.Password" />
+
+            @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">
+                    @ErrorMessage
+                </MudAlert>
+            }
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-2">
+                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Disabled="@IsBusy">
+                    @if (IsBusy) { <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" /> }
+                    Log in
+                </MudButton>
+            </MudStack>
+        </EditForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private EditContext? _editContext;
+    private ValidationMessageStore? _messages;
+    private LoginRequest _model = new();
+    private bool _show;
+
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
+    [Parameter] public EventCallback<LoginRequest> OnSubmit { get; set; }
+    [CascadingParameter] public ISnackbar? Snackbar { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(_model);
+        _messages = new ValidationMessageStore(_editContext);
+
+        _editContext.OnFieldChanged += (_, e) => ValidateField(e.FieldIdentifier);
+        _editContext.OnValidationRequested += (_, __) => ValidateAll();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (OnSubmit.HasDelegate)
+            await OnSubmit.InvokeAsync(_model);
+    }
+
+    private void ValidateField(in FieldIdentifier field)
+    {
+        if (_messages is null || _editContext is null) return;
+
+        _messages.Clear(field);
+
+        if (field.FieldName == nameof(_model.Email))
+        {
+            var email = _model.Email?.Trim();
+            if (string.IsNullOrWhiteSpace(email))
+                _messages.Add(field, "Email is necessary");
+            else if (!new EmailAddressAttribute().IsValid(email))
+                _messages.Add(field, "Wrong email");
+        }
+        else if (field.FieldName == nameof(_model.Password))
+        {
+            foreach (var err in PasswordStrength(_model.Password))
+                _messages.Add(field, err);
+        }
+
+        _editContext.NotifyValidationStateChanged();
+    }
+
+    private void ValidateAll()
+    {
+        if (_messages is null || _editContext is null) return;
+
+        _messages.Clear();
+        ValidateField(new FieldIdentifier(_model, nameof(_model.Email)));
+        ValidateField(new FieldIdentifier(_model, nameof(_model.Password)));
+    }
+
+    private IEnumerable<string> PasswordStrength(string? pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw))
+            yield return "Password is necessary";
+    }
+}

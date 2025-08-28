@@ -18,14 +18,4 @@ public sealed class AuthController(IAuthService auth) : ControllerBase
         if (token is null) return Unauthorized(new { message = "Invalid credentials." });
         return Ok(token);
     }
-
-    [HttpGet("me")]
-    [Authorize]
-    public IActionResult Me() => Ok(new
-    {
-        name  = User.Identity?.Name,
-        email = User.FindFirstValue(JwtRegisteredClaimNames.Email),
-        roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray(),
-        sub   = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
-    });
 }
