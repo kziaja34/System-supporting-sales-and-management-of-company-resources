@@ -60,28 +60,56 @@ public sealed class TokenResponse
     public DateTime? ExpiresAtUtc { get; set; }
 }
 
-public class UserDto
-{
-    public int Id { get; set; }
-    public string Email { get; set; } = "";
-    public string FullName => $"{FirstName} {LastName}".Trim();
-    public string FirstName { get; set; } = "";
-    public string LastName { get; set; } = "";
-    public string Phone { get; set; } = "";
-    public IEnumerable<string> Roles { get; set; } = Array.Empty<string>();
-}
-
-public class UserUpdateRequest
-{
-    [Required] public string FirstName { get; set; } = "";
-    [Required] public string LastName { get; set; } = "";
-    public string? Phone { get; set; }
-}
-
 public class ChangePasswordRequest
 {
     [Required] public string CurrentPassword { get; set; } = "";
     [Required] public string NewPassword { get; set; } = "";
+}
+
+public sealed class UserCreateRequest
+{
+    [Required, MaxLength(255)]
+    public string FirstName { get; set; } = default!;
+    [Required, MaxLength(255)]
+    public string LastName { get; set; } = default!;
+    [Required, EmailAddress, MaxLength(255)]
+    public string Email { get; set; } = default!;
+    [Required, MinLength(6), MaxLength(255)]
+    public string Password { get; set; } = default!;
+    [Required]
+    public int RoleId { get; set; }
+    [Required]
+    public int BranchId { get; set; }
+}
+
+public sealed class UserUpdateRequest
+{
+    [Required, MaxLength(255)]
+    public string FirstName { get; set; } = default!;
+    [Required, MaxLength(255)]
+    public string LastName { get; set; } = default!;
+    [Required, EmailAddress, MaxLength(255)]
+    public string Email { get; set; } = default!;
+    [Required]
+    public int RoleId { get; set; }
+    [Required]
+    public int BranchId { get; set; }
+        
+    [MinLength(6), MaxLength(255)]
+    public string? NewPassword { get; set; }
+}
+
+public sealed class UserResponse
+{
+    public int Id { get; set; }
+    public string FullName => $"{FirstName} {LastName}".Trim();
+    public string FirstName { get; set; } = default!;
+    public string LastName  { get; set; } = default!;
+    public string Email     { get; set; } = default!;
+    public int RoleId       { get; set; }
+    public int BranchId     { get; set; }
+    public string BranchName { get; set; } = default!;
+    public string RoleName   { get; set; } = default!;
 }
 
 public enum OrderStatusDto

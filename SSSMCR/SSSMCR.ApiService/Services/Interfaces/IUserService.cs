@@ -7,7 +7,7 @@ public interface IUserService : IGenericService<User>
 {
     Task<User?> GetByEmailAsync(string email, CancellationToken ct = default);
     Task<bool> VerifyPasswordAsync(string email, string password, CancellationToken ct = default);
-    Task<IEnumerable<string>> GetRolesAsync(int userId, CancellationToken ct = default);
+    Task<Role> GetRoleAsync(int userId, CancellationToken ct = default);
     Task UpdateProfileAsync(int userId, UserUpdateRequest req, CancellationToken ct = default);
     Task ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken ct = default);
 }

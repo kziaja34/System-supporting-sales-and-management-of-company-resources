@@ -40,17 +40,27 @@ public class UserService : GenericService<User>, IUserService
         catch { return false; }
     }
 
-    public Task<IEnumerable<string>> GetRolesAsync(int userId, CancellationToken ct = default)
+    public async Task<Role> GetRoleAsync(int userId, CancellationToken ct = default)
     {
-        return _dbSet.AsNoTracking()
+        return await _dbSet.AsNoTracking()
             .Where(u => u.Id == userId)
-            .Select(u => u.Role.Name)
-            .Select(n => new[] { n } as IEnumerable<string>)
-            .FirstOrDefaultAsync(ct) ?? Task.FromResult(Enumerable.Empty<string>());
+            .Select(u => u.Role)
+            .FirstOrDefaultAsync(ct) ?? throw new KeyNotFoundException("User not found");
     }
     
-    public async Task<User?> GetByIdAsync(int userId, CancellationToken ct = default)
-        => await _dbSet.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, ct);
+    public new async Task<User> GetByIdAsync(int userId)
+        => await _dbSet.AsNoTracking()
+            .Include(u => u.Role)
+            .Include(u => u.Branch)
+            .FirstOrDefaultAsync(u => u.Id == userId) ?? throw new KeyNotFoundException("User not found");
+
+    public new async Task<IEnumerable<User>> GetAllAsync()
+    {
+        return await _dbSet.AsNoTracking()
+            .Include(u => u.Role)
+            .Include(u => u.Branch)
+            .ToListAsync();
+    }
     
     public async Task UpdateProfileAsync(int userId, UserUpdateRequest req, CancellationToken ct = default)
     {

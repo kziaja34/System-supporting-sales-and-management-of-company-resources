@@ -13,21 +13,22 @@ public sealed class MeController(IUserService users) : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet("data")]
-    public async Task<ActionResult<UserDto>> GetMe(CancellationToken ct)
+    public async Task<ActionResult<UserResponse>> GetMe(CancellationToken ct)
     {
         var u = await users.GetByIdAsync(CurrentUserId);
         
         if (u is null) return NotFound();
 
-        var roles = await users.GetRolesAsync(u.Id, ct);
-
-        return Ok(new UserDto
+        return Ok(new UserResponse()
         {
             Id = u.Id,
             Email = u.Email,
             FirstName = u.FirstName,
             LastName = u.LastName,
-            Roles = roles
+            RoleId = u.RoleId,
+            RoleName = u.Role.Name,
+            BranchId = u.BranchId,
+            BranchName = u.Branch.Name
         });
     }
 

@@ -5,7 +5,7 @@
 @code {
     [CascadingParameter] 
     public IMudDialogInstance MudDialog { get; set; } = default!;
-    [Parameter] public UserDto? User { get; set; }
+    [Parameter] public UserResponse? User { get; set; }
     [Parameter] public bool Editable { get; set; }
 
     private UserUpdateRequest _edit = new();
@@ -46,7 +46,7 @@
         <MudStack Spacing="2">
             <MudText Typo="Typo.subtitle1">Credentials</MudText>
             <MudTextField Value="@User.Email" Label="Email" ReadOnly="true" />
-            <MudTextField Value="@User.Roles.FirstOrDefault()"  Label="Role"  ReadOnly="true" />
+            <MudTextField Value="@User.RoleName"  Label="Role"  ReadOnly="true" />
 
             <MudDivider Class="my-2" />
             <MudText Typo="Typo.subtitle1">Profile</MudText>
