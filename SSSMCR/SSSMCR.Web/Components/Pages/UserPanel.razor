@@ -24,11 +24,11 @@
     {
         <MudPaper Class="pa-4 mb-6">
             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                <MudAvatar Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
+                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
                 <div>
                     <MudText Typo="Typo.h6">@_me.FullName (@_me.Email)</MudText>
                     <MudText Color="Color.Secondary" Typo="Typo.body2">
-                        Role: @_me.Roles
+                        Role: @_me.Roles.FirstOrDefault()
                     </MudText>
                 </div>
                 <MudSpacer />

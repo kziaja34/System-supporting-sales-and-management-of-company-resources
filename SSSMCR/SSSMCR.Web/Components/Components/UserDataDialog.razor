@@ -36,7 +36,7 @@
         finally { _busy = false; }
     }
 }
-<MudDialogContent>
+<MudDialogContent Class="pa-4">
     @if (User is null)
     {
         <MudText>Missing data.</MudText>
@@ -46,7 +46,7 @@
         <MudStack Spacing="2">
             <MudText Typo="Typo.subtitle1">Credentials</MudText>
             <MudTextField Value="@User.Email" Label="Email" ReadOnly="true" />
-            <MudTextField Value="@User.Roles"  Label="Role"  ReadOnly="true" />
+            <MudTextField Value="@User.Roles.FirstOrDefault()"  Label="Role"  ReadOnly="true" />
 
             <MudDivider Class="my-2" />
             <MudText Typo="Typo.subtitle1">Profile</MudText>
@@ -71,7 +71,7 @@
     }
 </MudDialogContent>
 
-<MudDialogActions>
+<MudDialogActions Class="px-4 pb-3">
     @if (Editable)
     {
         <MudButton Color="Color.Primary" Disabled="_busy" OnClick="Save">Save</MudButton>

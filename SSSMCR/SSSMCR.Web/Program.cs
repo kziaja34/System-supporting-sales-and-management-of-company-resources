@@ -23,17 +23,13 @@ builder.Services.AddMudServices(config =>
 
 builder.Services.AddBlazoredLocalStorage();
 
-builder.Services.AddScoped<AuthState>();
-builder.Services.AddScoped<AuthHandler>();
-
 builder.Services.AddHttpClient("api", c =>
-    {
-        c.BaseAddress = new Uri("http://localhost:5506/");
-        c.DefaultRequestHeaders.Accept.Clear();
-        c.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-        c.Timeout = TimeSpan.FromSeconds(30);
-    })
-    .AddHttpMessageHandler<AuthHandler>();
+{
+    c.BaseAddress = new Uri("http://localhost:5506/");
+    c.DefaultRequestHeaders.Accept.Clear();
+    c.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+    c.Timeout = TimeSpan.FromSeconds(30);
+});
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
