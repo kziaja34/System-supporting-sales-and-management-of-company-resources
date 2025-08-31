@@ -6,7 +6,7 @@ using SSSMCR.Shared.Model;
 public interface IUserService
 {
     Task<UserResponse> GetMeAsync();
-    Task UpdateMeAsync(UserUpdateRequest req);
+    Task<bool> UpdateMeAsync(UpdateMeRequest req);
     Task ChangePasswordAsync(ChangePasswordRequest req);
 }
 
@@ -62,7 +62,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task UpdateMeAsync(UserUpdateRequest req)
+    public async Task<bool> UpdateMeAsync(UpdateMeRequest req)
     {
         var http = _httpFactory.CreateClient("api");
         var url = "/api/me";
@@ -72,20 +72,26 @@ public class UserService : IUserService
         HttpResponseMessage res;
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Patch, url)
-            {
-                Content = JsonContent.Create(req)
-            };
-            res = await http.SendAsync(request);
+            res = await http.PutAsJsonAsync(url, req);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "UpdateMeAsync: request exception");
-            throw;
+            return false;
         }
 
-        res.EnsureSuccessStatusCode();
+        if (!res.IsSuccessStatusCode)
+        {
+            string body = string.Empty;
+            try { body = await res.Content.ReadAsStringAsync(); } catch { }
+            _logger.LogWarning("UpdateMeAsync failed: {Status} body: {Body}",
+                res.StatusCode, Truncate(body, 1000));
+            return false;
+        }
+
+        return true;
     }
+
 
     public async Task ChangePasswordAsync(ChangePasswordRequest req)
     {

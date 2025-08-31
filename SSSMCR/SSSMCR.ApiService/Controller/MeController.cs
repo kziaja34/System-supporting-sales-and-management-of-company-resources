@@ -32,19 +32,25 @@ public sealed class MeController(IUserService users) : ControllerBase
         });
     }
 
-    [HttpPatch]
-    public async Task<IActionResult> PatchMe([FromBody] UserUpdateRequest req, CancellationToken ct)
+    [HttpPut]
+    public async Task<IActionResult> UpdateMe([FromBody] UpdateMeRequest req, CancellationToken ct)
     {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+        
         var user = await users.GetByIdAsync(CurrentUserId, ct);
-        
+
         if (user is null) return NotFound();
-        
+
         user.FirstName = req.FirstName;
-        user.LastName = req.LastName;
-        
+        user.LastName  = req.LastName;
+
         await users.UpdateProfileAsync(user.Id, user, ct);
         return NoContent();
     }
+
 
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest req, CancellationToken ct)

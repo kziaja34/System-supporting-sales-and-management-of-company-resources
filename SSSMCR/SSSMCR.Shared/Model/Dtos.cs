@@ -66,6 +66,14 @@ public class ChangePasswordRequest
     [Required] public string NewPassword { get; set; } = "";
 }
 
+public sealed class UpdateMeRequest
+{
+    [Required, MaxLength(255)]
+    public string FirstName { get; set; } = default!;
+    [Required, MaxLength(255)]
+    public string LastName { get; set; } = default!;
+}
+
 public sealed class UserCreateRequest
 {
     public string FirstName { get; set; } = default!;
