@@ -99,21 +99,32 @@ public class UserService(
         var existing = await _dbSet.FirstOrDefaultAsync(u => u.Id == userId, ct)
                        ?? throw new KeyNotFoundException("User not found");
 
+        var email = user.Email?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email is required", nameof(user.Email));
+        
+        var exists = await _dbSet.AsNoTracking()
+            .AnyAsync(u => u.Email.ToLower() == email.ToLower() && u.Id != userId, ct);
+
+        if (exists)
+            throw new InvalidOperationException("User with this email already exists");
+
         existing.FirstName = user.FirstName;
         existing.LastName  = user.LastName;
-        existing.Email     = user.Email;
+        existing.Email     = email;
         existing.RoleId    = user.RoleId;
         existing.BranchId  = user.BranchId;
-        
+
         if (!string.IsNullOrWhiteSpace(user.PasswordHash))
             existing.PasswordHash = user.PasswordHash;
 
         existing.Branch = await branchService.GetByIdAsync(user.BranchId, ct);
         existing.Role   = await roleService.GetByIdAsync(user.RoleId, ct);
-        
+    
         _dbSet.Update(existing);
         await _context.SaveChangesAsync(ct);
     }
+
 
 
     public async Task ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken ct = default)

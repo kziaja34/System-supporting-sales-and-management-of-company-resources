@@ -13,7 +13,10 @@
         <MudForm @ref="form" Model="model" @bind-IsValid="valid">
             <MudTextField @bind-Value="model.FirstName" Label="First Name" Required="true" />
             <MudTextField @bind-Value="model.LastName" Label="Last Name" Required="true" />
-            <MudTextField @bind-Value="model.Email" Label="Email" Required="true" />
+            <MudTextField @bind-Value="model.Email" Label="Email" Required="true" 
+                          Validation="@(new Func<string, IEnumerable<string>>(AuthService.EmailValidation))"
+                          Error="@(!string.IsNullOrEmpty(emailError))"
+                          ErrorText="@emailError" />
             @if (Roles?.Count > 0 && Branches?.Count > 0)
             {
                 <MudSelect T="int" @bind-Value="model.RoleId" Label="Role" Required="true">
@@ -34,12 +37,12 @@
             @if (isNew)
             {
                 <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true"
-                              Validation="@(new Func<string, IEnumerable<string>>(AuthService.PasswordStrength))"/>
+                              Validation="@(new Func<string, IEnumerable<string>>(AuthService.PasswordStrengthRequired))"/>
             }
             else
             {
-                <MudTextField @bind-Value="model.NewPassword" Label="New Password (optional)" InputType="InputType.Password" 
-                              Validation="@(new Func<string, IEnumerable<string>>(AuthService.PasswordStrength))"/>
+                <MudTextField @bind-Value="model.NewPassword" Label="New Password (optional)" InputType="InputType.Password"
+                              Validation="@(new Func<string, IEnumerable<string>>(AuthService.PasswordStrengthOptional))"/>
             }
         </MudForm>
     </DialogContent>
@@ -58,6 +61,7 @@
     private MudForm form = default!;
     private UserEditModel model = new();
     private bool isNew => User == null;
+    private string? emailError;
 
     protected override void OnInitialized()
     {
@@ -90,34 +94,49 @@
 
     private async Task Save()
     {
+        emailError = null;
         await form.Validate();
         if (!valid) return;
-        
-        if (isNew)
+
+        try
         {
-            var created = await UsersApi.CreateUserAsync(new UserCreateRequest
+            if (isNew)
             {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Email = model.Email,
-                Password = model.Password!,
-                RoleId = model.RoleId,
-                BranchId = model.BranchId
-            });
-            MudDialog.Close(DialogResult.Ok(created));
+                var created = await UsersApi.CreateUserAsync(new UserCreateRequest
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    Password = model.Password!,
+                    RoleId = model.RoleId,
+                    BranchId = model.BranchId
+                });
+                MudDialog.Close(DialogResult.Ok(created));
+            }
+            else
+            {
+                var updated = await UsersApi.UpdateUserAsync(model.Id, new UserUpdateRequest
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    RoleId = model.RoleId,
+                    BranchId = model.BranchId,
+                    NewPassword = model.NewPassword
+                });
+                MudDialog.Close(DialogResult.Ok(updated));
+            }
         }
-        else
+        catch (HttpRequestException ex)
         {
-            var updated = await UsersApi.UpdateUserAsync(model.Id, new UserUpdateRequest
+            if (ex.Message.Contains("exists", StringComparison.OrdinalIgnoreCase))
             {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Email = model.Email,
-                RoleId = model.RoleId,
-                BranchId = model.BranchId,
-                NewPassword = model.NewPassword
-            });
-            MudDialog.Close(DialogResult.Ok(updated));
+                emailError = "User with this email already exists.";
+            }
+            else
+            {
+                emailError = "An unexpected error occurred.";
+            }
         }
     }
 
@@ -132,9 +151,7 @@
         public string Email { get; set; } = "";
         public int RoleId { get; set; }
         public int BranchId { get; set; }
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
         public string? Password { get; set; }
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
         public string? NewPassword { get; set; }
     }
 }

@@ -30,13 +30,21 @@ public class UsersController(IUserService userService, IPasswordHasher hasher, I
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
-        var entity = ToEntity(req);
-        entity.PasswordHash = hasher.Hash(req.Password);
-        entity = await userService.CreateAsync(entity, ct);
+        try
+        {
+            var entity = ToEntity(req);
+            entity.PasswordHash = hasher.Hash(req.Password);
+            entity = await userService.CreateAsync(entity, ct);
 
-        var resp = ToResponse(entity);
-        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, resp);
+            var resp = ToResponse(entity);
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, resp);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
+
 
     
     [HttpPut("{id:int}")]
@@ -44,18 +52,30 @@ public class UsersController(IUserService userService, IPasswordHasher hasher, I
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
-        var entity = ToEntity(req);
-
-        if (!string.IsNullOrWhiteSpace(req.NewPassword))
+        try
         {
-            entity.PasswordHash = hasher.Hash(req.NewPassword);
+            var entity = ToEntity(req);
+
+            if (!string.IsNullOrWhiteSpace(req.NewPassword))
+            {
+                entity.PasswordHash = hasher.Hash(req.NewPassword);
+            }
+
+            await userService.UpdateUserAsync(id, entity, ct);
+
+            var updated = await userService.GetByIdAsync(id, ct);
+            return Ok(ToResponse(updated));
         }
-
-        await userService.UpdateUserAsync(id, entity, ct);
-
-        var updated = await userService.GetByIdAsync(id, ct);
-        return Ok(ToResponse(updated));
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
+
 
     
     [HttpDelete("{id:int}")]
