@@ -13,14 +13,14 @@ public class UsersController(IUserService userService, IPasswordHasher hasher, I
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserResponse>>> GetAll(CancellationToken ct)
     {
-        var users = await userService.GetAllAsync();
+        var users = await userService.GetAllAsync(ct);
         return Ok(users.Select(ToResponse));
     }
     
     [HttpGet("{id:int}")]
     public async Task<ActionResult<UserResponse>> GetById(int id, CancellationToken ct)
     {
-        var user = await userService.GetByIdAsync(id);
+        var user = await userService.GetByIdAsync(id, ct);
         if (user is null) return NotFound();
         return Ok(ToResponse(user));
     }
@@ -29,35 +29,34 @@ public class UsersController(IUserService userService, IPasswordHasher hasher, I
     public async Task<ActionResult<UserResponse>> Create([FromBody] UserCreateRequest req, CancellationToken ct)
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
-        
-        var existing = await userService.GetByEmailAsync(req.Email, ct);
-        if (existing is not null)
-            return Conflict(new { message = "Email is already in use." });
 
-        var entity = new User
-        {
-            FirstName = req.FirstName.Trim(),
-            LastName  = req.LastName.Trim(),
-            Email     = req.Email.Trim(),
-            PasswordHash = hasher.Hash(req.Password),
-            RoleId    = req.RoleId,
-            BranchId  = req.BranchId
-        };
+        var entity = ToEntity(req);
+        entity.PasswordHash = hasher.Hash(req.Password);
+        entity = await userService.CreateAsync(entity, ct);
 
-        entity = await userService.CreateAsync(entity);
         var resp = ToResponse(entity);
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, resp);
     }
+
     
     [HttpPut("{id:int}")]
     public async Task<ActionResult<UserResponse>> Update(int id, [FromBody] UserUpdateRequest req, CancellationToken ct)
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
-        
-        await userService.UpdateUserAsync(id, req, ct);
-        
-        return Ok(req);
+
+        var entity = ToEntity(req);
+
+        if (!string.IsNullOrWhiteSpace(req.NewPassword))
+        {
+            entity.PasswordHash = hasher.Hash(req.NewPassword);
+        }
+
+        await userService.UpdateUserAsync(id, entity, ct);
+
+        var updated = await userService.GetByIdAsync(id, ct);
+        return Ok(ToResponse(updated));
     }
+
     
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
@@ -65,6 +64,7 @@ public class UsersController(IUserService userService, IPasswordHasher hasher, I
         await userService.DeleteAsync(id);
         return NoContent();
     }
+
 
     private static UserResponse ToResponse(User u) => new()
     {
@@ -76,5 +76,23 @@ public class UsersController(IUserService userService, IPasswordHasher hasher, I
         BranchId  = u.BranchId,
         RoleName  = u.Role?.Name ?? string.Empty,
         BranchName = u.Branch?.Name ?? string.Empty
+    };
+    
+    private static User ToEntity(UserUpdateRequest req) => new()
+    {
+        FirstName = req.FirstName?.Trim() ?? string.Empty,
+        LastName  = req.LastName?.Trim() ?? string.Empty,
+        Email     = req.Email?.Trim() ?? string.Empty,
+        RoleId    = req.RoleId,
+        BranchId  = req.BranchId
+    };
+    private static User ToEntity(UserCreateRequest req) => new()
+    {
+        FirstName    = req.FirstName?.Trim() ?? string.Empty,
+        LastName     = req.LastName?.Trim() ?? string.Empty,
+        Email        = req.Email?.Trim() ?? string.Empty,
+        PasswordHash = req.Password,
+        RoleId       = req.RoleId,
+        BranchId     = req.BranchId
     };
 }

@@ -6,6 +6,7 @@ public interface IAuthService
 {
     Task<bool> LoginAsync(LoginRequest req);
     Task LogoutAsync();
+    IEnumerable<string> PasswordStrength(string pw);
 }
 
 public sealed class AuthService : IAuthService
@@ -91,6 +92,23 @@ public sealed class AuthService : IAuthService
         await _storage.RemoveItemAsync("jwt_expires");
         await _storage.RemoveItemAsync("refresh");
         await _storage.RemoveItemAsync("user_email");
+    }
+    
+    public IEnumerable<string> PasswordStrength(string pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw))
+        {
+            yield return "Password is required!";
+            yield break;
+        }
+        if (pw.Length < 6)
+            yield return "Password must be at least of length 6";
+        // if (!Regex.IsMatch(pw, @"[A-Z]"))
+        //     yield return "Password must contain at least one capital letter";
+        // if (!Regex.IsMatch(pw, @"[a-z]"))
+        //     yield return "Password must contain at least one lowercase letter";
+        // if (!Regex.IsMatch(pw, @"[0-9]"))
+        //     yield return "Password must contain at least one digit";
     }
 
     private static string Truncate(string? s, int max)

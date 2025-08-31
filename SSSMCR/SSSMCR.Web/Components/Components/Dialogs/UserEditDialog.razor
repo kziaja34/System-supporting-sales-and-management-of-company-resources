@@ -1,9 +1,12 @@
-﻿@using MudBlazor
+﻿@using System.ComponentModel.DataAnnotations
+@using System.Text.RegularExpressions
+@using MudBlazor
 @using SSSMCR.Shared.Model
 @using SSSMCR.Web.Services
 @inject UsersApiService UsersApi
 @inject RolesApiService RolesApiService
 @inject BranchesApiService BranchesApiService
+@inject IAuthService AuthService
 
 <MudDialog>
     <DialogContent>
@@ -30,11 +33,13 @@
 
             @if (isNew)
             {
-                <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true" />
+                <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true"
+                              Validation="@(new Func<string, IEnumerable<string>>(AuthService.PasswordStrength))"/>
             }
             else
             {
-                <MudTextField @bind-Value="model.NewPassword" Label="New Password (optional)" InputType="InputType.Password" />
+                <MudTextField @bind-Value="model.NewPassword" Label="New Password (optional)" InputType="InputType.Password" 
+                              Validation="@(new Func<string, IEnumerable<string>>(AuthService.PasswordStrength))"/>
             }
         </MudForm>
     </DialogContent>
@@ -56,6 +61,19 @@
 
     protected override void OnInitialized()
     {
+        if (model.RoleId == 0 && Roles.Count > 0)
+        {
+            var adminId = Roles.FirstOrDefault(r => string.Equals(r.Name, "Administrator", StringComparison.OrdinalIgnoreCase))?.Id
+                          ?? Roles[0].Id;
+            model.RoleId = adminId;
+        }
+        
+        if (model.BranchId == 0 && Branches.Count > 0)
+        {
+            model.BranchId = Branches[0].Id;
+        }
+
+        
         if (User is not null)
         {
             model = new UserEditModel
@@ -72,6 +90,9 @@
 
     private async Task Save()
     {
+        await form.Validate();
+        if (!valid) return;
+        
         if (isNew)
         {
             var created = await UsersApi.CreateUserAsync(new UserCreateRequest
@@ -102,6 +123,7 @@
 
     private void Cancel() => MudDialog.Cancel();
 
+
     class UserEditModel
     {
         public int Id { get; set; }
@@ -110,7 +132,9 @@
         public string Email { get; set; } = "";
         public int RoleId { get; set; }
         public int BranchId { get; set; }
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
         public string? Password { get; set; }
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
         public string? NewPassword { get; set; }
     }
 }

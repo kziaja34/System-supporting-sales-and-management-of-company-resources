@@ -15,7 +15,7 @@ public sealed class MeController(IUserService users) : ControllerBase
     [HttpGet("data")]
     public async Task<ActionResult<UserResponse>> GetMe(CancellationToken ct)
     {
-        var u = await users.GetByIdAsync(CurrentUserId);
+        var u = await users.GetByIdAsync(CurrentUserId, ct);
         
         if (u is null) return NotFound();
 
@@ -35,7 +35,14 @@ public sealed class MeController(IUserService users) : ControllerBase
     [HttpPatch]
     public async Task<IActionResult> PatchMe([FromBody] UserUpdateRequest req, CancellationToken ct)
     {
-        await users.UpdateProfileAsync(CurrentUserId, req, ct);
+        var user = await users.GetByIdAsync(CurrentUserId, ct);
+        
+        if (user is null) return NotFound();
+        
+        user.FirstName = req.FirstName;
+        user.LastName = req.LastName;
+        
+        await users.UpdateProfileAsync(user.Id, user, ct);
         return NoContent();
     }
 
