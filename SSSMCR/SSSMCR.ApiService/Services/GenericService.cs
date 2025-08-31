@@ -4,16 +4,11 @@ using SSSMCR.ApiService.Services.Interfaces;
 
 namespace SSSMCR.ApiService.Services;
 
-public class GenericService<T> : IGenericService<T> where T : class
+public class GenericService<T>(AppDbContext context) : IGenericService<T>
+    where T : class
 {
-    protected readonly AppDbContext _context;
-    protected readonly DbSet<T> _dbSet;
-
-    public GenericService(AppDbContext context)
-    {
-        _context = context;
-        _dbSet = context.Set<T>();
-    }
+    protected readonly AppDbContext _context = context;
+    protected readonly DbSet<T> _dbSet = context.Set<T>();
 
     public async Task<T> CreateAsync(T entity)
     {
@@ -25,7 +20,6 @@ public class GenericService<T> : IGenericService<T> where T : class
     public async Task DeleteAsync(int id)
     {
         var entity = await GetByIdAsync(id);
-        if (entity == null) return;
         _dbSet.Remove(entity);
         await _context.SaveChangesAsync();
     }

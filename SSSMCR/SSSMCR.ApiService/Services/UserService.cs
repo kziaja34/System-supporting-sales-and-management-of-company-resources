@@ -73,6 +73,25 @@ public class UserService : GenericService<User>, IUserService
         _dbSet.Update(user);
         await _context.SaveChangesAsync(ct);
     }
+    
+    public async Task UpdateUserAsync(int userId, UserUpdateRequest req, CancellationToken ct = default)
+    {
+        var user = await _dbSet.FirstOrDefaultAsync(u => u.Id == userId, ct)
+                   ?? throw new KeyNotFoundException("User not found");
+
+        user.FirstName = req.FirstName;
+        user.LastName  = req.LastName;
+        user.Email     = req.Email;
+        user.RoleId    = req.RoleId;
+        user.BranchId  = req.BranchId;
+        if (!string.IsNullOrWhiteSpace(req.NewPassword))
+            user.PasswordHash = _hasher.Hash(req.NewPassword);
+        user.Branch = await _context.Branches.FirstOrDefaultAsync(b => b.Id == req.BranchId, ct);
+        user.Role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == req.RoleId, ct);
+        
+        _dbSet.Update(user);
+        await _context.SaveChangesAsync(ct);
+    }
 
     public async Task ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken ct = default)
     {

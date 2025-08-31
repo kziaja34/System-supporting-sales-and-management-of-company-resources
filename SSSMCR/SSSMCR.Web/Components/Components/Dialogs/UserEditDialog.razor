@@ -1,0 +1,116 @@
+﻿@using MudBlazor
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject UsersApiService UsersApi
+@inject RolesApiService RolesApiService
+@inject BranchesApiService BranchesApiService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="model" @bind-IsValid="valid">
+            <MudTextField @bind-Value="model.FirstName" Label="First Name" Required="true" />
+            <MudTextField @bind-Value="model.LastName" Label="Last Name" Required="true" />
+            <MudTextField @bind-Value="model.Email" Label="Email" Required="true" />
+            @if (Roles?.Count > 0 && Branches?.Count > 0)
+            {
+                <MudSelect T="int" @bind-Value="model.RoleId" Label="Role" Required="true">
+                    @foreach (var r in Roles) { <MudSelectItem Value="@(r.Id)">@r.Name</MudSelectItem> }
+                </MudSelect>
+
+                <MudSelect T="int" @bind-Value="model.BranchId" Label="Branch" Required="true">
+                    @foreach (var b in Branches) { <MudSelectItem Value="@(b.Id)">@b.Name</MudSelectItem> }
+                </MudSelect>
+            }
+            else
+            {
+                <MudSkeleton Width="100%" Height="40px" Class="mb-2" />
+                <MudSkeleton Width="100%" Height="40px" />
+            }
+
+
+            @if (isNew)
+            {
+                <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true" />
+            }
+            else
+            {
+                <MudTextField @bind-Value="model.NewPassword" Label="New Password (optional)" InputType="InputType.Password" />
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Disabled="!valid" Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public UserResponse? User { get; set; }
+    [Parameter] public List<RoleDto> Roles { get; set; } = new();
+    [Parameter] public List<BranchDto> Branches { get; set; } = new();
+    private bool valid;
+    private MudForm form = default!;
+    private UserEditModel model = new();
+    private bool isNew => User == null;
+
+    protected override void OnInitialized()
+    {
+        if (User is not null)
+        {
+            model = new UserEditModel
+            {
+                Id = User.Id,
+                FirstName = User.FirstName,
+                LastName = User.LastName,
+                Email = User.Email,
+                RoleId = User.RoleId,
+                BranchId = User.BranchId
+            };
+        }
+    }
+
+    private async Task Save()
+    {
+        if (isNew)
+        {
+            var created = await UsersApi.CreateUserAsync(new UserCreateRequest
+            {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Email = model.Email,
+                Password = model.Password!,
+                RoleId = model.RoleId,
+                BranchId = model.BranchId
+            });
+            MudDialog.Close(DialogResult.Ok(created));
+        }
+        else
+        {
+            var updated = await UsersApi.UpdateUserAsync(model.Id, new UserUpdateRequest
+            {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Email = model.Email,
+                RoleId = model.RoleId,
+                BranchId = model.BranchId,
+                NewPassword = model.NewPassword
+            });
+            MudDialog.Close(DialogResult.Ok(updated));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    class UserEditModel
+    {
+        public int Id { get; set; }
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public int RoleId { get; set; }
+        public int BranchId { get; set; }
+        public string? Password { get; set; }
+        public string? NewPassword { get; set; }
+    }
+}

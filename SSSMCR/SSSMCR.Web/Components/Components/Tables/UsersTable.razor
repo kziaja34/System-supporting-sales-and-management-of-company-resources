@@ -1,0 +1,92 @@
+﻿@using MudBlazor
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Components.Components.Dialogs
+@using SSSMCR.Web.Services
+@inject UsersApiService UserApi
+@inject RolesApiService RolesApiService
+@inject BranchesApiService BranchesApiService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5" Class="mb-4">User Management</MudText>
+
+    <MudTable Items="users" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Id</MudTh>
+            <MudTh>First Name</MudTh>
+            <MudTh>Last Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Role</MudTh>
+            <MudTh>Branch</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="FirstName">@context.FirstName</MudTd>
+            <MudTd DataLabel="LastName">@context.LastName</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="RoleId">@context.RoleName (@context.RoleId)</MudTd>
+            <MudTd DataLabel="BranchId">@context.BranchName (@context.BranchId)</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="() => OpenDialog(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => Delete(context.Id)" />
+            </MudTd>
+        </RowTemplate>
+        <ToolBarContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(()=>OpenDialog(null))">
+                Add User
+            </MudButton>
+        </ToolBarContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<UserResponse> users = new();
+    private List<RoleDto> roles = new();
+    private List<BranchDto> branches = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserApi.GetUsersAsync();
+        roles = await RolesApiService.GetRolesAsync();
+        branches = await BranchesApiService.GetBranchesAsync();
+    }
+
+    private async Task Delete(int id)
+    {
+        bool confirmed = await DialogService.ShowMessageBox(
+            "Confirm Delete",
+            "Are you sure you want to delete this user?",
+            yesText: "Delete", cancelText: "Cancel") == true;
+
+        if (confirmed)
+        {
+            await UserApi.DeleteUserAsync(id);
+            users.RemoveAll(u => u.Id == id);
+            Snackbar.Add("User deleted", Severity.Success);
+        }
+    }
+
+    private async Task OpenDialog(UserResponse? user)
+    {
+        var parameters = new DialogParameters
+        {
+            ["User"] = user,
+            ["Roles"] = roles,
+            ["Branches"] = branches
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = DialogService.Show<UserEditDialog>("User Editor", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is UserResponse updated)
+        {
+            var idx = users.FindIndex(u => u.Id == updated.Id);
+            if (idx >= 0) users[idx] = updated;
+            else users.Add(updated);
+
+            Snackbar.Add("User saved", Severity.Success);
+        }
+    }
+}

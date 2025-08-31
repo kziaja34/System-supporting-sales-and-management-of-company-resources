@@ -112,6 +112,21 @@ public sealed class UserResponse
     public string RoleName   { get; set; } = default!;
 }
 
+public class RoleDto
+{
+    [Required]
+    public int Id { get; set; }
+    [Required]
+    public string Name { get; set; }
+}
+
+public class BranchDto
+{
+    [Required]
+    public int Id { get; set; }
+    [Required]
+    public string Name { get; set; }
+}
 public enum OrderStatusDto
 {
     Pending,

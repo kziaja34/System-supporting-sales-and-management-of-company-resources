@@ -8,28 +8,19 @@ namespace SSSMCR.ApiService.Controllers;
 
 [ApiController]
 [Route("api/users")]
-public class UsersController : ControllerBase
+public class UsersController(IUserService userService, IPasswordHasher hasher, IRoleService roleService, IBranchService branchService) : ControllerBase
 {
-    private readonly IUserService _userService;
-    private readonly IPasswordHasher _hasher;
-
-    public UsersController(IUserService userService, IPasswordHasher hasher)
-    {
-        _userService = userService;
-        _hasher = hasher;
-    }
-    
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserResponse>>> GetAll(CancellationToken ct)
     {
-        var users = await _userService.GetAllAsync();
+        var users = await userService.GetAllAsync();
         return Ok(users.Select(ToResponse));
     }
     
     [HttpGet("{id:int}")]
     public async Task<ActionResult<UserResponse>> GetById(int id, CancellationToken ct)
     {
-        var user = await _userService.GetByIdAsync(id);
+        var user = await userService.GetByIdAsync(id);
         if (user is null) return NotFound();
         return Ok(ToResponse(user));
     }
@@ -39,7 +30,7 @@ public class UsersController : ControllerBase
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
         
-        var existing = await _userService.GetByEmailAsync(req.Email, ct);
+        var existing = await userService.GetByEmailAsync(req.Email, ct);
         if (existing is not null)
             return Conflict(new { message = "Email is already in use." });
 
@@ -48,12 +39,12 @@ public class UsersController : ControllerBase
             FirstName = req.FirstName.Trim(),
             LastName  = req.LastName.Trim(),
             Email     = req.Email.Trim(),
-            PasswordHash = _hasher.Hash(req.Password),
+            PasswordHash = hasher.Hash(req.Password),
             RoleId    = req.RoleId,
             BranchId  = req.BranchId
         };
 
-        entity = await _userService.CreateAsync(entity);
+        entity = await userService.CreateAsync(entity);
         var resp = ToResponse(entity);
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, resp);
     }
@@ -62,36 +53,16 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserResponse>> Update(int id, [FromBody] UserUpdateRequest req, CancellationToken ct)
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
-
-        var user = await _userService.GetByIdAsync(id);
-        if (user is null) return NotFound();
         
-        if (!string.Equals(user.Email, req.Email, StringComparison.OrdinalIgnoreCase))
-        {
-            var emailOwner = await _userService.GetByEmailAsync(req.Email, ct);
-            if (emailOwner is not null && emailOwner.Id != id)
-                return Conflict(new { message = "Email is already in use." });
-        }
-
-        user.FirstName = req.FirstName.Trim();
-        user.LastName  = req.LastName.Trim();
-        user.Email     = req.Email.Trim();
-        user.RoleId    = req.RoleId;
-        user.BranchId  = req.BranchId;
+        await userService.UpdateUserAsync(id, req, ct);
         
-        if (!string.IsNullOrWhiteSpace(req.NewPassword))
-        {
-            user.PasswordHash = _hasher.Hash(req.NewPassword);
-        }
-
-        await _userService.UpdateAsync(user);
-        return Ok(ToResponse(user));
+        return Ok(req);
     }
     
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        await _userService.DeleteAsync(id);
+        await userService.DeleteAsync(id);
         return NoContent();
     }
 
@@ -103,7 +74,7 @@ public class UsersController : ControllerBase
         Email     = u.Email,
         RoleId    = u.RoleId,
         BranchId  = u.BranchId,
-        RoleName  = u.Role.Name,
-        BranchName = u.Branch.Name
+        RoleName  = u.Role?.Name ?? string.Empty,
+        BranchName = u.Branch?.Name ?? string.Empty
     };
 }
