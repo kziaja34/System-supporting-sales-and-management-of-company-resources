@@ -46,7 +46,7 @@ public class BranchesController(IBranchService branchService) : ControllerBase
         }
     }
 
-    [HttpPut]
+    [HttpPut("{id:int}")]
     public async Task<ActionResult<BranchResponse>> Update(int id, [FromBody] BranchCreateRequest req,
         CancellationToken ct)
     {
