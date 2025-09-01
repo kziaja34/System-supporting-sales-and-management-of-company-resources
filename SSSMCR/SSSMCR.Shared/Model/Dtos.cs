@@ -119,7 +119,7 @@ public sealed class UserResponse
     public string RoleName   { get; set; } = default!;
 }
 
-public class RoleDto
+public class RoleResponse
 {
     [Required]
     public int Id { get; set; }
@@ -127,12 +127,22 @@ public class RoleDto
     public string Name { get; set; }
 }
 
-public class BranchDto
+public class BranchResponse
 {
     [Required]
     public int Id { get; set; }
     [Required]
     public string Name { get; set; }
+    [Required]
+    public string Location { get; set; }
+}
+
+public class BranchCreateRequest
+{
+    [Required, MaxLength(255)]
+    public string Name { get; set; } = default!;
+    [Required, MaxLength(500)]
+    public string Location { get; set; } = default!;
 }
 public enum OrderStatusDto
 {

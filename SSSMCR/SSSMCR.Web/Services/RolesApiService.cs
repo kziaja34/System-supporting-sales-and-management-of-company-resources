@@ -9,7 +9,7 @@ public class RolesApiService(IHttpClientFactory httpFactory, ILocalStorageServic
     private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<UserService> _logger = logger;
     
-    public async Task<List<RoleDto>> GetRolesAsync()
+    public async Task<List<RoleResponse>> GetRolesAsync()
     {
         var http = _httpFactory.CreateClient("api");
         var url = "/api/roles";
@@ -35,7 +35,7 @@ public class RolesApiService(IHttpClientFactory httpFactory, ILocalStorageServic
 
         try
         {
-            var dto = await res.Content.ReadFromJsonAsync<List<RoleDto>>(
+            var dto = await res.Content.ReadFromJsonAsync<List<RoleResponse>>(
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             return dto ?? new();
         }

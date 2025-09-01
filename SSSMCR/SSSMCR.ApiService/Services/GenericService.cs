@@ -20,6 +20,7 @@ public class GenericService<T>(AppDbContext context) : IGenericService<T>
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
         var entity = await GetByIdAsync(id, ct);
+        if (entity is null) throw new KeyNotFoundException("Entity not found");
         _dbSet.Remove(entity);
         await _context.SaveChangesAsync(ct);
     }

@@ -4,7 +4,7 @@ using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Services.Interfaces;
 using SSSMCR.Shared.Model;
 
-namespace SSSMCR.ApiService.Controllers;
+namespace SSSMCR.ApiService.Controller;
 
 [ApiController]
 [Route("api/users")]
@@ -81,8 +81,15 @@ public class UsersController(IUserService userService, IPasswordHasher hasher, I
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        await userService.DeleteAsync(id);
-        return NoContent();
+        try
+        {
+            await userService.DeleteAsync(id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
 

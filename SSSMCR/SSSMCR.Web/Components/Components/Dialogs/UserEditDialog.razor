@@ -55,8 +55,8 @@
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public UserResponse? User { get; set; }
-    [Parameter] public List<RoleDto> Roles { get; set; } = new();
-    [Parameter] public List<BranchDto> Branches { get; set; } = new();
+    [Parameter] public List<RoleResponse> Roles { get; set; } = new();
+    [Parameter] public List<BranchResponse> Branches { get; set; } = new();
     private bool valid;
     private MudForm form = default!;
     private UserEditModel model = new();

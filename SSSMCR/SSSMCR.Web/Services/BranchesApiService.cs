@@ -9,7 +9,7 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
     private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<UserService> _logger = logger;
     
-    public async Task<List<BranchDto>> GetBranchesAsync()
+    public async Task<List<BranchResponse>> GetBranchesAsync()
     {
         var http = _httpFactory.CreateClient("api");
         var url = "/api/branches";
@@ -35,7 +35,7 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
 
         try
         {
-            var dto = await res.Content.ReadFromJsonAsync<List<BranchDto>>(
+            var dto = await res.Content.ReadFromJsonAsync<List<BranchResponse>>(
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             return dto ?? new();
         }
