@@ -1,0 +1,157 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using System.Text.RegularExpressions
+@using MudBlazor
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject UsersApiService UsersApi
+@inject RolesApiService RolesApiService
+@inject BranchesApiService BranchesApiService
+@inject IAuthService AuthService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="model" @bind-IsValid="valid">
+            <MudTextField @bind-Value="model.FirstName" Label="First Name" Required="true" />
+            <MudTextField @bind-Value="model.LastName" Label="Last Name" Required="true" />
+            <MudTextField @bind-Value="model.Email" Label="Email" Required="true" 
+                          Validation="@(new Func<string, IEnumerable<string>>(AuthService.EmailValidation))"
+                          Error="@(!string.IsNullOrEmpty(emailError))"
+                          ErrorText="@emailError" />
+            @if (Roles?.Count > 0 && Branches?.Count > 0)
+            {
+                <MudSelect T="int" @bind-Value="model.RoleId" Label="Role" Required="true">
+                    @foreach (var r in Roles) { <MudSelectItem Value="@(r.Id)">@r.Name</MudSelectItem> }
+                </MudSelect>
+
+                <MudSelect T="int" @bind-Value="model.BranchId" Label="Branch" Required="true">
+                    @foreach (var b in Branches) { <MudSelectItem Value="@(b.Id)">@b.Name</MudSelectItem> }
+                </MudSelect>
+            }
+            else
+            {
+                <MudSkeleton Width="100%" Height="40px" Class="mb-2" />
+                <MudSkeleton Width="100%" Height="40px" />
+            }
+
+
+            @if (isNew)
+            {
+                <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true"
+                              Validation="@(new Func<string, IEnumerable<string>>(AuthService.PasswordStrengthRequired))"/>
+            }
+            else
+            {
+                <MudTextField @bind-Value="model.NewPassword" Label="New Password (optional)" InputType="InputType.Password"
+                              Validation="@(new Func<string, IEnumerable<string>>(AuthService.PasswordStrengthOptional))"/>
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Disabled="!valid" Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public UserResponse? User { get; set; }
+    [Parameter] public List<RoleResponse> Roles { get; set; } = new();
+    [Parameter] public List<BranchResponse> Branches { get; set; } = new();
+    private bool valid;
+    private MudForm form = default!;
+    private UserEditModel model = new();
+    private bool isNew => User == null;
+    private string? emailError;
+
+    protected override void OnInitialized()
+    {
+        if (model.RoleId == 0 && Roles.Count > 0)
+        {
+            var adminId = Roles.FirstOrDefault(r => string.Equals(r.Name, "Administrator", StringComparison.OrdinalIgnoreCase))?.Id
+                          ?? Roles[0].Id;
+            model.RoleId = adminId;
+        }
+        
+        if (model.BranchId == 0 && Branches.Count > 0)
+        {
+            model.BranchId = Branches[0].Id;
+        }
+
+        
+        if (User is not null)
+        {
+            model = new UserEditModel
+            {
+                Id = User.Id,
+                FirstName = User.FirstName,
+                LastName = User.LastName,
+                Email = User.Email,
+                RoleId = User.RoleId,
+                BranchId = User.BranchId
+            };
+        }
+    }
+
+    private async Task Save()
+    {
+        emailError = null;
+        await form.Validate();
+        if (!valid) return;
+
+        try
+        {
+            if (isNew)
+            {
+                var created = await UsersApi.CreateUserAsync(new UserCreateRequest
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    Password = model.Password!,
+                    RoleId = model.RoleId,
+                    BranchId = model.BranchId
+                });
+                MudDialog.Close(DialogResult.Ok(created));
+            }
+            else
+            {
+                var updated = await UsersApi.UpdateUserAsync(model.Id, new UserUpdateRequest
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    RoleId = model.RoleId,
+                    BranchId = model.BranchId,
+                    NewPassword = model.NewPassword
+                });
+                MudDialog.Close(DialogResult.Ok(updated));
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            if (ex.Message.Contains("exists", StringComparison.OrdinalIgnoreCase))
+            {
+                emailError = "User with this email already exists.";
+            }
+            else
+            {
+                emailError = "An unexpected error occurred.";
+            }
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+    class UserEditModel
+    {
+        public int Id { get; set; }
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public int RoleId { get; set; }
+        public int BranchId { get; set; }
+        public string? Password { get; set; }
+        public string? NewPassword { get; set; }
+    }
+}

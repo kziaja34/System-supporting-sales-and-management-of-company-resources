@@ -8,15 +8,13 @@ using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services;
 
-public class UserService : GenericService<User>, IUserService
+public class UserService(
+    AppDbContext context,
+    IPasswordHasher hasher,
+    IRoleService roleService,
+    IBranchService branchService)
+    : GenericService<User>(context), IUserService
 {
-    private readonly IPasswordHasher _hasher;
-    
-    public UserService(AppDbContext context, IPasswordHasher hasher) : base(context)
-    {
-        _hasher = hasher;
-    }
-
     public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(email)) return null;
@@ -36,44 +34,109 @@ public class UserService : GenericService<User>, IUserService
 
         if (user is null || string.IsNullOrEmpty(user.PasswordHash)) return false;
 
-        try { return _hasher.Verify(user.PasswordHash, password); }
+        try { return hasher.Verify(user.PasswordHash, password); }
         catch { return false; }
     }
 
-    public Task<IEnumerable<string>> GetRolesAsync(int userId, CancellationToken ct = default)
+    public async Task<Role> GetRoleAsync(int userId, CancellationToken ct = default)
     {
-        return _dbSet.AsNoTracking()
+        return await _dbSet.AsNoTracking()
             .Where(u => u.Id == userId)
-            .Select(u => u.Role.Name)
-            .Select(n => new[] { n } as IEnumerable<string>)
-            .FirstOrDefaultAsync(ct) ?? Task.FromResult(Enumerable.Empty<string>());
+            .Select(u => u.Role)
+            .FirstOrDefaultAsync(ct) ?? throw new KeyNotFoundException("User not found");
     }
     
-    public async Task<User?> GetByIdAsync(int userId, CancellationToken ct = default)
-        => await _dbSet.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, ct);
-    
-    public async Task UpdateProfileAsync(int userId, UserUpdateRequest req, CancellationToken ct = default)
+    public new async Task<User> GetByIdAsync(int userId, CancellationToken ct = default)
+        => await _dbSet.AsNoTracking()
+            .Include(u => u.Role)
+            .Include(u => u.Branch)
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+
+    public new async Task<IEnumerable<User>> GetAllAsync(CancellationToken ct = default)
     {
-        var user = await _dbSet.FirstOrDefaultAsync(u => u.Id == userId, ct)
-                   ?? throw new KeyNotFoundException("User not found");
+        return await _dbSet.AsNoTracking()
+            .Include(u => u.Role)
+            .Include(u => u.Branch)
+            .ToListAsync(ct);
+    }
+    
+    public new async Task<User> CreateAsync(User user, CancellationToken ct = default)
+    {
+        var email = user.Email?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email is required", nameof(user.Email));
 
-        user.FirstName = req.FirstName;
-        user.LastName  = req.LastName;
+        var exists = await _dbSet.AsNoTracking()
+            .AnyAsync(u => u.Email.ToLower() == email.ToLower(), ct);
 
-        _dbSet.Update(user);
+        if (exists)
+            throw new InvalidOperationException("User already exists");
+        
+        await _dbSet.AddAsync(user, ct);
+        await _context.SaveChangesAsync(ct);
+        
+        return await _dbSet
+            .Include(u => u.Role)
+            .Include(u => u.Branch)
+            .FirstAsync(u => u.Id == user.Id, ct);
+    }
+
+    
+    public async Task UpdateProfileAsync(int userId, User user, CancellationToken ct = default)
+    {
+        var existing = await _dbSet.FirstOrDefaultAsync(u => u.Id == userId, ct)
+                       ?? throw new KeyNotFoundException("User not found");
+
+        existing.FirstName = user.FirstName;
+        existing.LastName  = user.LastName;
+
+        _dbSet.Update(existing);
         await _context.SaveChangesAsync(ct);
     }
+    
+    public async Task UpdateUserAsync(int userId, User user, CancellationToken ct = default)
+    {
+        var existing = await _dbSet.FirstOrDefaultAsync(u => u.Id == userId, ct)
+                       ?? throw new KeyNotFoundException("User not found");
+
+        var email = user.Email?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email is required", nameof(user.Email));
+        
+        var exists = await _dbSet.AsNoTracking()
+            .AnyAsync(u => u.Email.ToLower() == email.ToLower() && u.Id != userId, ct);
+
+        if (exists)
+            throw new InvalidOperationException("User with this email already exists");
+
+        existing.FirstName = user.FirstName;
+        existing.LastName  = user.LastName;
+        existing.Email     = email;
+        existing.RoleId    = user.RoleId;
+        existing.BranchId  = user.BranchId;
+
+        if (!string.IsNullOrWhiteSpace(user.PasswordHash))
+            existing.PasswordHash = user.PasswordHash;
+
+        existing.Branch = await branchService.GetByIdAsync(user.BranchId, ct);
+        existing.Role   = await roleService.GetByIdAsync(user.RoleId, ct);
+    
+        _dbSet.Update(existing);
+        await _context.SaveChangesAsync(ct);
+    }
+
+
 
     public async Task ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken ct = default)
     {
         var user = await _dbSet.FirstOrDefaultAsync(u => u.Id == userId, ct)
                    ?? throw new KeyNotFoundException("User not found");
         
-        var verify = _hasher.Verify(user.PasswordHash, currentPassword);
+        var verify = hasher.Verify(user.PasswordHash, currentPassword);
         if (!verify)
             throw new InvalidOperationException("Current password is invalid.");
         
-        user.PasswordHash = _hasher.Hash(newPassword);
+        user.PasswordHash = hasher.Hash(newPassword);
         _dbSet.Update(user);
         await _context.SaveChangesAsync(ct);
     }

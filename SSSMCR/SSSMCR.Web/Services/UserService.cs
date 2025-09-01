@@ -5,8 +5,8 @@ using SSSMCR.Shared.Model;
 
 public interface IUserService
 {
-    Task<UserDto> GetMeAsync();
-    Task UpdateMeAsync(UserUpdateRequest req);
+    Task<UserResponse> GetMeAsync();
+    Task<bool> UpdateMeAsync(UpdateMeRequest req);
     Task ChangePasswordAsync(ChangePasswordRequest req);
 }
 
@@ -23,7 +23,7 @@ public class UserService : IUserService
         _logger = logger;
     }
 
-    public async Task<UserDto> GetMeAsync()
+    public async Task<UserResponse> GetMeAsync()
     {
         var http = _httpFactory.CreateClient("api");
         var url = "/api/me/data";
@@ -38,7 +38,7 @@ public class UserService : IUserService
         catch (Exception ex)
         {
             _logger.LogError(ex, "GetMeAsync: request exception");
-            return new UserDto();
+            return new UserResponse();
         }
 
         if (!res.IsSuccessStatusCode)
@@ -46,23 +46,23 @@ public class UserService : IUserService
             string body = string.Empty;
             try { body = await res.Content.ReadAsStringAsync(); } catch { }
             _logger.LogWarning("GetMeAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-            return new UserDto();
+            return new UserResponse();
         }
 
         try
         {
-            var dto = await res.Content.ReadFromJsonAsync<UserDto>(
+            var dto = await res.Content.ReadFromJsonAsync<UserResponse>(
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return dto ?? new UserDto();
+            return dto ?? new UserResponse();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "GetMeAsync: JSON deserialize error");
-            return new UserDto();
+            return new UserResponse();
         }
     }
 
-    public async Task UpdateMeAsync(UserUpdateRequest req)
+    public async Task<bool> UpdateMeAsync(UpdateMeRequest req)
     {
         var http = _httpFactory.CreateClient("api");
         var url = "/api/me";
@@ -72,20 +72,26 @@ public class UserService : IUserService
         HttpResponseMessage res;
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Patch, url)
-            {
-                Content = JsonContent.Create(req)
-            };
-            res = await http.SendAsync(request);
+            res = await http.PutAsJsonAsync(url, req);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "UpdateMeAsync: request exception");
-            throw;
+            return false;
         }
 
-        res.EnsureSuccessStatusCode();
+        if (!res.IsSuccessStatusCode)
+        {
+            string body = string.Empty;
+            try { body = await res.Content.ReadAsStringAsync(); } catch { }
+            _logger.LogWarning("UpdateMeAsync failed: {Status} body: {Body}",
+                res.StatusCode, Truncate(body, 1000));
+            return false;
+        }
+
+        return true;
     }
+
 
     public async Task ChangePasswordAsync(ChangePasswordRequest req)
     {

@@ -43,7 +43,15 @@
         <MudNavLink Href="stock">Stany</MudNavLink>
         <MudNavLink Href="suppliers">Dostawcy</MudNavLink>
     </MudNavGroup>
-
+    
+    <MudNavGroup Title="System management" Icon="@Icons.Material.Filled.Settings" >
+        <MudNavLink Href="/users" Icon="@Icons.Material.Filled.People">
+            Users
+        </MudNavLink>
+        <MudNavLink Href="/branches" Icon="@Icons.Material.Filled.Warehouse">
+            Branches
+        </MudNavLink>
+    </MudNavGroup>
 
 </MudNavMenu>
 
@@ -96,7 +104,7 @@
         {
             _email = await LocalStorage.GetItemAsStringAsync("user_email");
         }
-        catch (InvalidOperationException)
+        catch (Exception)
         {
         
         }

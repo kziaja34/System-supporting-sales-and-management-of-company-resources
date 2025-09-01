@@ -22,6 +22,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped(typeof(IGenericService<>), typeof(GenericService<>));
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IBranchService, BranchService>();
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
@@ -52,8 +54,6 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddControllers();
-
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();

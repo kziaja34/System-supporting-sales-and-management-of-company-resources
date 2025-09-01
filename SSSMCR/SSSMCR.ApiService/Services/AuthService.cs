@@ -16,8 +16,8 @@ public sealed class AuthService(IUserService users, IJwtTokenGenerator tokens) :
         var u = await users.GetByEmailAsync(req.Email, ct);
         if (u is null) return null;
         
-        var roles = await users.GetRolesAsync(u.Id, ct);
+        var role = await users.GetRoleAsync(u.Id, ct);
 
-        return tokens.Generate(u.Id, u.Email, $"{u.FirstName} {u.LastName}", roles);
+        return tokens.Generate(u.Id, u.Email, $"{u.FirstName} {u.LastName}", role.Name);
     }
 }

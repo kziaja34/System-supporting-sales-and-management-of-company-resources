@@ -1,0 +1,93 @@
+﻿@using MudBlazor
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject BranchesApiService BranchesApiService
+@inject IAuthService AuthService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="model" @bind-IsValid="valid">
+            <MudTextField @bind-Value="model.Name" Label="Name" Required="true" 
+                          Error="@(!string.IsNullOrEmpty(error))"
+                          ErrorText="@error" />
+            <MudTextField @bind-Value="model.Location" Label="Location" Required="true" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Disabled="!valid" Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public BranchResponse Branch { get; set; } = new();
+    private bool valid;
+    private MudForm form = default!;
+    private BranchEditModel model = new();
+    private bool isNew => Branch == null;
+    private string? error;
+    
+    protected override void OnInitialized()
+    {
+        if (Branch is not null)
+        {
+            model = new BranchEditModel()
+            {
+                Id = Branch.Id,
+                Name = Branch.Name,
+                Location = Branch.Location
+            };
+        }
+    }
+
+    private async Task Save()
+    {
+        error = null;
+        await form.Validate();
+        if (!valid) return;
+
+        try
+        {
+            if (isNew)
+            {
+                var created = await BranchesApiService.CreateBranchAsync(new BranchCreateRequest
+                {
+                    Name = model.Name,
+                    Location = model.Location
+                }); 
+                MudDialog.Close(DialogResult.Ok(created));
+            }
+            else
+            {
+                var updated = await BranchesApiService.UpdateBranchAsync(model.Id, new BranchCreateRequest
+                {
+                    Name = model.Name,
+                    Location = model.Location
+                });
+                MudDialog.Close(DialogResult.Ok(updated));
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            if (ex.Message.Contains("exists", StringComparison.OrdinalIgnoreCase))
+            {
+                error = "Branch with this name already exists.";
+            }
+            else
+            {
+                error = "An unexpected error occurred.";
+            }
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+    class BranchEditModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Location { get; set; }
+    }
+}

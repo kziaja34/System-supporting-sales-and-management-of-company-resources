@@ -3,6 +3,7 @@ using MudBlazor;
 using SSSMCR.Web;
 using SSSMCR.Web.Components;
 using MudBlazor.Services;
+using SSSMCR.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +32,12 @@ builder.Services.AddHttpClient("api", c =>
     c.Timeout = TimeSpan.FromSeconds(30);
 });
 
+builder.Services.AddScoped<GenericService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<BranchesApiService>();   
+builder.Services.AddScoped<RolesApiService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<UsersApiService>();
 builder.AddServiceDefaults();
 
 var app = builder.Build();

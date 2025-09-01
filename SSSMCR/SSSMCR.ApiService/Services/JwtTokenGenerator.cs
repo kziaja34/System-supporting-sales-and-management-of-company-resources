@@ -9,7 +9,7 @@ namespace SSSMCR.ApiService.Services;
 
 public sealed class JwtTokenGenerator(IConfiguration cfg) : IJwtTokenGenerator
 {
-    public TokenResponse Generate(int userId, string email, string name, IEnumerable<string> roles)
+    public TokenResponse Generate(int userId, string email, string name, string role)
     {
         var jwt = cfg.GetSection("Jwt");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!));
@@ -21,9 +21,9 @@ public sealed class JwtTokenGenerator(IConfiguration cfg) : IJwtTokenGenerator
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Email, email),
-            new(ClaimTypes.Name, name)
+            new(ClaimTypes.Name, name),
+            new(ClaimTypes.Role, role)
         };
-        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
         var token = new JwtSecurityToken(
             issuer: jwt["Issuer"],

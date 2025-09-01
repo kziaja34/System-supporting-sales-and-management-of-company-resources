@@ -13,30 +13,44 @@ public sealed class MeController(IUserService users) : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet("data")]
-    public async Task<ActionResult<UserDto>> GetMe(CancellationToken ct)
+    public async Task<ActionResult<UserResponse>> GetMe(CancellationToken ct)
     {
-        var u = await users.GetByIdAsync(CurrentUserId);
+        var u = await users.GetByIdAsync(CurrentUserId, ct);
         
         if (u is null) return NotFound();
 
-        var roles = await users.GetRolesAsync(u.Id, ct);
-
-        return Ok(new UserDto
+        return Ok(new UserResponse()
         {
             Id = u.Id,
             Email = u.Email,
             FirstName = u.FirstName,
             LastName = u.LastName,
-            Roles = roles
+            RoleId = u.RoleId,
+            RoleName = u.Role.Name,
+            BranchId = u.BranchId,
+            BranchName = u.Branch.Name
         });
     }
 
-    [HttpPatch]
-    public async Task<IActionResult> PatchMe([FromBody] UserUpdateRequest req, CancellationToken ct)
+    [HttpPut]
+    public async Task<IActionResult> UpdateMe([FromBody] UpdateMeRequest req, CancellationToken ct)
     {
-        await users.UpdateProfileAsync(CurrentUserId, req, ct);
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+        
+        var user = await users.GetByIdAsync(CurrentUserId, ct);
+
+        if (user is null) return NotFound();
+
+        user.FirstName = req.FirstName;
+        user.LastName  = req.LastName;
+
+        await users.UpdateProfileAsync(user.Id, user, ct);
         return NoContent();
     }
+
 
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest req, CancellationToken ct)

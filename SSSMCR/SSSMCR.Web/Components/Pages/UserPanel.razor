@@ -4,6 +4,7 @@
 @using Blazored.LocalStorage.StorageOptions
 @using SSSMCR.Shared.Model
 @using SSSMCR.Web.Components.Components
+@using SSSMCR.Web.Components.Components.Dialogs
 @inject IAuthService Auth
 @inject IUserService UserService
 @inject IDialogService Dialogs
@@ -28,7 +29,7 @@
                 <div>
                     <MudText Typo="Typo.h6">@_me.FullName (@_me.Email)</MudText>
                     <MudText Color="Color.Secondary" Typo="Typo.body2">
-                        Role: @_me.Roles.FirstOrDefault()
+                        Role: @_me.RoleName
                     </MudText>
                 </div>
                 <MudSpacer />
@@ -102,7 +103,7 @@
 </MudContainer>
 
 @code {
-    private UserDto? _me;
+    private UserResponse? _me;
     private bool _loading = true;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
