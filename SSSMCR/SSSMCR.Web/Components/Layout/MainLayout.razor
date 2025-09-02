@@ -37,22 +37,28 @@
 
     MudTheme _theme = new()
     {
-        PaletteLight = new PaletteLight
-        {
-            Primary = Colors.Indigo.Default,
-            Secondary = Colors.Pink.Default
-        },
         PaletteDark = new PaletteDark
         {
-            Black = "#27272f",
-            Background = Colors.Gray.Darken3,
-            Surface = Colors.Gray.Darken3,
-            Primary = Colors.Indigo.Default,
-            Secondary = Colors.Pink.Default,
-            AppbarBackground = Colors.Gray.Darken4,
-            TextPrimary = Colors.Shades.White
+            Black = "#1e1e2e",
+            Background = "#2C2F33",     // bluish-gray (discord style)
+            Surface = "#23272A",        // slightly darker
+            Primary = Colors.Indigo.Default,   // #3F51B5
+            Secondary = Colors.Pink.Default,   // #E91E63
+            AppbarBackground = "#1e1e2e",
+            TextPrimary = "#E0E0E0"
+        },
+        PaletteLight = new PaletteLight
+        {
+            Primary = Colors.Indigo.Default,         // #3F51B5
+            Secondary = Colors.Pink.Lighten2,        // #F48FB1 (pastel pink)
+            Background = "#FAFAFA",                  // delikatny off-white
+            Surface = "#FFFFFF",                     // klasyczna biel na kartach
+            AppbarBackground = Colors.Indigo.Darken1, // #E8EAF6
+            TextPrimary = "#212121"                  // ciemnoszary zamiast czystej czerni
         }
     };
+
+
 
 
     const string DrawerKey = "drawer_open";
