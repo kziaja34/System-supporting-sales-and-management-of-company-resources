@@ -67,9 +67,15 @@
     {
         if (!firstRender) return;
 
+        var token = await LocalStorage.GetItemAsync<string>("jwt");
+        var expires = await LocalStorage.GetItemAsync<DateTime?>("jwt_expires");
+        
         try
         {
-            _email = await LocalStorage.GetItemAsStringAsync("user_email");
+            if (!string.IsNullOrWhiteSpace(token) && expires is not null && expires > DateTime.UtcNow)
+            {
+                _email = await LocalStorage.GetItemAsStringAsync("user_email");
+            }
         }
         catch (InvalidOperationException)
         {

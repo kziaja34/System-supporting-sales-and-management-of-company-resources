@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @using Blazored.LocalStorage
 @inject ILocalStorageService LocalStorage
+@inject IAuthService AuthService
 @using MudBlazor
 
 <MudThemeProvider Theme="_theme" @bind-IsDarkMode="_dark" />
@@ -78,6 +79,8 @@
         StateHasChanged();
     }
 
+    private bool _checked = false;
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -97,6 +100,19 @@
             
         }
 
+        if (firstRender && !_checked)
+        {
+            _checked = true;
+            
+            var token = await LocalStorage.GetItemAsync<string>("jwt");
+            var expires = await LocalStorage.GetItemAsync<DateTime?>("jwt_expires");
+
+            if (string.IsNullOrWhiteSpace(token) || expires is null || expires <= DateTime.UtcNow)
+            {
+                await AuthService.LogoutAsync();
+            }
+        }
+        
         StateHasChanged();
     }
 }
