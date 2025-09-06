@@ -28,22 +28,20 @@ public class OrderItemDto
     public DateTime CreatedAt { get; set; }
 }
 
-public class ProductDto
+public class ProductResponse
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
     public decimal UnitPrice { get; set; }
-    public int CategoryId { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
-public class CategoryDto
+public class ProductCreateRequest
 {
-    public int Id { get; set; }
     public string Name { get; set; } = null!;
-    public DateTime CreatedAt { get; set; }
-    // StockAlerts pomijamy na razie
+    public string Description { get; set; } = null!;
+    public decimal UnitPrice { get; set; }
 }
 
 public sealed class LoginRequest
