@@ -5,11 +5,11 @@ using SSSMCR.ApiService.Services.Interfaces;
 
 namespace SSSMCR.ApiService.Services;
 
-public class InventoryService : GenericService<Inventory>, IInventoryService
+public class InventoryService : GenericService<ProductStock>, IInventoryService
 {
     public InventoryService(AppDbContext context) : base(context) { }
 
-    public async Task<IEnumerable<Inventory>> GetLowStockAsync() =>
+    public async Task<IEnumerable<ProductStock>> GetLowStockAsync() =>
         await _dbSet
             .Where(i => i.Quantity <= i.CriticalThreshold)
             .Include(i => i.Product)

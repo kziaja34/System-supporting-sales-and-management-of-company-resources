@@ -100,7 +100,7 @@ public class UsersController(IUserService userService, IPasswordHasher hasher, I
         LastName  = u.LastName,
         Email     = u.Email,
         RoleId    = u.RoleId,
-        BranchId  = u.BranchId,
+        BranchId  = u.BranchId ?? 0,
         RoleName  = u.Role?.Name ?? string.Empty,
         BranchName = u.Branch?.Name ?? string.Empty
     };

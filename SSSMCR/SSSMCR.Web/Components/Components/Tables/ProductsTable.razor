@@ -2,24 +2,26 @@
 @using SSSMCR.Shared.Model
 @using SSSMCR.Web.Components.Components.Dialogs
 @using SSSMCR.Web.Services
-@inject BranchesApiService BranchesApiService
+@inject ProductsApiService ProductsApiService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
 <MudPaper Class="pa-4">
-    <MudText Typo="Typo.h5" Class="mb-4">Branch Management</MudText>
+    <MudText Typo="Typo.h5" Class="mb-4">Product Management</MudText>
 
-    <MudTable Items="branches" Dense="true" Hover="true">
+    <MudTable Items="products" Dense="true" Hover="true">
         <HeaderContent>
             <MudTh>Id</MudTh>
-            <MudTh>First Name</MudTh>
-            <MudTh>Last Name</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Description</MudTh>
+            <MudTh>Unit Price</MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Id">@context.Id</MudTd>
-            <MudTd DataLabel="FirstName">@context.Name</MudTd>
-            <MudTd DataLabel="LastName">@context.Location</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Description">@context.Description</MudTd>
+            <MudTd DataLabel="Unit Price">@context.UnitPrice</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="() => OpenDialog(context)" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => Delete(context.Id)" />
@@ -27,52 +29,54 @@
         </RowTemplate>
         <ToolBarContent>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(()=>OpenDialog(null))">
-                Add Branch
+                Add Product
             </MudButton>
         </ToolBarContent>
     </MudTable>
 </MudPaper>
 
-@code {
-    private List<BranchResponse> branches = new();
+@code{
+
+    private List<ProductResponse> products = new();
 
     protected override async Task OnInitializedAsync()
     {
-        branches = await BranchesApiService.GetBranchesAsync();
+        products = await ProductsApiService.GetProductsAsync();
     }
 
     private async Task Delete(int id)
     {
         bool confirmed = await DialogService.ShowMessageBox(
             "Confirm Delete",
-            "Are you sure you want to delete this branch?",
+            "Are you sure you want to delete this product?",
             yesText: "Delete", cancelText: "Cancel") == true;
 
         if (confirmed)
         {
-            await BranchesApiService.DeleteBranchAsync(id);
-            branches.RemoveAll(u => u.Id == id);
+            await ProductsApiService.DeleteProductAsync(id);
+            products.RemoveAll(u => u.Id == id);
             Snackbar.Add("Branch deleted", Severity.Success);
         }
     }
-    
-    private async Task OpenDialog(BranchResponse? branch)
+
+    private async Task OpenDialog(ProductResponse? product)
     {
         var parameters = new DialogParameters
         {
-            ["Branch"] = branch
+            ["Product"] = product
         };
+        
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = DialogService.Show<BranchEditDialog>("Branch Editor", parameters, options);
+        var dialog = DialogService.Show<ProductEditDialog>("Product Editor", parameters, options);
         var result = await dialog.Result;
-
-        if (!result.Canceled && result.Data is BranchResponse updated)
+        
+        if (!result.Canceled && result.Data is ProductResponse updated)
         {
-            var idx = branches.FindIndex(u => u.Id == updated.Id);
-            if (idx >= 0) branches[idx] = updated;
-            else branches.Add(updated);
+            var idx = products.FindIndex(u => u.Id == updated.Id);
+            if (idx >= 0) products[idx] = updated;
+            else products.Add(updated);
 
-            Snackbar.Add("Branch saved", Severity.Success);
+            Snackbar.Add("Product saved", Severity.Success);
         }
     }
 }

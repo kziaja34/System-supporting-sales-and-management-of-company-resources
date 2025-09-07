@@ -14,6 +14,7 @@ public class Order
 
     [Required]
     [MaxLength(255)]
+    [EmailAddress]
     public string CustomerEmail { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

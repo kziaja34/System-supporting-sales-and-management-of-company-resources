@@ -12,11 +12,11 @@ public class ProductService(
     public new async Task<Product> CreateAsync(Product product, CancellationToken ct = default)
     {
         var name = product?.Name?.Trim() ?? string.Empty;
-        
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required", nameof(product.Name));
         
-        var exists = await _dbSet.AnyAsync(p => p.Name.ToLower().Equals(name.ToLower()), ct);
+        var exists = await _dbSet.AsNoTracking()
+            .AnyAsync(p => p.Name.ToLower() == name.ToLower(), ct);
         
         if (exists)
             throw new InvalidOperationException("Product with this name already exists");
@@ -31,12 +31,9 @@ public class ProductService(
     {
         var existing = await _dbSet.FirstOrDefaultAsync(p => p.Id == productId, ct)
                             ?? throw new KeyNotFoundException("Product not found");
-        
-        var name = product.Name?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name is required", nameof(product.Name));
 
-        var exists = await _dbSet.AnyAsync(p => p.Name.ToLower().Equals(name), ct);
+        var exists = await _dbSet.AsNoTracking()
+            .AnyAsync(p => p.Name.ToLower() == product.Name.ToLower() && p.Id != productId, ct);
         
         if (exists)
             throw new InvalidOperationException("Product with this name already exists");

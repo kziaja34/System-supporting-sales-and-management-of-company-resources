@@ -18,7 +18,12 @@
                           RequiredError="Email is necessary"
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AlternateEmail"
                           Variant="Variant.Outlined"
-                          Disabled="@IsBusy" />
+                          Disabled="@IsBusy" 
+                          @attributes="@(new Dictionary<string, object>
+              {
+                  ["name"] = "username",
+                  ["autocomplete"] = "username"
+              })"/>
             <ValidationMessage For="() => _model.Email" />
 
             <MudTextField @bind-Value="_model.Password"
@@ -27,7 +32,12 @@
                           RequiredError="Password is necessary"
                           InputType="@(_show ? InputType.Text : InputType.Password)"
                           Variant="Variant.Outlined"
-                          Disabled="@IsBusy">
+                          Disabled="@IsBusy"
+                          @attributes="@(new Dictionary<string, object>
+                                       {
+                                           ["name"] = "password",
+                                           ["autocomplete"] = "current-password"
+                                       })">
                 <AdornmentEndContent>
                     <MudIconButton Size="Size.Small"
                                    Icon="@(_show ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"

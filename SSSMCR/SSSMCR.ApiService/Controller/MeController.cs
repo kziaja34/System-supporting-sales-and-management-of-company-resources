@@ -27,7 +27,7 @@ public sealed class MeController(IUserService users) : ControllerBase
             LastName = u.LastName,
             RoleId = u.RoleId,
             RoleName = u.Role.Name,
-            BranchId = u.BranchId,
+            BranchId = u.BranchId ?? 0,
             BranchName = u.Branch.Name
         });
     }

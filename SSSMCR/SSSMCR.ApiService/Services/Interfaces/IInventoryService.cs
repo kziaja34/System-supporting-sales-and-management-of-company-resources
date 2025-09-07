@@ -2,7 +2,7 @@
 
 namespace SSSMCR.ApiService.Services.Interfaces;
 
-public interface IInventoryService : IGenericService<Inventory>
+public interface IInventoryService : IGenericService<ProductStock>
 {
-    Task<IEnumerable<Inventory>> GetLowStockAsync();
+    Task<IEnumerable<ProductStock>> GetLowStockAsync();
 }

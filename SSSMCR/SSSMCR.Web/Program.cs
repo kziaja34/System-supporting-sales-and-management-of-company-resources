@@ -33,6 +33,7 @@ builder.Services.AddHttpClient("api", c =>
 });
 
 builder.Services.AddScoped<GenericService>();
+builder.Services.AddScoped<ProductsApiService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<BranchesApiService>();   
 builder.Services.AddScoped<RolesApiService>();

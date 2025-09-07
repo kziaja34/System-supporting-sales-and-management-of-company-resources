@@ -118,7 +118,7 @@ public class UserService(
         if (!string.IsNullOrWhiteSpace(user.PasswordHash))
             existing.PasswordHash = user.PasswordHash;
 
-        existing.Branch = await branchService.GetByIdAsync(user.BranchId, ct);
+        existing.Branch = await branchService.GetByIdAsync(user.BranchId ?? 0, ct);
         existing.Role   = await roleService.GetByIdAsync(user.RoleId, ct);
     
         _dbSet.Update(existing);

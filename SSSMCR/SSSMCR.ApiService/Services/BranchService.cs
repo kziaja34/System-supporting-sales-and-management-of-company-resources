@@ -20,10 +20,10 @@ public class BranchService(AppDbContext context) : GenericService<Branch>(contex
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required", nameof(branch.Name));
         
-        var exist = await _dbSet.AsNoTracking()
+        var exists = await _dbSet.AsNoTracking()
             .AnyAsync(b => b.Name.ToLower() == name.ToLower(), ct);
         
-        if (exist)
+        if (exists)
             throw new InvalidOperationException("Branch with this name already exists");
         
         await _dbSet.AddAsync(branch, ct);
@@ -32,17 +32,16 @@ public class BranchService(AppDbContext context) : GenericService<Branch>(contex
         return await _dbSet
             .FirstAsync(b => b.Id == branch.Id, ct);
     }
-
-    [HttpPut]
+    
     public async Task UpdateBranchAsync(int branchId, Branch branch, CancellationToken ct = default)
     {
         var existing = await _dbSet.FirstOrDefaultAsync(b => b.Id == branchId, ct)
                        ?? throw new KeyNotFoundException("Branch not found");
         
-        var exist = await _dbSet.AsNoTracking()
+        var exists = await _dbSet.AsNoTracking()
             .AnyAsync(b => b.Name.ToLower() == branch.Name.ToLower() && b.Id != branchId, ct);
         
-        if (exist)
+        if (exists)
             throw new InvalidOperationException("Branch with this name already exists");
         
         existing.Name = branch.Name;
