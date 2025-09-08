@@ -2,40 +2,6 @@
 @inject IUserService Users
 @inject ISnackbar Snackbar
 
-@code {
-    [CascadingParameter] 
-    public IMudDialogInstance MudDialog { get; set; } = default!;
-    [Parameter] public UserResponse? User { get; set; }
-    [Parameter] public bool Editable { get; set; }
-
-    private UpdateMeRequest _edit = new();
-    private bool _busy;
-
-    protected override void OnParametersSet()
-    {
-        if (User is null) return;
-        _edit = new UpdateMeRequest()
-        {
-            FirstName = User.FirstName,
-            LastName  = User.LastName
-        };
-    }
-
-    private async Task Save()
-    {
-        try
-        {
-            _busy = true;
-            await Users.UpdateMeAsync(_edit);
-            MudDialog.Close(DialogResult.Ok(true));
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
-        }
-        finally { _busy = false; }
-    }
-}
 <MudDialogContent Class="pa-4">
     @if (User is null)
     {
@@ -78,3 +44,39 @@
     }
     <MudButton Variant="Variant.Outlined" OnClick="MudDialog.Cancel">Close</MudButton>
 </MudDialogActions>
+
+
+@code {
+    [CascadingParameter] 
+    public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public UserResponse? User { get; set; }
+    [Parameter] public bool Editable { get; set; }
+
+    private UpdateMeRequest _edit = new();
+    private bool _busy;
+
+    protected override void OnParametersSet()
+    {
+        if (User is null) return;
+        _edit = new UpdateMeRequest()
+        {
+            FirstName = User.FirstName,
+            LastName  = User.LastName
+        };
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            _busy = true;
+            await Users.UpdateMeAsync(_edit);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+}
