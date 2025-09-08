@@ -55,7 +55,14 @@ public sealed class MeController(IUserService users) : ControllerBase
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest req, CancellationToken ct)
     {
-        await users.ChangePasswordAsync(CurrentUserId, req.CurrentPassword, req.NewPassword, ct);
-        return NoContent();
+        try
+        {
+            await users.ChangePasswordAsync(CurrentUserId, req.CurrentPassword, req.NewPassword, ct);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }
