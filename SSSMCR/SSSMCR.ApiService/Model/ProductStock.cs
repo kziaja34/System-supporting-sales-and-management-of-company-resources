@@ -1,9 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace SSSMCR.ApiService.Model;
 
-public class Inventory
+[Index(nameof(ProductId), nameof(BranchId), IsUnique = true)]
+public class ProductStock
 {
     [Key]
     public int Id { get; set; }
@@ -18,7 +20,7 @@ public class Inventory
 
     public int CriticalThreshold { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
     
     public Product Product { get; set; }
     public Branch Branch { get; set; }

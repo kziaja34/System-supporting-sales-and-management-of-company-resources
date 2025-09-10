@@ -27,7 +27,20 @@
             <MudTd DataLabel="LastName">@context.LastName</MudTd>
             <MudTd DataLabel="Email">@context.Email</MudTd>
             <MudTd DataLabel="RoleId">@context.RoleName (@context.RoleId)</MudTd>
-            <MudTd DataLabel="BranchId">@context.BranchName (@context.BranchId)</MudTd>
+            <MudTd>
+                @if (context.BranchId == 0)
+                {
+                    <MudTooltip Text="No branch assigned" />
+                        <MudIcon Icon="@Icons.Material.Filled.ReportProblem" Color="Color.Warning" />
+                    
+                }
+                else
+                {
+                    @($"{context.BranchName} ({context.BranchId})")
+
+                }
+            </MudTd>
+
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="() => OpenDialog(context)" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => Delete(context.Id)" />

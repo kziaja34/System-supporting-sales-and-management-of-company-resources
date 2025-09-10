@@ -64,11 +64,11 @@ public static class DbSeeder
         var product3 = new Product { Name = "Mysz Z", Description = "Mysz bezprzewodowa", UnitPrice = 120m };
         context.Products.AddRange(product1, product2, product3);
 
-        // Inventory
-        context.Inventory.AddRange(
-            new Inventory { Product = product1, Branch = branch1, Quantity = 10, CriticalThreshold = 3 },
-            new Inventory { Product = product2, Branch = branch1, Quantity = 5, CriticalThreshold = 2 },
-            new Inventory { Product = product3, Branch = branch2, Quantity = 20, CriticalThreshold = 5 }
+        // ProductStock
+        context.ProductStock.AddRange(
+            new ProductStock { Product = product1, Branch = branch1, Quantity = 10, CriticalThreshold = 3 },
+            new ProductStock { Product = product2, Branch = branch1, Quantity = 5, CriticalThreshold = 2 },
+            new ProductStock { Product = product3, Branch = branch2, Quantity = 20, CriticalThreshold = 5 }
         );
 
         // Supplier

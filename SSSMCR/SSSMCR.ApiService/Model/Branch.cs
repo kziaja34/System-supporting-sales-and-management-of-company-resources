@@ -15,7 +15,7 @@ public class Branch
     [MaxLength(500)]
     public string Location { get; set; }
     
-    public ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
+    public ICollection<ProductStock> Inventories { get; set; } = new List<ProductStock>();
     public ICollection<SupplyOrder> SupplyOrders { get; set; } = new List<SupplyOrder>();
     public ICollection<User> Users { get; set; } = new List<User>();
 }

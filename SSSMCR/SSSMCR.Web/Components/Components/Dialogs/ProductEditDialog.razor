@@ -1,0 +1,96 @@
+﻿@using MudBlazor
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject ProductsApiService ProductsApiService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="model" @bind-IsValid="valid">
+            <MudTextField @bind-Value="model.Name" Label="Name" Required="true" 
+                          Error="@(!string.IsNullOrEmpty(error))"
+                          ErrorText="@error" />
+            <MudTextField @bind-Value="model.Description" Label="Description" Required="true" />
+            <MudTextField @bind-Value="model.UnitPrice" Label="Unit Price" Required="true" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Disabled="!valid" Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ProductResponse Product { get; set; } = new();
+    private bool valid;
+    private MudForm form = default!;
+    private ProductEditModel model = new();
+    private bool isNew => Product == null;
+    private string? error;
+    
+    protected override void OnInitialized()
+    {
+        if (Product is not null)
+        {
+            model = new ProductEditModel()
+            {
+                Id = Product.Id,
+                Name = Product.Name,
+                Description = Product.Description,
+                UnitPrice = Product.UnitPrice
+            };
+        }
+    }
+    
+    private async Task Save()
+    {
+        error = null;
+        await form.Validate();
+        if (!valid) return;
+
+        try
+        {
+            if (isNew)
+            {
+                var created = await ProductsApiService.CreateProductAsync(new ProductCreateRequest
+                {
+                    Name = model.Name,
+                    Description = model.Description,
+                    UnitPrice = model.UnitPrice
+                }); 
+                MudDialog.Close(DialogResult.Ok(created));
+            }
+            else
+            {
+                var updated = await ProductsApiService.UpdateProductAsync(model.Id, new ProductCreateRequest
+                {
+                    Name = model.Name,
+                    Description = model.Description,
+                    UnitPrice = model.UnitPrice
+                });
+                MudDialog.Close(DialogResult.Ok(updated));
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            if (ex.Message.Contains("exists", StringComparison.OrdinalIgnoreCase))
+            {
+                error = "Product with this name already exists.";
+            }
+            else
+            {
+                error = "An unexpected error occurred.";
+            }
+        }
+    }
+    
+    private void Cancel() => MudDialog.Cancel();
+    
+    class ProductEditModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+}

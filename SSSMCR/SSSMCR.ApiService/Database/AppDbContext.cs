@@ -11,7 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<Product> Products => Set<Product>();
-    public DbSet<Inventory> Inventory => Set<Inventory>();
+    public DbSet<ProductStock> ProductStock => Set<ProductStock>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<SupplyOrder> SupplyOrders => Set<SupplyOrder>();
     public DbSet<SupplyItem> SupplyItems => Set<SupplyItem>();
@@ -28,10 +28,10 @@ public class AppDbContext : DbContext
             .HasOne(u => u.Branch)
             .WithMany(b => b.Users)
             .HasForeignKey(u => u.BranchId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.SetNull);
 
-        // Branch → Inventory
-        modelBuilder.Entity<Inventory>()
+        // Branch → ProductStock
+        modelBuilder.Entity<ProductStock>()
             .HasOne(i => i.Branch)
             .WithMany(b => b.Inventories)
             .HasForeignKey(i => i.BranchId)

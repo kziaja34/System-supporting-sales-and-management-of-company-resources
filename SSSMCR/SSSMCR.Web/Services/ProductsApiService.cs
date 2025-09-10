@@ -3,16 +3,16 @@ using SSSMCR.Shared.Model;
 
 namespace SSSMCR.Web.Services;
 
-public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UserService> logger) : GenericService(storage)
+public class ProductsApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UserService> logger) : GenericService(storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
     private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<UserService> _logger = logger;
     
-    public async Task<List<BranchResponse>> GetBranchesAsync()
+    public async Task<List<ProductResponse>> GetProductsAsync()
     {
         var http = _httpFactory.CreateClient("api");
-        var url = "/api/branches";
+        var url = "/api/products";
 
         HttpResponseMessage res;
         try
@@ -21,7 +21,7 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GetBranchesAsync: request exception");
+            _logger.LogError(ex, "GetProductsAsync: request exception");
             return new();
         }
 
@@ -29,27 +29,27 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
         {
             string body = string.Empty;
             try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("GetBranchesAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            _logger.LogWarning("GetProductsAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
             return new();
         }
 
         try
         {
-            var dto = await res.Content.ReadFromJsonAsync<List<BranchResponse>>(
+            var dto = await res.Content.ReadFromJsonAsync<List<ProductResponse>>(
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             return dto ?? new();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GetBranchesAsync: JSON deserialize error");
+            _logger.LogError(ex, "GetProductsAsync: JSON deserialize error");
             return new();
         }
     }
     
-    public async Task<BranchResponse?> CreateBranchAsync(BranchCreateRequest req)
+    public async Task<ProductResponse?> CreateProductAsync(ProductCreateRequest req)
     {
         var http = _httpFactory.CreateClient("api");
-        var url = "/api/branches";
+        var url = "/api/products";
         
         await AttachBearerAsync(http);
         
@@ -60,7 +60,7 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "CreateBranchAsync: request exception");
+            _logger.LogError(ex, "CreateProductAsync: request exception");
             throw;
         }
         
@@ -68,18 +68,18 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
         {
             string body = string.Empty;
             try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("CreateBranchAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            _logger.LogWarning("CreateProductAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
             throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
         }
 
-        return await res.Content.ReadFromJsonAsync<BranchResponse>(
+        return await res.Content.ReadFromJsonAsync<ProductResponse>(
             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     }
-
-    public async Task<BranchResponse?> UpdateBranchAsync(int id, BranchCreateRequest req)
+    
+    public async Task<ProductResponse?> UpdateProductAsync(int id, ProductCreateRequest req)
     {
         var http = _httpFactory.CreateClient("api");
-        var url = $"/api/branches/{id}";
+        var url = $"/api/products/{id}";
         
         await AttachBearerAsync(http);
         
@@ -90,7 +90,7 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "UpdateBranchAsync: request exception");
+            _logger.LogError(ex, "UpdateProductAsync: request exception");
             throw;
         }
         
@@ -98,25 +98,25 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
         {
             string body = string.Empty;
             try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("UpdateBranchAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            _logger.LogWarning("UpdateProductAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
             throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
         }
         
-        return await res.Content.ReadFromJsonAsync<BranchResponse>(
+        return await res.Content.ReadFromJsonAsync<ProductResponse>(
             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     }
     
-    public async Task DeleteBranchAsync(int id)
+    public async Task DeleteProductAsync(int id)
     {
         var http = _httpFactory.CreateClient("api");
-        var url = $"/api/branches/{id}";
+        var url = $"/api/products/{id}";
         
         await AttachBearerAsync(http);
 
         var res = await http.DeleteAsync(url);
         res.EnsureSuccessStatusCode();
     }
-
+    
     private static string Truncate(string? s, int max)
         => string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s.Substring(0, max));
 }
