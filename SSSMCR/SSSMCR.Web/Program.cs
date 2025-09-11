@@ -32,7 +32,7 @@ builder.Services.AddHttpClient("api", c =>
     c.Timeout = TimeSpan.FromSeconds(30);
 });
 
-builder.Services.AddScoped<GenericService>();
+builder.Services.AddScoped(typeof(GenericService<>));
 builder.Services.AddScoped<ProductsApiService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<BranchesApiService>();   

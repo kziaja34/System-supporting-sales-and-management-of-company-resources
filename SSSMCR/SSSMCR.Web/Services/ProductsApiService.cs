@@ -3,17 +3,19 @@ using SSSMCR.Shared.Model;
 
 namespace SSSMCR.Web.Services;
 
-public class ProductsApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UserService> logger) : GenericService(storage)
+public class ProductsApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<ProductsApiService> logger) : GenericService<ProductsApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
     private readonly ILocalStorageService _storage = storage;
-    private readonly ILogger<UserService> _logger = logger;
+    private readonly ILogger<ProductsApiService> _logger = logger;
     
     public async Task<List<ProductResponse>> GetProductsAsync()
     {
         var http = _httpFactory.CreateClient("api");
         var url = "/api/products";
 
+        await AttachBearerAsync(http);
+        
         HttpResponseMessage res;
         try
         {

@@ -3,17 +3,19 @@ using SSSMCR.Shared.Model;
 
 namespace SSSMCR.Web.Services;
 
-public class UsersApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UserService> logger) : GenericService(storage)
+public class UsersApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UsersApiService> logger) : GenericService<UsersApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
     private readonly ILocalStorageService _storage = storage;
-    private readonly ILogger<UserService> _logger = logger;
+    private readonly ILogger<UsersApiService> _logger = logger;
 
     public async Task<List<UserResponse>> GetUsersAsync()
     {
         var http = _httpFactory.CreateClient("api");
         var url = "/api/users";
 
+        await AttachBearerAsync(http);
+        
         try
         {
             var res = await http.GetAsync(url);
@@ -102,6 +104,8 @@ public class UsersApiService(IHttpClientFactory httpFactory, ILocalStorageServic
     {
         var http = _httpFactory.CreateClient("api");
         var url = $"/api/users/{id}";
+        
+        await AttachBearerAsync(http);
 
         var res = await http.DeleteAsync(url);
         res.EnsureSuccessStatusCode();
