@@ -44,17 +44,27 @@
         <MudNavLink Href="suppliers">Dostawcy</MudNavLink>
     </MudNavGroup>
     
-    <MudNavGroup Title="System management" Icon="@Icons.Material.Filled.Settings" >
-        <MudNavLink Href="/users" Icon="@Icons.Material.Filled.Badge">
-            Users
-        </MudNavLink>
-        <MudNavLink Href="/branches" Icon="@Icons.Material.Filled.Warehouse">
-            Branches
-        </MudNavLink>
-        <MudNavLink Href="/products" Icon="@Icons.Material.Filled.Inventory2">
-            Products
-        </MudNavLink>
-    </MudNavGroup>
+    
+        @if (user_role == "Administrator")
+        {
+            <MudNavGroup Title="System management" Icon="@Icons.Material.Filled.Settings" >
+                <MudNavLink Href="/users" Icon="@Icons.Material.Filled.Badge">
+                    Users
+                </MudNavLink>
+                <MudNavLink Href="/branches" Icon="@Icons.Material.Filled.Warehouse">
+                    Branches
+                </MudNavLink>
+                <MudNavLink Href="/products" Icon="@Icons.Material.Filled.Inventory2">
+                    Products
+                </MudNavLink>
+            </MudNavGroup>
+        }
+        else if (user_role == "Inna")
+        {
+            
+        }
+        
+    
 
 </MudNavMenu>
 
@@ -64,6 +74,7 @@
     [Inject] IAuthService Auth { get; set; } = default!;
     [Inject] NavigationManager Nav { get; set; } = default!;
     private string? _email;
+    private string? user_role;
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -78,6 +89,7 @@
             if (!string.IsNullOrWhiteSpace(token) && expires is not null && expires > DateTime.UtcNow)
             {
                 _email = await LocalStorage.GetItemAsStringAsync("user_email");
+                user_role = await LocalStorage.GetItemAsync<string>("user_role");
             }
         }
         catch (InvalidOperationException)

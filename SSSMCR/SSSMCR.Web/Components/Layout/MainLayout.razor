@@ -1,8 +1,11 @@
 ﻿@inherits LayoutComponentBase
 @using Blazored.LocalStorage
+@inject IUserService UserService
+@inject ISnackbar Snackbar
 @inject ILocalStorageService LocalStorage
 @inject IAuthService AuthService
 @using MudBlazor
+@using SSSMCR.Web.Components.Components
 
 <MudThemeProvider Theme="_theme" @bind-IsDarkMode="_dark" />
 <MudDialogProvider />
@@ -117,6 +120,17 @@
             {
                 await AuthService.LogoutAsync();
             }
+        }
+        
+        try
+        {
+            var user = await UserService.GetMeAsync();
+            await LocalStorage.SetItemAsync<string>("user_role", user.RoleName);
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load profile: {ex.Message}", Severity.Error);
         }
         
         StateHasChanged();

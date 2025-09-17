@@ -1,6 +1,7 @@
 ﻿@page "/users"
 @using SSSMCR.Web.Components.Components.Tables
 @inherits LayoutComponentBase
+@inject NavigationManager Nav
 
 <PageTitle>Users</PageTitle>
 
@@ -9,3 +10,30 @@
 
     <UsersTable />
 </MudContainer>
+
+@code{
+    [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
+    private string? user_role;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        
+        
+        try
+        {
+            user_role = await LocalStorage.GetItemAsync<string>("user_role");
+            if (user_role != "Administrator")
+            {
+                Nav.NavigateTo("/");
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            
+        }
+        
+        StateHasChanged();
+    }
+
+}
