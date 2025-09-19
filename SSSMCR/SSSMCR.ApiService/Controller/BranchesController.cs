@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
@@ -10,6 +11,7 @@ namespace SSSMCR.ApiService.Controller;
 
 [ApiController]
 [Route("api/branches")]
+[Authorize(Roles = "Administrator")]
 public class BranchesController(IBranchService branchService) : ControllerBase
 {
     [HttpGet]

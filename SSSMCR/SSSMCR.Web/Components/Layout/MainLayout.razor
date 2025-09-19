@@ -1,8 +1,11 @@
 ﻿@inherits LayoutComponentBase
 @using Blazored.LocalStorage
+@inject IUserService UserService
+@inject ISnackbar Snackbar
 @inject ILocalStorageService LocalStorage
 @inject IAuthService AuthService
 @using MudBlazor
+@using SSSMCR.Web.Components.Components
 
 <MudThemeProvider Theme="_theme" @bind-IsDarkMode="_dark" />
 <MudDialogProvider />
@@ -109,7 +112,7 @@
         if (firstRender && !_checked)
         {
             _checked = true;
-            
+
             var token = await LocalStorage.GetItemAsync<string>("jwt");
             var expires = await LocalStorage.GetItemAsync<DateTime?>("jwt_expires");
 
@@ -118,7 +121,7 @@
                 await AuthService.LogoutAsync();
             }
         }
-        
+
         StateHasChanged();
     }
 }

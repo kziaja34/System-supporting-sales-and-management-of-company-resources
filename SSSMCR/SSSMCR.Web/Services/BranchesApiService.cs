@@ -3,17 +3,19 @@ using SSSMCR.Shared.Model;
 
 namespace SSSMCR.Web.Services;
 
-public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UserService> logger) : GenericService(storage)
+public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<BranchesApiService> logger) : GenericService<BranchesApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
     private readonly ILocalStorageService _storage = storage;
-    private readonly ILogger<UserService> _logger = logger;
+    private readonly ILogger<BranchesApiService> _logger = logger;
     
     public async Task<List<BranchResponse>> GetBranchesAsync()
     {
         var http = _httpFactory.CreateClient("api");
         var url = "/api/branches";
 
+        await AttachBearerAsync(http);
+        
         HttpResponseMessage res;
         try
         {

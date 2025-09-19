@@ -5,6 +5,7 @@
 @inject IAuthService Auth
 @inject ISnackbar Snackbar
 @inject NavigationManager Nav
+@inject IUserService UserService
 @using Blazored.LocalStorage
 @using SSSMCR.Web.Components.Components.Auth
 @inject ILocalStorageService LocalStorage
@@ -33,6 +34,8 @@
         {
             
         }
+        
+        
     }
 
     private async Task HandleLogin(LoginRequest model)
@@ -53,6 +56,17 @@
 
             if (!string.IsNullOrWhiteSpace(model.Email))
                 await LocalStorage.SetItemAsStringAsync("user_email", model.Email.Trim());
+            
+            try
+            {
+                var user = await UserService.GetMeAsync();
+                await LocalStorage.SetItemAsync<string>("user_role", user.RoleName);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to load profile: {ex.Message}", Severity.Error);
+            }
 
             Snackbar.Add("Logged in successfully", Severity.Success);
             await Task.Delay(100);
@@ -69,5 +83,7 @@
             _busy = false;
             await InvokeAsync(StateHasChanged);
         }
+        
+        
     }
 }

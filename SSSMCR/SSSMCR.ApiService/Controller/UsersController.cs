@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Services.Interfaces;
@@ -8,6 +9,7 @@ namespace SSSMCR.ApiService.Controller;
 
 [ApiController]
 [Route("api/users")]
+[Authorize(Roles = "Administrator")]
 public class UsersController(IUserService userService, IPasswordHasher hasher, IRoleService roleService, IBranchService branchService) : ControllerBase
 {
     [HttpGet]
