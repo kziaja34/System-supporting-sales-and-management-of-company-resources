@@ -103,14 +103,15 @@
     {
         await Auth.LogoutAsync();
         _email = null;
-        StateHasChanged();
+        user_role = null;
         Nav.NavigateTo("login", replace: true);
+        StateHasChanged();
     }
 
     private async Task RedirectToLogin()
     {
         StateHasChanged();
-         Nav.NavigateTo("/login");
+        Nav.NavigateTo("/login");
     }
     
     protected override void OnInitialized()
@@ -124,6 +125,7 @@
         try
         {
             _email = await LocalStorage.GetItemAsStringAsync("user_email");
+            user_role = await LocalStorage.GetItemAsync<string>("user_role");
         }
         catch (Exception)
         {

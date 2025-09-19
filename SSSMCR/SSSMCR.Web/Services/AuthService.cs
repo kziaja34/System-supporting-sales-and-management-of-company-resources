@@ -88,6 +88,7 @@ public sealed class AuthService(
         await storage.RemoveItemAsync("jwt_expires");
         await storage.RemoveItemAsync("refresh");
         await storage.RemoveItemAsync("user_email");
+        await storage.RemoveItemAsync("user_role");
     }
     
     public IEnumerable<string> PasswordStrengthRequired(string pw)
