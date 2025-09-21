@@ -8,7 +8,7 @@ public interface IOrderService : IGenericService<Order>
 {
     Task<IEnumerable<Order>> GetAllAsync(string? status = null, string? email = null, CancellationToken ct = default);
 
-    Task<PageResponse<OrderListItemDto>> GetPagedAsync(int page, int size, string sort, CancellationToken ct = default);
+    Task<PageResponse<OrderListItemDto>> GetPagedAsync(int page, int size, string sort, string? search = null, CancellationToken ct = default);
     
     Task<bool> UpdateStatusAsync(int id, string newStatus);
 }

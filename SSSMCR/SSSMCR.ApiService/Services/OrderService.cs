@@ -46,7 +46,7 @@ public class OrderService : GenericService<Order>, IOrderService
         return order;
     }
     
-    public async Task<PageResponse<OrderListItemDto>> GetPagedAsync(int page, int size, string sort, CancellationToken ct = default)
+    public async Task<PageResponse<OrderListItemDto>> GetPagedAsync(int page, int size, string sort, string? search = null, CancellationToken ct = default)
     {
         var query = _dbSet
             .Include(o => o.Items)
@@ -56,6 +56,13 @@ public class OrderService : GenericService<Order>, IOrderService
         foreach (var order in query)
         {
             order.Priority = CalculatePriority(order);
+        }
+        
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(o =>
+                o.CustomerName.Contains(search) ||
+                o.CustomerEmail.Contains(search));
         }
         
         query = sort switch

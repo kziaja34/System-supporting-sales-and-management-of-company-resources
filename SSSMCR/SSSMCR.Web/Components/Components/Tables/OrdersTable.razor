@@ -3,13 +3,23 @@
 @using SSSMCR.Web.Services
 @inject OrdersApiService OrdersService
 
+<MudTextField @bind-Value="_search"
+              Placeholder="Search by name or email"
+              Adornment="Adornment.Start"
+              AdornmentIcon="@Icons.Material.Filled.Search"
+              Immediate="true"
+              DebounceInterval="300"
+              OnDebounceIntervalElapsed="OnSearchChanged"
+              Class="mb-3" />
+
 <MudTable ServerData="LoadOrders"
           RowsPerPage="10"
           RowsPerPageOptions="new int[]{10,25,50}"
           Bordered="true"
           Hover="true"
           Striped="true"
-          Breakpoint="Breakpoint.Sm">
+          Breakpoint="Breakpoint.Sm"
+          @ref="_table">
 
     <HeaderContent>
         <MudTh>
@@ -89,6 +99,10 @@
                            AriaLabel="View details" />
         </MudTd>
     </RowTemplate>
+    
+    <NoRecordsContent>
+        <MudText Typo="Typo.body1" Class="pa-4">No records</MudText>
+    </NoRecordsContent>
 
     <PagerContent>
         <MudTablePager />
@@ -96,6 +110,9 @@
 </MudTable>
 
 @code {
+    private string? _search;
+    private MudTable<OrderListItemDto>? _table;
+
     private async Task<TableData<OrderListItemDto>> LoadOrders(TableState state, CancellationToken ct)
     {
         var label = string.IsNullOrWhiteSpace(state.SortLabel) ? "priority" : state.SortLabel;
@@ -103,18 +120,26 @@
         {
             SortDirection.Ascending => "asc",
             SortDirection.Descending => "desc",
-            SortDirection.None => label == "priority" ? "desc" : "asc",
             _ => "desc"
         };
 
         var sort = $"{label},{dir}";
-        var result = await OrdersService.GetOrdersPageAsync(state.Page, state.PageSize, sort);
+        var result = await OrdersService.GetOrdersPageAsync(state.Page, state.PageSize, sort, _search);
 
         return new TableData<OrderListItemDto>
         {
             Items = result.Items,
             TotalItems = result.TotalElements
         };
+    }
+
+    private async Task OnSearchChanged(string text)
+    {
+        _search = text;
+        if (_table is not null)
+            await _table.ReloadServerData();
+        else
+            await InvokeAsync(StateHasChanged);
     }
     
     private static Color GetStatusColor(string status) => status switch

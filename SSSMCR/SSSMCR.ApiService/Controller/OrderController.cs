@@ -29,9 +29,10 @@ public class OrderController : ControllerBase
     public async Task<ActionResult<PageResponse<OrderListItemDto>>> GetOrders(
         [FromQuery] int page = 0,
         [FromQuery] int size = 20,
-        [FromQuery] string sort = "priority,desc")
+        [FromQuery] string sort = "priority,desc",
+        [FromQuery] string? search = null)
     {
-        var result = await _orderService.GetPagedAsync(page, size, sort);
+        var result = await _orderService.GetPagedAsync(page, size, sort, search);
         return Ok(result);
     }
 
