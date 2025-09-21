@@ -54,9 +54,16 @@
 
         if (confirmed)
         {
-            await ProductsApiService.DeleteProductAsync(id);
-            products.RemoveAll(u => u.Id == id);
-            Snackbar.Add("Branch deleted", Severity.Success);
+            try
+            {
+                await ProductsApiService.DeleteProductAsync(id);
+                products.RemoveAll(u => u.Id == id);
+                Snackbar.Add("Product deleted", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("Cannot delete product as some Orders contain it.", Severity.Error);
+            }
         }
     }
 

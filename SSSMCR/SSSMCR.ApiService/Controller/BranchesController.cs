@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Services;
 using SSSMCR.Shared.Model;
@@ -79,6 +80,10 @@ public class BranchesController(IBranchService branchService) : ControllerBase
             return NoContent();
         }
         catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (DbUpdateException ex)
         {
             return NotFound(new { error = ex.Message });
         }

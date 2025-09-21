@@ -115,9 +115,37 @@ public class ProductsApiService(IHttpClientFactory httpFactory, ILocalStorageSer
         
         await AttachBearerAsync(http);
 
-        var res = await http.DeleteAsync(url);
-        res.EnsureSuccessStatusCode();
+        HttpResponseMessage res;
+        try
+        {
+            res = await http.DeleteAsync(url);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeleteProductAsync: request exception");
+            throw;
+        }
+
+        if (!res.IsSuccessStatusCode)
+        {
+            string body = string.Empty;
+            try { body = await res.Content.ReadAsStringAsync(); } catch { }
+
+            if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                var message = string.IsNullOrWhiteSpace(body)
+                    ? "Cannot delete product, it is used in other records."
+                    : body;
+
+                _logger.LogWarning("DeleteProductAsync conflict: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+                throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {message}");
+            }
+
+            _logger.LogWarning("DeleteProductAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
+        }
     }
+
     
     private static string Truncate(string? s, int max)
         => string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s.Substring(0, max));

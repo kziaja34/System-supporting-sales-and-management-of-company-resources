@@ -50,9 +50,16 @@
 
         if (confirmed)
         {
-            await BranchesApiService.DeleteBranchAsync(id);
-            branches.RemoveAll(u => u.Id == id);
-            Snackbar.Add("Branch deleted", Severity.Success);
+            try
+            {
+                await BranchesApiService.DeleteBranchAsync(id);
+                branches.RemoveAll(u => u.Id == id);
+                Snackbar.Add("Branch deleted", Severity.Success);
+            }
+            catch(Exception ex)
+            {
+                Snackbar.Add("Cannot delete branch, as some users are assigned to it.", Severity.Error);
+            }
         }
     }
     
