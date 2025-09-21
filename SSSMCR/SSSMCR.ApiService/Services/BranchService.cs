@@ -2,10 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
-using SSSMCR.ApiService.Services.Interfaces;
 
 namespace SSSMCR.ApiService.Services;
 
+public interface IBranchService : IGenericService<Branch>
+{
+    Task UpdateBranchAsync(int branchId, Branch branch, CancellationToken ct = default);
+}
 public class BranchService(AppDbContext context) : GenericService<Branch>(context), IBranchService
 {
     public new async Task<Branch> GetByIdAsync(int id, CancellationToken ct = default)

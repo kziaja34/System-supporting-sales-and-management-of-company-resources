@@ -1,10 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
-using SSSMCR.ApiService.Services.Interfaces;
 
 namespace SSSMCR.ApiService.Services;
 
+public interface IInvoiceService : IGenericService<Invoice>
+{
+    Task<IEnumerable<Invoice>> GetByOrderAsync(int orderId);
+}
 public class InvoiceService : GenericService<Invoice>, IInvoiceService
 {
     public InvoiceService(AppDbContext context) : base(context) { }

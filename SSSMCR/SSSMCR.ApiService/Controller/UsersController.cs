@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SSSMCR.ApiService.Model;
-using SSSMCR.ApiService.Services.Interfaces;
+using SSSMCR.ApiService.Services;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Controller;

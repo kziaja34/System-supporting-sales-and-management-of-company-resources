@@ -1,7 +1,5 @@
-﻿using Azure.Core;
-using Microsoft.EntityFrameworkCore;
-using SSSMCR.ApiService.Model;
-using SSSMCR.ApiService.Services.Interfaces;
+﻿using SSSMCR.ApiService.Model;
+using SSSMCR.ApiService.Services;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Database;

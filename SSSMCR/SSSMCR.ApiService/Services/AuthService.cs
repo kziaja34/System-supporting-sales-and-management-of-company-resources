@@ -1,8 +1,11 @@
-﻿using SSSMCR.ApiService.Services.Interfaces;
-using SSSMCR.Shared.Model;
+﻿using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services;
 
+public interface IAuthService
+{
+    Task<TokenResponse?> LoginAsync(LoginRequest req, CancellationToken ct = default);
+}
 public sealed class AuthService(IUserService users, IJwtTokenGenerator tokens) : IAuthService
 {
     public async Task<TokenResponse?> LoginAsync(LoginRequest req, CancellationToken ct = default)

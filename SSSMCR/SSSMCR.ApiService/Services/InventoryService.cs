@@ -1,10 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
-using SSSMCR.ApiService.Services.Interfaces;
 
 namespace SSSMCR.ApiService.Services;
 
+public interface IInventoryService : IGenericService<ProductStock>
+{
+    Task<IEnumerable<ProductStock>> GetLowStockAsync();
+}
 public class InventoryService : GenericService<ProductStock>, IInventoryService
 {
     public InventoryService(AppDbContext context) : base(context) { }
