@@ -40,6 +40,7 @@ builder.Services.AddScoped<BranchesApiService>();
 builder.Services.AddScoped<RolesApiService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<UsersApiService>();
+builder.Services.AddScoped<OrdersApiService>();
 builder.AddServiceDefaults();
 
 var app = builder.Build();

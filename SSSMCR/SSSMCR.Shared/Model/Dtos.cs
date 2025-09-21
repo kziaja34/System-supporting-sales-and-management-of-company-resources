@@ -3,29 +3,54 @@ using System.Text.Json.Serialization;
 
 namespace SSSMCR.Shared.Model;
 
-public class OrderDto
+
+public enum OrderStatus
 {
-    public int Id { get; set; }
-    public string CustomerName { get; set; } = null!;
-    public string CustomerEmail { get; set; } = null!;
-    public DateTime CreatedAt { get; set; }
-    public OrderStatusDto Status { get; set; }
-    public int Priority { get; set; }
-    public List<OrderItemDto> Items { get; set; } = new();
-    
-    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
-    public decimal Total 
-        => Items.Sum(i => i.Quantity * i.UnitPrice);
+    Pending,
+    Processing,
+    Completed,
+    Cancelled
 }
 
-public class OrderItemDto
+public record OrderListItemDto(
+    int Id,
+    string CustomerEmail,
+    string CustomerName,
+    DateTime CreatedAt,
+    string Status,
+    int Priority,
+    int ItemsCount,
+    decimal TotalPrice
+);
+
+public record OrderItemDto(
+    int ProductId,
+    string ProductName,
+    int Quantity,
+    decimal UnitPrice,
+    decimal LineTotal
+);
+
+public record OrderDetailsDto(
+    int Id,
+    string CustomerEmail,
+    string CustomerName,
+    DateTime CreatedAt,
+    string Status,
+    int Priority,
+    IEnumerable<OrderItemDto> Items,
+    decimal TotalPrice
+);
+
+public class PageResponse<T>
 {
-    public int Id { get; set; }
-    public int ProductId { get; set; }
-    public string ProductName { get; set; } = null!;
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public IEnumerable<T> Items { get; set; }
+    public int Page { get; set; }
+    public int Size { get; set; }
+    public int TotalElements { get; set; }
+    public int TotalPages { get; set; }
+    public bool HasNext => Page < TotalPages - 1;
+    public bool HasPrevious => Page > 0;
 }
 
 public class ProductResponse

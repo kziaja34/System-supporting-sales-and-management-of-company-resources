@@ -1,0 +1,130 @@
+﻿@page "/orders/{OrderId:int}"
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject OrdersApiService OrdersService
+@inject ISnackbar Snackbar
+
+<PageTitle>Order details</PageTitle>
+
+<MudPaper Class="pa-4">
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    }
+    else if (_order is null)
+    {
+        <MudText Typo="Typo.h6" Color="Color.Error">Order not found.</MudText>
+    }
+    else
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+            <MudText Typo="Typo.h5">Order #@_order.Id</MudText>
+            <MudLink Href="/orders">← Back to orders</MudLink>
+        </MudStack>
+        
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" md="8">
+                <MudStack>
+                    <MudText><b>Customer:</b> @_order.CustomerName (@_order.CustomerEmail)</MudText>
+                    <MudText><b>Created at:</b> @_order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudText>
+                    <MudText><b>Priority:</b> @_order.Priority</MudText>
+                    <MudText><b>Total price:</b> @_order.TotalPrice.ToString("C")</MudText>
+                </MudStack>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudStack AlignItems="AlignItems.End" Spacing="2">
+                    <MudText><b>Status:</b></MudText>
+                    <MudChip T="string" Variant="Variant.Filled" Color="@GetStatusColor(_order.Status)">
+                        @_order.Status
+                    </MudChip>
+                    
+                    <MudSelect T="OrderStatus" Label="Change status" @bind-Value="_newStatus">
+                        @foreach (var status in Enum.GetValues<OrderStatus>())
+                        {
+                            <MudSelectItem Value="@status">@status</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudButton OnClick="UpdateStatus"
+                               Disabled="_order is null"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Class="mt-2">
+                        Update status
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+        
+        <MudText Typo="Typo.h6" Class="mb-2">Ordered products</MudText>
+
+        <MudTable T="OrderItemDto" Items="@_order.Items" Dense="true" Bordered="true" Hover="true" Striped="true">
+            <HeaderContent>
+                <MudTh style="width: 90px">Product Id</MudTh>
+                <MudTh>Product name</MudTh>
+                <MudTh style="width: 120px; text-align:right">Quantity</MudTh>
+                <MudTh style="width: 160px; text-align:right">Unit price</MudTh>
+                <MudTh style="width: 160px; text-align:right">Line total</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd>@context.ProductId</MudTd>
+                <MudTd>@context.ProductName</MudTd>
+                <MudTd Style="text-align:right">@context.Quantity</MudTd>
+                <MudTd Style="text-align:right">@context.UnitPrice.ToString("C")</MudTd>
+                <MudTd Style="text-align:right">@context.LineTotal.ToString("C")</MudTd>
+            </RowTemplate>
+
+            <FooterContent>
+                <MudTd></MudTd>
+                <MudTd Style="text-align:right"><b>Totals:</b></MudTd>
+                <MudTd Style="text-align:right"><b>@_order.Items.Sum(i => i.Quantity)</b></MudTd>
+                <MudTd></MudTd>
+                <MudTd Style="text-align:right"><b>@_order.TotalPrice.ToString("C")</b></MudTd>
+            </FooterContent>
+        </MudTable>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+    private OrderDetailsDto? _order;
+    private bool _loading = true;
+    private OrderStatus _newStatus;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _order = await OrdersService.GetOrderByIdAsync(OrderId);
+        if (_order != null && Enum.TryParse<OrderStatus>(_order.Status, out var parsed))
+        {
+            _newStatus = parsed;
+        }
+        _loading = false;
+    }
+
+
+    private static Color GetStatusColor(string status) => status switch
+    {
+        "Pending" => Color.Warning,
+        "Processing" => Color.Info,
+        "Completed" => Color.Success,
+        "Cancelled" => Color.Error,
+        _ => Color.Default
+    };
+    
+    private async Task UpdateStatus()
+    {
+        if (_order == null) return;
+
+        var success = await OrdersService.UpdateOrderStatusAsync(_order.Id, _newStatus.ToString());
+        if (success)
+        {
+            _order = _order with { Status = _newStatus.ToString() };
+            Snackbar.Add("Status updated successfully", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to update status", Severity.Error);
+        }
+    }
+
+}

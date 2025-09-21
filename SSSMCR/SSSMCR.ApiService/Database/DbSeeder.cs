@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Services.Interfaces;
+using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Database;
 
@@ -100,14 +101,29 @@ public static class DbSeeder
         {
             CustomerName = "Jan Kowalski",
             CustomerEmail = "jan.kowalski@example.com",
-            Status = Model.Common.OrderStatus.Pending,
+            Status = OrderStatus.Pending,
             Priority = 1
         };
         context.Orders.Add(order1);
 
         context.OrderItems.AddRange(
-            new OrderItem { Order = order1, Product = product1, Quantity = 1 },
-            new OrderItem { Order = order1, Product = product3, Quantity = 2 }
+            new OrderItem { Order = order1, Product = product1, Quantity = 1, UnitPrice = product1.UnitPrice },
+            new OrderItem { Order = order1, Product = product3, Quantity = 2, UnitPrice = product3.UnitPrice }
+        );
+        
+        var order2 = new Order
+        {
+            CustomerName = "Anna Nowak",
+            CustomerEmail = "anna.nowak@example.com",
+            Status = OrderStatus.Processing,
+            Priority = 2,
+            CreatedAt = DateTime.UtcNow.AddDays(-2)
+        };
+        context.Orders.Add(order2);
+
+        context.OrderItems.AddRange(
+            new OrderItem { Order = order2, Product = product2, Quantity = 1, UnitPrice = product2.UnitPrice },
+            new OrderItem { Order = order2, Product = product3, Quantity = 2, UnitPrice = product3.UnitPrice }
         );
 
         // Invoice (opcjonalnie)

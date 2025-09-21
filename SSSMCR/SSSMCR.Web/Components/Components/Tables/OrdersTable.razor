@@ -1,0 +1,129 @@
+﻿@using SSSMCR.Shared.Model
+@using MudBlazor
+@using SSSMCR.Web.Services
+@inject OrdersApiService OrdersService
+
+<MudTable ServerData="LoadOrders"
+          RowsPerPage="10"
+          RowsPerPageOptions="new int[]{10,25,50}"
+          Bordered="true"
+          Hover="true"
+          Striped="true"
+          Breakpoint="Breakpoint.Sm">
+
+    <HeaderContent>
+        <MudTh>
+            <MudTableSortLabel T="OrderListItemDto"
+                               SortLabel="id"
+                               InitialDirection="SortDirection.Ascending"
+                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                Id
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel T="OrderListItemDto"
+                               SortLabel="customerEmail"
+                               InitialDirection="SortDirection.Ascending"
+                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                Email
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel T="OrderListItemDto"
+                               SortLabel="customerName"
+                               InitialDirection="SortDirection.Ascending"
+                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                Customer name
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel T="OrderListItemDto"
+                               SortLabel="createdAt"
+                               InitialDirection="SortDirection.Descending"
+                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                Created at
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>
+            <MudTableSortLabel T="OrderListItemDto"
+                               SortLabel="priority"
+                               SortActive="true"
+                               InitialDirection="SortDirection.Descending"
+                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                Priority
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh>Items</MudTh>
+        <MudTh>Total price</MudTh>
+    </HeaderContent>
+
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Email">@context.CustomerEmail</MudTd>
+        <MudTd DataLabel="Customer name">@context.CustomerName</MudTd>
+        <MudTd DataLabel="Created at">@context.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+        <MudTd>
+            <MudChip T="string"
+                     Color="@GetStatusColor(context.Status)"
+                     Variant="Variant.Filled"
+                     Size="Size.Small"
+                     Class="px-2">
+                @context.Status
+            </MudChip>
+        </MudTd>
+
+        <MudTd DataLabel="Priority">@context.Priority</MudTd>
+        <MudTd DataLabel="Items">@context.ItemsCount</MudTd>
+        <MudTd DataLabel="Total price">@context.TotalPrice.ToString("C")</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Search"
+                           Color="Color.Primary"
+                           Size="Size.Small"
+                           Href="@($"/orders/{context.Id}")"
+                           AriaLabel="View details" />
+        </MudTd>
+    </RowTemplate>
+
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private async Task<TableData<OrderListItemDto>> LoadOrders(TableState state, CancellationToken ct)
+    {
+        var label = string.IsNullOrWhiteSpace(state.SortLabel) ? "priority" : state.SortLabel;
+        var dir = state.SortDirection switch
+        {
+            SortDirection.Ascending => "asc",
+            SortDirection.Descending => "desc",
+            SortDirection.None => label == "priority" ? "desc" : "asc",
+            _ => "desc"
+        };
+
+        var sort = $"{label},{dir}";
+        var result = await OrdersService.GetOrdersPageAsync(state.Page, state.PageSize, sort);
+
+        return new TableData<OrderListItemDto>
+        {
+            Items = result.Items,
+            TotalItems = result.TotalElements
+        };
+    }
+    
+    private static Color GetStatusColor(string status) => status switch
+    {
+        "Pending" => Color.Warning,
+        "Processing" => Color.Info,
+        "Completed" => Color.Success,
+        "Cancelled" => Color.Error,
+        _ => Color.Default
+    };
+
+}

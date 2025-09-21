@@ -1,4 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SSSMCR.ApiService.Model;
+using SSSMCR.ApiService.Model.Common;
+using SSSMCR.ApiService.Services.Interfaces;
+using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Controller;
 
@@ -14,17 +18,66 @@ public class OrderDto
 [Route("api/orders")]
 public class OrderController : ControllerBase
 {
-    [HttpGet("{id}")]
-    public ActionResult<OrderDto> GetById(int id)
-    {
-        var order = new OrderDto
-        {
-            Id = id,
-            CustomerName = "John Doe",
-            OrderDate = DateTime.UtcNow,
-            Total = 199.99m
-        };
+    private readonly IOrderService _orderService;
 
-        return Ok(order);
+    public OrderController(IOrderService orderService)
+    {
+        _orderService = orderService;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<PageResponse<OrderListItemDto>>> GetOrders(
+        [FromQuery] int page = 0,
+        [FromQuery] int size = 20,
+        [FromQuery] string sort = "priority,desc")
+    {
+        var result = await _orderService.GetPagedAsync(page, size, sort);
+        return Ok(result);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<OrderDetailsDto>> GetOrder(int id)
+    {
+        var order = await _orderService.GetByIdAsync(id);
+        if (order == null) return NotFound();
+
+        return Ok(ToDetailsDto(order));
+    }
+    
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] string newStatus)
+    {
+        try
+        {
+            var success = await _orderService.UpdateStatusAsync(id, newStatus);
+            if (!success) return NotFound();
+
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+
+    private static OrderDetailsDto ToDetailsDto(Order order)
+    {
+        return new OrderDetailsDto(
+            Id: order.Id,
+            CustomerEmail: order.CustomerEmail,
+            CustomerName: order.CustomerName,
+            CreatedAt: order.CreatedAt,
+            Status: order.Status.ToString(),
+            Priority: order.Priority,
+            Items: order.Items.Select(i => new OrderItemDto(
+                ProductId: i.ProductId,
+                ProductName: i.Product.Name,
+                Quantity: i.Quantity,
+                UnitPrice: i.UnitPrice,
+                LineTotal: i.TotalPrice
+            )),
+            TotalPrice: order.Items.Sum(i => i.TotalPrice)
+        );
     }
 }

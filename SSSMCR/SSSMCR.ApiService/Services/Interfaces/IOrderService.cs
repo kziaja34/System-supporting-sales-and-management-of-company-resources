@@ -1,10 +1,14 @@
 ﻿using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Model.Common;
+using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services.Interfaces;
 
 public interface IOrderService : IGenericService<Order>
 {
-    Task<IEnumerable<Order>> GetByStatusAsync(OrderStatus status);
-    Task<IEnumerable<Order>> GetByCustomerEmailAsync(string email);
+    Task<IEnumerable<Order>> GetAllAsync(string? status = null, string? email = null, CancellationToken ct = default);
+
+    Task<PageResponse<OrderListItemDto>> GetPagedAsync(int page, int size, string sort, CancellationToken ct = default);
+    
+    Task<bool> UpdateStatusAsync(int id, string newStatus);
 }

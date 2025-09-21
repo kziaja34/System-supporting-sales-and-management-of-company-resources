@@ -1,0 +1,13 @@
+﻿@page "/orders"
+@using SSSMCR.Web.Services
+@using SSSMCR.Web.Components.Components.Tables
+@rendermode InteractiveServer
+@inject OrdersApiService OrdersService
+
+<PageTitle>Orders</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Orders</MudText>
+
+    <OrdersTable />
+</MudPaper>

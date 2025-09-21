@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using SSSMCR.ApiService.Model.Common;
+using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Model;
 
