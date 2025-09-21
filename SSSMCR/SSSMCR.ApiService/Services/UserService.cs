@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Model;
-using SSSMCR.ApiService.Services.Interfaces;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Identity;
 using SSSMCR.ApiService.Database;
@@ -8,6 +7,15 @@ using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services;
 
+public interface IUserService : IGenericService<User>
+{
+    Task<User?> GetByEmailAsync(string email, CancellationToken ct = default);
+    Task<bool> VerifyPasswordAsync(string email, string password, CancellationToken ct = default);
+    Task<Role> GetRoleAsync(int userId, CancellationToken ct = default);
+    Task UpdateProfileAsync(int userId, User user, CancellationToken ct = default);
+    Task UpdateUserAsync(int userId, User user, CancellationToken ct = default);
+    Task ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken ct = default);
+}
 public class UserService(
     AppDbContext context,
     IPasswordHasher hasher,

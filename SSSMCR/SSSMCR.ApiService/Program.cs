@@ -5,7 +5,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Services;
-using SSSMCR.ApiService.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);

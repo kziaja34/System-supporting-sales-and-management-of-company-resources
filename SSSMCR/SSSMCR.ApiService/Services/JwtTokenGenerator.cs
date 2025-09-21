@@ -2,11 +2,14 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using SSSMCR.ApiService.Services.Interfaces;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services;
 
+public interface IJwtTokenGenerator
+{
+    TokenResponse Generate(int userId, string email, string name, string role);
+}
 public sealed class JwtTokenGenerator(IConfiguration cfg) : IJwtTokenGenerator
 {
     public TokenResponse Generate(int userId, string email, string name, string role)

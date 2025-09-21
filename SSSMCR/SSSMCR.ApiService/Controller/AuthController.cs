@@ -1,8 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using SSSMCR.ApiService.Services.Interfaces;
+﻿using Microsoft.AspNetCore.Mvc;
+using SSSMCR.ApiService.Services;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Controller;

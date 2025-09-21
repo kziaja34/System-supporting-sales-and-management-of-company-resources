@@ -23,26 +23,34 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Branch → Users
+        // Branch -> Users
         modelBuilder.Entity<User>()
             .HasOne(u => u.Branch)
             .WithMany(b => b.Users)
             .HasForeignKey(u => u.BranchId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Branch → ProductStock
+        // Branch -> ProductStock
         modelBuilder.Entity<ProductStock>()
             .HasOne(i => i.Branch)
             .WithMany(b => b.Inventories)
             .HasForeignKey(i => i.BranchId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Branch → SupplyOrder
+        // Branch -> SupplyOrder
         modelBuilder.Entity<SupplyOrder>()
             .HasOne(so => so.Branch)
             .WithMany(b => b.SupplyOrders)
             .HasForeignKey(so => so.BranchId)
             .OnDelete(DeleteBehavior.Restrict);
+        
+        // OrderItem -> Product
+        modelBuilder.Entity<OrderItem>()
+            .HasOne(oi => oi.Product)
+            .WithMany()
+            .HasForeignKey(oi => oi.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
     }
 
 }

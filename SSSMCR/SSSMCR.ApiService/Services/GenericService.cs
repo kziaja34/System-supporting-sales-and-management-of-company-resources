@@ -1,9 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
-using SSSMCR.ApiService.Services.Interfaces;
 
 namespace SSSMCR.ApiService.Services;
 
+public interface IGenericService<T> where T : class
+{
+    Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default);
+    Task<T> GetByIdAsync(int id, CancellationToken ct = default);
+    Task<T> CreateAsync(T entity, CancellationToken ct = default);
+    Task UpdateAsync(T entity, CancellationToken ct = default);
+    Task DeleteAsync(int id, CancellationToken ct = default);
+
+}
 public class GenericService<T>(AppDbContext context) : IGenericService<T>
     where T : class
 {
