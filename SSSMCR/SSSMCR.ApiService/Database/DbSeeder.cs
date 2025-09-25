@@ -17,9 +17,9 @@ public static class DbSeeder
 
         // Roles
         var adminRole = new Role { Name = "Administrator" };
-        var managerRole = new Role { Name = "Kierownik Oddziału" };
-        var sellerRole = new Role { Name = "Handlowiec" };
-        var warehouseRole = new Role { Name = "Magazynier" };
+        var managerRole = new Role { Name = "Manager" };
+        var sellerRole = new Role { Name = "Seller" };
+        var warehouseRole = new Role { Name = "WarehouseWorker" };
         context.Roles.AddRange(adminRole, managerRole, sellerRole, warehouseRole);
 
         // Branches
@@ -51,9 +51,18 @@ public static class DbSeeder
             FirstName = "Piotr",
             LastName = "Magazynier",
             Email = "piotr@example.com",
-            PasswordHash = "hashed789",
+            PasswordHash = hasher.Hash("hashed123"),
             Role = warehouseRole,
             Branch = branch2
+        };
+        var manager = new User()
+        {
+            FirstName = "Manager",
+            LastName = "Super",
+            Email = "manager@example.com",
+            PasswordHash = hasher.Hash("hashed123"),
+            Role = managerRole,
+            Branch = branch1
         };
         context.Users.AddRange(admin, seller, warehouseman);
 

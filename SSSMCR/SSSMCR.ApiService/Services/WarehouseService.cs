@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
+using SSSMCR.ApiService.Model.Exceptions;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services;
@@ -9,6 +10,7 @@ public interface IWarehouseService : IGenericService<ProductStock>
 {
     Task<ReserveResult> ReserveForOrderAsync(int orderId, int? preferredBranchId = null, CancellationToken ct = default);
     Task FulfillReservationsAsync(int orderId, CancellationToken ct = default);
+    Task FulfillReservationForBranchAsync(int orderId, int branchId, CancellationToken ct = default);
     Task ReleaseReservationsForOrderAsync(int orderId, CancellationToken ct = default);
 }
 
@@ -19,10 +21,14 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         await using var tx = await context.Database.BeginTransactionAsync(ct);
 
         var order = await context.Orders
-            .Include(o => o.Items)
-            .ThenInclude(i => i.Product)
-            .FirstOrDefaultAsync(o => o.Id == orderId, ct)
-            ?? throw new InvalidOperationException("Order not found.");
+                        .Include(o => o.Items)
+                        .ThenInclude(i => i.Product)
+                        .FirstOrDefaultAsync(o => o.Id == orderId, ct)
+                    ?? throw new InvalidOperationException("Order not found.");
+
+        if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Processing)
+            throw new InvalidOperationException($"Cannot reserve order in status {order.Status}.");
+
 
         var perItemReport = new List<ReserveLineResult>();
 
@@ -64,12 +70,12 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 
             perItemReport.Add(new ReserveLineResult(item.Id, reservedHere, need));
         }
-
+        var isPartial = perItemReport.Any(r => r.MissingQuantity > 0);
+        order.Status = isPartial ? OrderStatus.Processing : OrderStatus.Processing;
+        
         await context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
-
-        var isPartial = perItemReport.Any(r => r.MissingQuantity > 0);
-        // Tu możesz zaktualizować status zamówienia: RESERVED/PARTIALLY_RESERVED
+        
         return new ReserveResult(perItemReport, isPartial);
     }
 
@@ -77,11 +83,20 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
     {
         await using var tx = await context.Database.BeginTransactionAsync(ct);
 
+        var order = await context.Orders.FindAsync(orderId, ct);
+        if (order == null) throw new InvalidOperationException("Order not found.");
+        if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Pending)
+            throw new InvalidOperationException("You can only fulfill processing orders.");
+
         var reservations = await context.StockReservations
             .Include(r => r.ProductStock)
             .Include(r => r.OrderItem)
             .Where(r => r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Active)
             .ToListAsync(ct);
+
+        if (!reservations.Any())
+            throw new ReservationNotFoundException(orderId);
+
 
         foreach (var r in reservations)
         {
@@ -103,21 +118,100 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             r.Status      = ReservationStatus.Fulfilled;
             r.FulfilledAt = DateTime.UtcNow;
         }
+        
+        var allReservations = await context.StockReservations
+            .Where(r => r.OrderItem.OrderId == orderId)
+            .ToListAsync(ct);
+
+        if (allReservations.All(r => r.Status == ReservationStatus.Fulfilled))
+        {
+            order.Status = OrderStatus.Completed;
+        }
 
         await context.SaveChangesAsync(ct);
+        
         await tx.CommitAsync(ct);
-
-        // Tu możesz przeliczyć i podnieść status zamówienia: FULFILLED / PARTIALLY_FULFILLED
     }
+    
+    public async Task FulfillReservationForBranchAsync(int orderId, int branchId, CancellationToken ct)
+    {
+        await using var tx = await context.Database.BeginTransactionAsync(ct);
+
+        var order = await context.Orders.FindAsync(orderId, ct);
+        if (order == null) throw new InvalidOperationException("Order not found.");
+        if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Pending)
+            throw new InvalidOperationException("You can only fulfill processing orders.");
+
+        var reservations = await context.StockReservations
+            .Include(r => r.ProductStock)
+            .Include(r => r.OrderItem)
+            .Where(r => r.OrderItem.OrderId == orderId 
+                        && r.Status == ReservationStatus.Active
+                        && r.ProductStock.BranchId == branchId)
+            .ToListAsync(ct);
+
+        if (!reservations.Any())
+            throw new ReservationNotFoundException(orderId);
+
+
+        foreach (var r in reservations)
+        {
+            var stock = r.ProductStock;
+
+            stock.Quantity        -= r.Quantity;
+            stock.ReservedQuantity -= r.Quantity;
+            stock.LastUpdatedAt    = DateTime.UtcNow;
+
+            context.StockMovements.Add(new StockMovement
+            {
+                ProductStockId = stock.Id,
+                QuantityDelta  = -r.Quantity,
+                Type           = StockMovementType.Outbound,
+                OrderItemId    = r.OrderItemId,
+                Reference      = $"ORDER#{orderId}/BRANCH#{branchId}"
+            });
+
+            r.Status      = ReservationStatus.Fulfilled;
+            r.FulfilledAt = DateTime.UtcNow;
+        }
+
+        var allReservations = await context.StockReservations
+            .Where(r => r.OrderItem.OrderId == orderId)
+            .ToListAsync(ct);
+        
+        if (allReservations.All(r => r.Status == ReservationStatus.Fulfilled))
+        {
+            
+            order.Status = OrderStatus.Completed;
+        }
+        else
+        {
+            order.Status = OrderStatus.Processing;
+        }
+        
+        await context.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        
+    }
+
 
     public async Task ReleaseReservationsForOrderAsync(int orderId, CancellationToken ct)
     {
         await using var tx = await context.Database.BeginTransactionAsync(ct);
 
+        var order = await context.Orders.FindAsync(orderId, ct);
+        if (order == null) throw new InvalidOperationException("Order not found.");
+        if (order.Status == OrderStatus.Completed)
+            throw new InvalidOperationException("Cannot release a completed order.");
+
         var reservations = await context.StockReservations
             .Include(r => r.ProductStock)
             .Where(r => r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Active)
             .ToListAsync(ct);
+
+        if (!reservations.Any())
+            throw new ReservationNotFoundException(orderId);
+
 
         foreach (var r in reservations)
         {
@@ -127,8 +221,10 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             r.Status     = ReservationStatus.Released;
             r.ReleasedAt = DateTime.UtcNow;
         }
-
+        
+        order.Status = OrderStatus.Pending;
         await context.SaveChangesAsync(ct);
+
         await tx.CommitAsync(ct);
     }
 
