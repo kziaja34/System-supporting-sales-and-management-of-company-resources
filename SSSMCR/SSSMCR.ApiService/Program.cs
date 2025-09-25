@@ -34,6 +34,7 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IWarehouseService, WarehouseService>();
 
 var jwt = builder.Configuration.GetSection("Jwt");
 var keyBytes = Encoding.UTF8.GetBytes(jwt["Key"]!);

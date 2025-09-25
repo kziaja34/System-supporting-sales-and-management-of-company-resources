@@ -12,6 +12,9 @@ public enum OrderStatus
     Cancelled
 }
 
+public enum ReservationStatus { Active, Released, Fulfilled }
+public enum StockMovementType { Inbound, Outbound, Adjustment }
+
 public record OrderListItemDto(
     int Id,
     string CustomerEmail,
@@ -166,19 +169,4 @@ public class BranchCreateRequest
     public string Name { get; set; } = default!;
     [Required, MaxLength(500)]
     public string Location { get; set; } = default!;
-}
-public enum OrderStatusDto
-{
-    Pending,
-    Processing,
-    Completed,
-    Cancelled
-}
-
-public enum SupplyOrderStatusDto
-{
-    Draft,
-    Ordered,
-    Received,
-    Cancelled
 }

@@ -42,7 +42,7 @@ public static class DbSeeder
             FirstName = "Anna",
             LastName = "Sprzedawczyni",
             Email = "anna@example.com",
-            PasswordHash = "hashed456",
+            PasswordHash = hasher.Hash("hashed123"),
             Role = sellerRole,
             Branch = branch1
         };
@@ -65,9 +65,9 @@ public static class DbSeeder
 
         // ProductStock
         context.ProductStock.AddRange(
-            new ProductStock { Product = product1, Branch = branch1, Quantity = 10, CriticalThreshold = 3 },
-            new ProductStock { Product = product2, Branch = branch1, Quantity = 5, CriticalThreshold = 2 },
-            new ProductStock { Product = product3, Branch = branch2, Quantity = 20, CriticalThreshold = 5 }
+            new ProductStock { Product = product1, Branch = branch1, Quantity = 10, ReservedQuantity = 0, CriticalThreshold = 3 },
+            new ProductStock { Product = product2, Branch = branch1, Quantity = 5, ReservedQuantity = 0, CriticalThreshold = 2 },
+            new ProductStock { Product = product3, Branch = branch2, Quantity = 20, ReservedQuantity = 0, CriticalThreshold = 5 }
         );
 
         // Supplier
