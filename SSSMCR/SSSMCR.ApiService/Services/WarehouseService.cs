@@ -233,10 +233,3 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             .Where(r => r.OrderItemId == orderItemId && r.Status == ReservationStatus.Active)
             .Sum(r => (int?)r.Quantity) ?? 0;
 }
-
-public record ReserveResult(IReadOnlyList<ReserveLineResult> Lines, bool IsPartial);
-public record ReserveLineResult(int OrderItemId, int ReservedQuantity, int MissingQuantity)
-{
-    public static ReserveLineResult Done(int orderItemId, int reserved, int missing) =>
-        new(orderItemId, reserved, missing);
-}

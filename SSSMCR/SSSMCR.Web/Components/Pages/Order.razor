@@ -2,6 +2,7 @@
 @using SSSMCR.Shared.Model
 @using SSSMCR.Web.Services
 @inject OrdersApiService OrdersService
+@inject BranchesApiService BranchesService
 @inject ISnackbar Snackbar
 
 <PageTitle>Order details</PageTitle>
@@ -82,18 +83,70 @@
                 <MudTd Style="text-align:right"><b>@_order.TotalPrice.ToString("C")</b></MudTd>
             </FooterContent>
         </MudTable>
+        
+        <!-- Reserve products -->
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.h6" Class="mb-2">Reserve products</MudText>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+            <MudSelect T="int?" Label="Select preferred branch" @bind-Value="selectedBranchId" Style="min-width:250px">
+                @foreach (var b in branches)
+                {
+                    <MudSelectItem T="int?" Value="@b.Id">@b.Name (@b.Location)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReserveOrder"
+                       Disabled="_order is null || selectedBranchId is null || _order.Status != nameof(OrderStatus.Pending)">
+                Reserve
+            </MudButton>
+        </MudStack>
+
+        @if (reserveResult != null)
+        {
+            <MudPaper Class="pa-3">
+                @if (reserveResult.IsPartial)
+                {
+                    <MudAlert Severity="Severity.Warning" Elevation="0" Dense="true">
+                        Reservation was only partially successful – some items are missing.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Success" Elevation="0" Dense="true">
+                        Reservation completed successfully.
+                    </MudAlert>
+                }
+
+                <MudTable T="ReserveLineResult" Items="@reserveResult.Lines" Dense="true" Bordered="true" Hover="true" Striped="true" Class="mt-3">
+                    <HeaderContent>
+                        <MudTh>Order Item Id</MudTh>
+                        <MudTh style="text-align:right">Reserved</MudTh>
+                        <MudTh style="text-align:right">Missing</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.OrderItemId</MudTd>
+                        <MudTd Style="text-align:right">@context.ReservedQuantity</MudTd>
+                        <MudTd Style="text-align:right">@context.MissingQuantity</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        }
     }
 </MudPaper>
 
 @code {
     [Parameter] public int OrderId { get; set; }
     private OrderDetailsDto? _order;
+    private List<BranchResponse> branches = new();
+    private int? selectedBranchId;
+    private ReserveResult? reserveResult;
     private bool _loading = true;
     private OrderStatus _newStatus;
 
     protected override async Task OnInitializedAsync()
     {
         _order = await OrdersService.GetOrderByIdAsync(OrderId);
+        branches = await BranchesService.GetBranchesAsync();
         if (_order != null && Enum.TryParse<OrderStatus>(_order.Status, out var parsed))
         {
             _newStatus = parsed;
@@ -101,6 +154,17 @@
         _loading = false;
     }
 
+    private async Task ReserveOrder()
+    {
+        if (selectedBranchId == null)
+        {
+            Snackbar.Add("Choose prefered branch!", Severity.Info);
+        }
+
+        reserveResult = await OrdersService.ReserveOrderAsync(OrderId, selectedBranchId);
+        _order = await OrdersService.GetOrderByIdAsync(OrderId);
+        StateHasChanged();
+    }
 
     private static Color GetStatusColor(string status) => status switch
     {

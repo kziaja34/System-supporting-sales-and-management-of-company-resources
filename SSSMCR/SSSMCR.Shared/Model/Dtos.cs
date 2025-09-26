@@ -170,3 +170,10 @@ public class BranchCreateRequest
     [Required, MaxLength(500)]
     public string Location { get; set; } = default!;
 }
+
+public record ReserveResult(IReadOnlyList<ReserveLineResult> Lines, bool IsPartial);
+public record ReserveLineResult(int OrderItemId, int ReservedQuantity, int MissingQuantity)
+{
+    public static ReserveLineResult Done(int orderItemId, int reserved, int missing) =>
+        new(orderItemId, reserved, missing);
+}
