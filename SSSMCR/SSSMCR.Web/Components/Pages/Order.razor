@@ -39,19 +39,19 @@
                         @_order.Status
                     </MudChip>
                     
-                    <MudSelect T="OrderStatus" Label="Change status" @bind-Value="_newStatus">
-                        @foreach (var status in Enum.GetValues<OrderStatus>())
-                        {
-                            <MudSelectItem Value="@status">@status</MudSelectItem>
-                        }
-                    </MudSelect>
-                    <MudButton OnClick="UpdateStatus"
-                               Disabled="_order is null"
-                               Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               Class="mt-2">
-                        Update status
-                    </MudButton>
+                    @* <MudSelect T="OrderStatus" Label="Change status" @bind-Value="_newStatus"> *@
+                    @*     @foreach (var status in Enum.GetValues<OrderStatus>()) *@
+                    @*     { *@
+                    @*         <MudSelectItem Value="@status">@status</MudSelectItem> *@
+                    @*     } *@
+                    @* </MudSelect> *@
+                    @* <MudButton OnClick="UpdateStatus" *@
+                    @*            Disabled="_order is null" *@
+                    @*            Variant="Variant.Filled" *@
+                    @*            Color="Color.Primary" *@
+                    @*            Class="mt-2"> *@
+                    @*     Update status *@
+                    @* </MudButton> *@
                 </MudStack>
             </MudItem>
         </MudGrid>
@@ -99,6 +99,15 @@
                        Disabled="_order is null || selectedBranchId is null || _order.Status != nameof(OrderStatus.Pending)">
                 Reserve
             </MudButton>
+            @if (user_role == "Manager")
+            {
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Secondary" 
+                           OnClick="ReleaseOrder"
+                           Disabled="_order is null || _order.Status != nameof(OrderStatus.Processing)">
+                    Release
+                </MudButton>
+            }
         </MudStack>
 
         @if (reserveResult != null)
@@ -135,6 +144,7 @@
 </MudPaper>
 
 @code {
+    [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
     [Parameter] public int OrderId { get; set; }
     private OrderDetailsDto? _order;
     private List<BranchResponse> branches = new();
@@ -142,6 +152,7 @@
     private ReserveResult? reserveResult;
     private bool _loading = true;
     private OrderStatus _newStatus;
+    private string? user_role;
 
     protected override async Task OnInitializedAsync()
     {
@@ -152,6 +163,27 @@
             _newStatus = parsed;
         }
         _loading = false;
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var token = await LocalStorage.GetItemAsync<string>("jwt");
+        var expires = await LocalStorage.GetItemAsync<DateTime?>("jwt_expires");
+        
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(token) && expires is not null && expires > DateTime.UtcNow)
+            {
+                user_role = await LocalStorage.GetItemAsync<string>("user_role");
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            
+        }
+        StateHasChanged();
     }
 
     private async Task ReserveOrder()
@@ -164,6 +196,21 @@
         reserveResult = await OrdersService.ReserveOrderAsync(OrderId, selectedBranchId);
         _order = await OrdersService.GetOrderByIdAsync(OrderId);
         StateHasChanged();
+    }
+    
+    private async Task ReleaseOrder()
+    {
+        if (_order == null)
+            return;
+
+        var success = await OrdersService.ReleaseOrderAsync(_order.Id);
+
+        if (success)
+        {
+            _order = await OrdersService.GetOrderByIdAsync(OrderId);
+            reserveResult = null;
+            StateHasChanged();
+        }
     }
 
     private static Color GetStatusColor(string status) => status switch

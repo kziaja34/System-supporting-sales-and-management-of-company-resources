@@ -119,4 +119,23 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     }
 
+    public async Task<bool> ReleaseOrderAsync(int orderId)
+    {
+        var http = _httpFactory.CreateClient("api");
+        await AttachBearerAsync(http);
+
+        var res = await http.PostAsync($"/api/warehouse/orders/{orderId}/release", null);
+
+        if (!res.IsSuccessStatusCode)
+        {
+            string body = string.Empty;
+            try { body = await res.Content.ReadAsStringAsync(); } catch { }
+            _logger.LogWarning("ReleaseOrderAsync failed: {Status} body: {Body}", res.StatusCode, body);
+            return false;
+        }
+
+        return true;
+    }
+
+
 }
