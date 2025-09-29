@@ -119,23 +119,22 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     }
 
-    public async Task<bool> ReleaseOrderAsync(int orderId)
+    public async Task<(bool Success, bool RequireConfirm)> ReleaseOrderAsync(int orderId, bool confirm = false)
     {
         var http = _httpFactory.CreateClient("api");
         await AttachBearerAsync(http);
 
-        var res = await http.PostAsync($"/api/warehouse/orders/{orderId}/release", null);
+        var url = $"/api/warehouse/orders/{orderId}/release?confirm={confirm.ToString().ToLower()}";
+        var res = await http.PostAsync(url, null);
 
-        if (!res.IsSuccessStatusCode)
+        if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("ReleaseOrderAsync failed: {Status} body: {Body}", res.StatusCode, body);
-            return false;
+            var body = await res.Content.ReadAsStringAsync();
+            if (body.Contains("requireConfirm", StringComparison.OrdinalIgnoreCase))
+                return (false, true);
         }
 
-        return true;
+        return (res.IsSuccessStatusCode, false);
     }
-
 
 }

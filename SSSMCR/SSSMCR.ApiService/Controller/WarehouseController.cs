@@ -1,18 +1,18 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Model.Exceptions;
 using SSSMCR.ApiService.Services;
+using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Controller;
 
 [ApiController]
 [Route("api/warehouse")]
 [Authorize]
-public class WarehouseController : ControllerBase
+public class WarehouseController(IWarehouseService svc, IReservationService reservationSvc) : ControllerBase
 {
-    private readonly IWarehouseService _svc;
-
-    public WarehouseController(IWarehouseService svc) => _svc = svc;
+    private readonly IReservationService _reservationSvc = reservationSvc;
 
     [HttpPost("orders/{orderId}/reserve")]
     [Authorize(Roles = "Manager,Seller")]
@@ -20,7 +20,7 @@ public class WarehouseController : ControllerBase
     {
         try
         {
-            var result = await _svc.ReserveForOrderAsync(orderId, preferredBranchId);
+            var result = await svc.ReserveForOrderAsync(orderId, preferredBranchId);
             return Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -39,7 +39,7 @@ public class WarehouseController : ControllerBase
     {
         try
         {
-            await _svc.FulfillReservationsAsync(orderId);
+            await svc.FulfillReservationsAsync(orderId);
             return NoContent();
         }
         catch (ReservationNotFoundException ex)
@@ -62,7 +62,7 @@ public class WarehouseController : ControllerBase
     {
         try
         {
-            await _svc.FulfillReservationForBranchAsync(orderId, branchId, HttpContext.RequestAborted);
+            await svc.FulfillReservationForBranchAsync(orderId, branchId, HttpContext.RequestAborted);
             return NoContent();
         }
         catch (ReservationNotFoundException ex)
@@ -80,13 +80,16 @@ public class WarehouseController : ControllerBase
     }
 
     [HttpPost("orders/{orderId}/release")]
-    [Authorize(Roles = "Manager, Seller")]
-    public async Task<IActionResult> Release(int orderId)
+    public async Task<IActionResult> Release(int orderId, [FromQuery] bool confirm = false)
     {
         try
         {
-            await _svc.ReleaseReservationsForOrderAsync(orderId);
+            await svc.ReleaseReservationsForOrderAsync(orderId, confirm);
             return NoContent();
+        }
+        catch (PartialReleaseConfirmationRequiredException ex)
+        {
+            return Conflict(new { message = ex.Message, requireConfirm = true });
         }
         catch (ReservationNotFoundException ex)
         {
@@ -101,4 +104,42 @@ public class WarehouseController : ControllerBase
             return StatusCode(500, new { message = "Unexpected error", details = ex.Message });
         }
     }
+
+
+    [HttpGet("reservations")]
+    public async Task<IActionResult> GetReservations([FromQuery] int? branchId = null)
+    {
+        try
+        {
+            var query = await _reservationSvc.GetReservations(branchId);
+
+            var reservations = query.Select(ToResponse);
+            
+            return Ok(reservations);
+        }
+        catch (ReservationNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Unexpected error", details = ex.Message });       
+        }
+    }
+    
+    private static ReservationDto ToResponse(StockReservation r) => new()
+    {
+        Id = r.Id,
+        OrderId = r.OrderItem.OrderId,
+        ProductName = r.ProductStock.Product.Name,
+        BranchId = r.ProductStock.BranchId,
+        BranchName = r.ProductStock.Branch.Name,
+        Quantity = r.Quantity,
+        Status = r.Status.ToString(),
+        CreatedAt = r.CreatedAt,
+        OrderStatus = r.OrderItem.Order.Status.ToString(),
+        Priority = r.OrderItem.Order.Priority.ToString(),
+        CustomerName = r.OrderItem.Order.CustomerName,
+        ShippingAddress = "testowy adres"
+    };
 }

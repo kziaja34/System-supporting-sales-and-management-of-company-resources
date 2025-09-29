@@ -64,7 +64,16 @@ public static class DbSeeder
             Role = managerRole,
             Branch = branch1
         };
-        context.Users.AddRange(admin, seller, warehouseman);
+        var manager2 = new User()
+        {
+            FirstName = "Manager",
+            LastName = "Super",
+            Email = "manager2@example.com",
+            PasswordHash = hasher.Hash("hashed123"),
+            Role = managerRole,
+            Branch = branch2
+        };
+        context.Users.AddRange(admin, seller, warehouseman, manager, manager2);
 
         // Products
         var product1 = new Product { Name = "Laptop X", Description = "Laptop 15 cali", UnitPrice = 2500m };
@@ -122,7 +131,7 @@ public static class DbSeeder
         {
             CustomerName = "Anna Nowak",
             CustomerEmail = "anna.nowak@example.com",
-            Status = OrderStatus.Processing,
+            Status = OrderStatus.Pending,
             Priority = 2,
             CreatedAt = DateTime.UtcNow.AddDays(-2)
         };

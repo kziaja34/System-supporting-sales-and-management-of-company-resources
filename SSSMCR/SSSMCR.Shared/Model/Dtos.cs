@@ -8,6 +8,7 @@ public enum OrderStatus
 {
     Pending,
     Processing,
+    PartiallyFulfilled,
     Completed,
     Cancelled
 }
@@ -170,6 +171,23 @@ public class BranchCreateRequest
     [Required, MaxLength(500)]
     public string Location { get; set; } = default!;
 }
+
+public class ReservationDto
+{
+    public int Id { get; set; }
+    public int OrderId { get; set; }
+    public int BranchId { get; set; }
+    public string OrderStatus { get; set; } = "";
+    public string Priority { get; set; } = "";
+    public string CustomerName { get; set; } = "";
+    public string ShippingAddress { get; set; } = "";
+    public string ProductName { get; set; } = "";
+    public string BranchName { get; set; } = "";
+    public int Quantity { get; set; }
+    public string Status { get; set; } = "";
+    public DateTime CreatedAt { get; set; }
+}
+
 
 public record ReserveResult(IReadOnlyList<ReserveLineResult> Lines, bool IsPartial);
 public record ReserveLineResult(int OrderItemId, int ReservedQuantity, int MissingQuantity)

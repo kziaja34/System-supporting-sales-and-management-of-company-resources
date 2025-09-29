@@ -1,9 +1,11 @@
 ﻿@page "/orders/{OrderId:int}"
 @using SSSMCR.Shared.Model
+@using SSSMCR.Web.Components.Components.Dialogs
 @using SSSMCR.Web.Services
 @inject OrdersApiService OrdersService
 @inject BranchesApiService BranchesService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Order details</PageTitle>
 
@@ -104,7 +106,9 @@
                 <MudButton Variant="Variant.Filled" 
                            Color="Color.Secondary" 
                            OnClick="ReleaseOrder"
-                           Disabled="_order is null || _order.Status != nameof(OrderStatus.Processing)">
+                           Disabled="_order is null || 
+                            (_order.Status != nameof(OrderStatus.Processing) && 
+                             _order.Status != nameof(OrderStatus.PartiallyFulfilled))">
                     Release
                 </MudButton>
             }
@@ -203,15 +207,42 @@
         if (_order == null)
             return;
 
-        var success = await OrdersService.ReleaseOrderAsync(_order.Id);
+        var result = await OrdersService.ReleaseOrderAsync(_order.Id);
 
-        if (success)
+        if (result.Success)
         {
             _order = await OrdersService.GetOrderByIdAsync(OrderId);
             reserveResult = null;
             StateHasChanged();
         }
+        else if (result.RequireConfirm)
+        {
+            var parameters = new DialogParameters
+            {
+                { "ContentText", "Part of this order is already fulfilled. Do you really want to release the remaining reservations?" },
+                { "ButtonText", "Yes, release" },
+                { "Color", Color.Error }
+            };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+            var dialog = DialogService.Show<ConfirmDialog>("Confirm release", parameters, options);
+            var dialogResult = await dialog.Result;
+
+            if (!dialogResult.Canceled)
+            {
+                var forceResult = await OrdersService.ReleaseOrderAsync(_order.Id, confirm: true);
+                if (forceResult.Success)
+                {
+                    _order = await OrdersService.GetOrderByIdAsync(OrderId);
+                    reserveResult = null;
+                    Snackbar.Add("Remaining reservations have been released.", Severity.Info);
+                    StateHasChanged();
+                }
+            }
+        }
     }
+
 
     private static Color GetStatusColor(string status) => status switch
     {

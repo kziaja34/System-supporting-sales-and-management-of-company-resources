@@ -11,7 +11,7 @@ public interface IWarehouseService : IGenericService<ProductStock>
     Task<ReserveResult> ReserveForOrderAsync(int orderId, int? preferredBranchId = null, CancellationToken ct = default);
     Task FulfillReservationsAsync(int orderId, CancellationToken ct = default);
     Task FulfillReservationForBranchAsync(int orderId, int branchId, CancellationToken ct = default);
-    Task ReleaseReservationsForOrderAsync(int orderId, CancellationToken ct = default);
+    Task ReleaseReservationsForOrderAsync(int orderId, bool confirm, CancellationToken ct = default);
 }
 
 public class WarehouseService(AppDbContext context) : GenericService<ProductStock>(context), IWarehouseService
@@ -26,7 +26,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
                         .FirstOrDefaultAsync(o => o.Id == orderId, ct)
                     ?? throw new InvalidOperationException("Order not found.");
 
-        if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Processing)
+        if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Processing || order.Status == OrderStatus.PartiallyFulfilled)
             throw new InvalidOperationException($"Cannot reserve order in status {order.Status}.");
 
 
@@ -101,8 +101,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         foreach (var r in reservations)
         {
             var stock = r.ProductStock;
-
-            // Wydanie: OUT = -Quantity, zdejmujemy i z OnHand, i z Reserved
+            
             stock.Quantity        -= r.Quantity;
             stock.ReservedQuantity -= r.Quantity;
             stock.LastUpdatedAt    = DateTime.UtcNow;
@@ -176,13 +175,16 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         }
 
         var allReservations = await context.StockReservations
-            .Where(r => r.OrderItem.OrderId == orderId)
+            .Where(r => r.OrderItem.OrderId == orderId && r.Status != ReservationStatus.Released)
             .ToListAsync(ct);
         
         if (allReservations.All(r => r.Status == ReservationStatus.Fulfilled))
         {
-            
             order.Status = OrderStatus.Completed;
+        }
+        else if (allReservations.Any(r => r.Status == ReservationStatus.Fulfilled))
+        {
+            order.Status = OrderStatus.PartiallyFulfilled;
         }
         else
         {
@@ -195,7 +197,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
     }
 
 
-    public async Task ReleaseReservationsForOrderAsync(int orderId, CancellationToken ct)
+    public async Task ReleaseReservationsForOrderAsync(int orderId, bool confirm, CancellationToken ct)
     {
         await using var tx = await context.Database.BeginTransactionAsync(ct);
 
@@ -213,18 +215,31 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             throw new ReservationNotFoundException(orderId);
 
 
+        var allReservations = await context.StockReservations
+            .Where(r => r.OrderItem.OrderId == orderId)
+            .ToListAsync(ct);
+
+        var anyFulfilled = allReservations.Any(r => r.Status == ReservationStatus.Fulfilled);
+
+        if (anyFulfilled && !confirm)
+            throw new PartialReleaseConfirmationRequiredException(orderId);
+
         foreach (var r in reservations)
         {
             r.ProductStock.ReservedQuantity -= r.Quantity;
-            r.ProductStock.LastUpdatedAt     = DateTime.UtcNow;
+            r.ProductStock.LastUpdatedAt = DateTime.UtcNow;
 
-            r.Status     = ReservationStatus.Released;
+            r.Status = ReservationStatus.Released;
             r.ReleasedAt = DateTime.UtcNow;
         }
-        
-        order.Status = OrderStatus.Pending;
-        await context.SaveChangesAsync(ct);
 
+        if (anyFulfilled)
+            order.Status = OrderStatus.PartiallyFulfilled;
+        else
+            order.Status = OrderStatus.Pending;
+
+
+        await context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
     }
 

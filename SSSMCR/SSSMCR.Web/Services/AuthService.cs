@@ -36,8 +36,7 @@ public sealed class AuthService(
         }
 
         logger.LogInformation("LoginAsync <- HTTP {Status} ({Code})", res.StatusCode, (int)res.StatusCode);
-
-        // Na czas debugowania rzuć wyjątkiem przy błędzie, żeby mieć pełny stack/diagnozę
+        
         if (!res.IsSuccessStatusCode)
         {
             string body = string.Empty;
@@ -45,8 +44,7 @@ public sealed class AuthService(
             logger.LogWarning("LoginAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
             return false;
         }
-
-        // Spróbuj najpierw tekst – łatwiej zdiagnozować, co przyszło
+        
         string raw = await res.Content.ReadAsStringAsync();
         logger.LogDebug("LoginAsync response body (first 500 chars): {Body}", Truncate(raw, 500));
 
