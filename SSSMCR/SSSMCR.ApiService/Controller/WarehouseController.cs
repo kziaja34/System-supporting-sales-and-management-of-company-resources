@@ -15,7 +15,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
     private readonly IReservationService _reservationSvc = reservationSvc;
 
     [HttpPost("orders/{orderId}/reserve")]
-    [Authorize(Roles = "Manager,Seller")]
+    [Authorize(Roles = "Manager,Seller, Administrator")]
     public async Task<IActionResult> Reserve(int orderId, [FromBody] int? preferredBranchId)
     {
         try
@@ -34,7 +34,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
     }
 
     [HttpPost("orders/{orderId}/fulfill")]
-    [Authorize(Roles = "Manager")]
+    [Authorize(Roles = "Manager, Administrator")]
     public async Task<IActionResult> Fulfill(int orderId)
     {
         try
@@ -57,7 +57,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
     }
 
     [HttpPost("orders/{orderId}/fulfill/{branchId}")]
-    [Authorize(Roles = "Manager,WarehouseWorker")]
+    [Authorize(Roles = "Manager,WarehouseWorker, Administrator")]
     public async Task<IActionResult> FulfillForBranch(int orderId, int branchId)
     {
         try
@@ -80,6 +80,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
     }
 
     [HttpPost("orders/{orderId}/release")]
+    [Authorize(Roles = "Manager, Administrator")]
     public async Task<IActionResult> Release(int orderId, [FromQuery] bool confirm = false)
     {
         try
@@ -107,6 +108,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
 
 
     [HttpGet("reservations")]
+    [Authorize(Roles = "WarehouseWorker, Manager, Administrator")]
     public async Task<IActionResult> GetReservations([FromQuery] int? branchId = null)
     {
         try
@@ -128,6 +130,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
     }
     
     [HttpGet("stocks")]
+    [Authorize(Roles = "Manager, WarehouseWorker, Administrator")]
     public async Task<IActionResult> GetStocks([FromQuery] int? branchId, CancellationToken ct)
     {
         try

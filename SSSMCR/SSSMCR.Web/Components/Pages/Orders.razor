@@ -3,6 +3,8 @@
 @using SSSMCR.Web.Components.Components.Tables
 @rendermode InteractiveServer
 @inject OrdersApiService OrdersService
+@inject NavigationManager Nav
+@inject IAuthService AuthService
 
 <PageTitle>Orders</PageTitle>
 
@@ -11,3 +13,30 @@
 
     <OrdersTable />
 </MudPaper>
+
+@code{
+    [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
+    private string? user_role;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        
+        
+        try
+        {
+            user_role = await LocalStorage.GetItemAsync<string>("user_role");
+            if (!AuthService.PermittedForOrders(user_role))
+            {
+                Nav.NavigateTo("/");
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            
+        }
+        
+        StateHasChanged();
+    }
+
+}

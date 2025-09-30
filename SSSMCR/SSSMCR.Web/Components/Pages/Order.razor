@@ -6,6 +6,8 @@
 @inject BranchesApiService BranchesService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IAuthService AuthService
+@inject NavigationManager Nav
 
 <PageTitle>Order details</PageTitle>
 
@@ -86,7 +88,6 @@
             </FooterContent>
         </MudTable>
         
-        <!-- Reserve products -->
         <MudDivider Class="my-4" />
         <MudText Typo="Typo.h6" Class="mb-2">Reserve products</MudText>
 
@@ -175,14 +176,12 @@
     {
         if (!firstRender) return;
 
-        var token = await LocalStorage.GetItemAsync<string>("jwt");
-        var expires = await LocalStorage.GetItemAsync<DateTime?>("jwt_expires");
-        
         try
         {
-            if (!string.IsNullOrWhiteSpace(token) && expires is not null && expires > DateTime.UtcNow)
+            user_role = await LocalStorage.GetItemAsync<string>("user_role");
+            if (!AuthService.PermittedForOrders(user_role))
             {
-                user_role = await LocalStorage.GetItemAsync<string>("user_role");
+                Nav.NavigateTo("/");
             }
         }
         catch (InvalidOperationException)
@@ -196,7 +195,7 @@
     {
         if (selectedBranchId == null)
         {
-            Snackbar.Add("Choose prefered branch!", Severity.Info);
+            Snackbar.Add("Choose preferred branch!", Severity.Info);
         }
 
         reserveResult = await OrdersService.ReserveOrderAsync(OrderId, selectedBranchId);

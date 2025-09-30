@@ -31,22 +31,8 @@
                 </MudButton>
             </MudListItem>
         }
-
     </MudList>
-    
-    <MudNavGroup Title="Sales" Icon="@Icons.Material.Filled.PointOfSale" Expanded="false">
-        <MudNavLink Href="orders" Icon="@Icons.Material.Filled.Receipt" Match="NavLinkMatch.Prefix">Orders</MudNavLink>
-        <MudNavLink Href="invoices" Icon="@Icons.Material.Filled.ReceiptLong">Invoices</MudNavLink>
-    </MudNavGroup>
-
-    <MudNavGroup Title="Warehouse" Icon="@Icons.Material.Filled.Inventory2">
-        <MudNavLink Href="stocks" Disabled="false">Stock</MudNavLink>
-        <MudNavLink Href="reservations">Reservations</MudNavLink>
-        <MudNavLink Href="suppliers" Disabled="true">Suppliers</MudNavLink>
-    </MudNavGroup>
-    
-    
-        @if (user_role == "Administrator")
+        @if (Auth.PermittedForManagement(user_role))
         {
             <MudNavGroup Title="System management" Icon="@Icons.Material.Filled.Settings" >
                 <MudNavLink Href="/users" Icon="@Icons.Material.Filled.Badge">
@@ -60,13 +46,21 @@
                 </MudNavLink>
             </MudNavGroup>
         }
-        else if (user_role == "Inna")
+        @if (Auth.PermittedForOrders(user_role))
         {
-            
+            <MudNavGroup Title="Sales" Icon="@Icons.Material.Filled.PointOfSale" Expanded="false">
+                <MudNavLink Href="orders" Icon="@Icons.Material.Filled.Receipt" Match="NavLinkMatch.Prefix">Orders</MudNavLink>
+                <MudNavLink Href="invoices" Icon="@Icons.Material.Filled.ReceiptLong">Invoices</MudNavLink>
+            </MudNavGroup>
         }
-        
-    
-
+        @if (Auth.PermittedForWarehouse(user_role))
+        {
+            <MudNavGroup Title="Warehouse" Icon="@Icons.Material.Filled.Inventory2">
+                <MudNavLink Href="stocks" Disabled="false">Stock</MudNavLink>
+                <MudNavLink Href="reservations">Reservations</MudNavLink>
+                <MudNavLink Href="suppliers" Disabled="true">Suppliers</MudNavLink>
+            </MudNavGroup>
+        }
 </MudNavMenu>
 
 

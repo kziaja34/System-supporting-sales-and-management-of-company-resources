@@ -4,6 +4,8 @@
 @inject ReservationsApiService ReservationsApi
 @inject BranchesApiService BranchesApi
 @inject IUserService UserService
+@inject NavigationManager Nav
+@inject IAuthService AuthService
 
 <MudPaper Class="pa-4">
     <MudText Typo="Typo.h5" Class="mb-4">Reservations</MudText>
@@ -70,15 +72,30 @@
 </MudPaper>
 
 @code {
+    [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
     private List<BranchResponse> _branches = new();
     private List<ReservationDto> _reservations = new();
     private int? _selectedBranchId;
     private int _userBranchId;
+    private string? user_role;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            try
+            {
+                user_role = await LocalStorage.GetItemAsync<string>("user_role");
+                if (!AuthService.PermittedForWarehouse(user_role))
+                {
+                    Nav.NavigateTo("/");
+                }
+            }
+            catch (InvalidOperationException)
+            {
+            
+            }
+            
             _branches = await BranchesApi.GetBranchesAsync();
 
             var me = await UserService.GetMeAsync();

@@ -6,6 +6,7 @@
 @inject NavigationManager Nav
 @inject IUserService UserService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IAuthService AuthService
 
 <MudPaper Class="pa-4">
     <MudText Typo="Typo.h5" Class="mb-4">Stocks</MudText>
@@ -37,20 +38,11 @@
         try
         {
             user_role = await LocalStorage.GetItemAsync<string>("user_role");
-            var me = await UserService.GetMeAsync();
-
-
-            if (string.IsNullOrWhiteSpace(user_role))
-            {
-                Nav.NavigateTo("/login");
-                return;
-            }
-            
-            if (user_role != "Manager" && user_role != "WarehouseWorker")
+            if (!AuthService.PermittedForWarehouse(user_role))
             {
                 Nav.NavigateTo("/");
-                return;
             }
+            var me = await UserService.GetMeAsync();
 
             if (user_role == "Manager")
             {

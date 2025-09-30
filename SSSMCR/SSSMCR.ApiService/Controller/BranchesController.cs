@@ -21,6 +21,7 @@ public class BranchesController(IBranchService branchService) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Administrator, Seller, Manager, WarehouseWorker")]
     public async Task<ActionResult<BranchResponse>> GetById(int id)
     {
         var branch = await branchService.GetByIdAsync(id);
