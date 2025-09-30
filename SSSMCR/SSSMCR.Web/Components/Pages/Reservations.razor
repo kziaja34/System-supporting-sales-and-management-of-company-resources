@@ -11,7 +11,8 @@
     <MudText Typo="Typo.h5" Class="mb-4">Reservations</MudText>
 
     <MudStack Row="true" Spacing="2" Class="mb-3">
-        <MudSelect T="int?" Label="Filter by branch" @bind-Value="_selectedBranchId" Style="min-width:250px">
+        <MudSelect T="int?" ToStringFunc="@(id => GetBranchName(id))"
+                   Label="Filter by branch" @bind-Value="_selectedBranchId" Style="min-width:250px">
             <MudSelectItem T="int?" Value="@null">All branches</MudSelectItem>
             @foreach (var b in _branches)
             {
@@ -145,4 +146,14 @@
         "Cancelled" => Color.Error,
         _ => Color.Default
     };
+    
+    private string GetBranchName(int? branchId)
+    {
+        if (branchId == null)
+            return "All branches";
+        
+        var branch = _branches.FirstOrDefault(b => b.Id == branchId);
+        return branch?.Name ?? branchId.ToString();
+    }
+
 }
