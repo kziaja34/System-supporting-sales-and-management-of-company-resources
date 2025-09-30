@@ -98,7 +98,9 @@
                 }
             </MudSelect>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReserveOrder"
-                       Disabled="_order is null || selectedBranchId is null || _order.Status != nameof(OrderStatus.Pending)">
+                       Disabled="_order is null || selectedBranchId is null || 
+                       (_order.Status != nameof(OrderStatus.Pending) && 
+                        _order.Status != nameof(OrderStatus.PartiallyFulfilled))">
                 Reserve
             </MudButton>
             @if (user_role == "Manager")

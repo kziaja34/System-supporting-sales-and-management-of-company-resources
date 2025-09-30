@@ -21,30 +21,49 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         await using var tx = await context.Database.BeginTransactionAsync(ct);
 
         var order = await context.Orders
-                        .Include(o => o.Items)
-                        .ThenInclude(i => i.Product)
-                        .FirstOrDefaultAsync(o => o.Id == orderId, ct)
-                    ?? throw new InvalidOperationException("Order not found.");
+            .Include(o => o.Items)
+            .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(o => o.Id == orderId, ct)
+            ?? throw new InvalidOperationException("Order not found.");
 
-        if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Processing || order.Status == OrderStatus.PartiallyFulfilled)
+        if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled)
             throw new InvalidOperationException($"Cannot reserve order in status {order.Status}.");
+        
+        if (order.Status == OrderStatus.PartiallyFulfilled)
+        {
+            var releasedReservations = await context.StockReservations
+                .Where(r => r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Released)
+                .ToListAsync(ct);
 
+            foreach (var r in releasedReservations)
+            {
+                r.Status = ReservationStatus.Active;
+                r.CreatedAt = DateTime.UtcNow;
+            }
+        }
 
         var perItemReport = new List<ReserveLineResult>();
 
         foreach (var item in order.Items)
         {
             var need = item.Quantity - GetAlreadyReservedQty(item.Id);
-            if (need <= 0) { perItemReport.Add(ReserveLineResult.Done(item.Id, 0, 0)); continue; }
-            
+            if (need <= 0)
+            {
+                perItemReport.Add(ReserveLineResult.Done(item.Id, 0, 0));
+                continue;
+            }
+
             var stocks = await _dbSet
                 .Where(s => s.ProductId == item.ProductId)
-                .Select(s => new {
-                    s, Available = s.Quantity - s.ReservedQuantity,
+                .Select(s => new
+                {
+                    s,
+                    Available = s.Quantity - s.ReservedQuantity,
                     Priority = (preferredBranchId.HasValue && s.BranchId == preferredBranchId.Value) ? 0 : 1
                 })
                 .Where(x => x.Available > 0)
-                .OrderBy(x => x.Priority).ThenByDescending(x => x.Available)
+                .OrderBy(x => x.Priority)
+                .ThenByDescending(x => x.Available)
                 .ToListAsync(ct);
 
             var reservedHere = 0;
@@ -53,31 +72,51 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             {
                 if (need <= 0) break;
                 var take = Math.Min(need, x.Available);
-                
+
                 x.s.ReservedQuantity += take;
                 x.s.LastUpdatedAt = DateTime.UtcNow;
 
-                context.StockReservations.Add(new StockReservation {
-                    OrderItemId = item.Id,
-                    ProductStockId = x.s.Id,
-                    Quantity = take,
-                    Status = ReservationStatus.Active
-                });
+                var existingReservation = await context.StockReservations
+                    .FirstOrDefaultAsync(r =>
+                        r.OrderItemId == item.Id &&
+                        r.ProductStockId == x.s.Id &&
+                        (r.Status == ReservationStatus.Released || r.Status == ReservationStatus.Active), ct);
 
+                if (existingReservation != null)
+                {
+                    existingReservation.Status = ReservationStatus.Active;
+                    existingReservation.Quantity = take;
+                    existingReservation.CreatedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    context.StockReservations.Add(new StockReservation
+                    {
+                        OrderItemId = item.Id,
+                        ProductStockId = x.s.Id,
+                        Quantity = take,
+                        Status = ReservationStatus.Active,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+                
                 reservedHere += take;
                 need -= take;
             }
 
+
             perItemReport.Add(new ReserveLineResult(item.Id, reservedHere, need));
         }
+
         var isPartial = perItemReport.Any(r => r.MissingQuantity > 0);
-        order.Status = isPartial ? OrderStatus.Processing : OrderStatus.Processing;
-        
+        order.Status = OrderStatus.Processing;
+
         await context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
-        
+
         return new ReserveResult(perItemReport, isPartial);
     }
+
 
     public async Task FulfillReservationsAsync(int orderId, CancellationToken ct)
     {
@@ -245,6 +284,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 
     private int GetAlreadyReservedQty(int orderItemId) =>
         context.StockReservations
-            .Where(r => r.OrderItemId == orderItemId && r.Status == ReservationStatus.Active)
+            .Where(r => r.OrderItemId == orderItemId 
+                        && (r.Status == ReservationStatus.Active || r.Status == ReservationStatus.Fulfilled))
             .Sum(r => (int?)r.Quantity) ?? 0;
 }
