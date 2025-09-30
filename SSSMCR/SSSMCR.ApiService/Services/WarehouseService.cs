@@ -12,6 +12,7 @@ public interface IWarehouseService : IGenericService<ProductStock>
     Task FulfillReservationsAsync(int orderId, CancellationToken ct = default);
     Task FulfillReservationForBranchAsync(int orderId, int branchId, CancellationToken ct = default);
     Task ReleaseReservationsForOrderAsync(int orderId, bool confirm, CancellationToken ct = default);
+    Task<List<ProductStockDto>> GetStocksAsync(int? branchId, CancellationToken ct);
 }
 
 public class WarehouseService(AppDbContext context) : GenericService<ProductStock>(context), IWarehouseService
@@ -280,6 +281,37 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 
         await context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
+    }
+    
+    public async Task<List<ProductStockDto>> GetStocksAsync(int? branchId, CancellationToken ct)
+    {
+        var query = _dbSet
+            .Include(ps => ps.Product)
+            .Include(ps => ps.Branch)
+            .AsQueryable();
+
+        if (branchId.HasValue)
+        {
+            var exists = await context.Branches.AnyAsync(b => b.Id == branchId.Value, ct);
+            if (!exists)
+                throw new BranchNotFoundException(branchId.Value);
+            
+            query = query.Where(ps => ps.BranchId == branchId.Value);
+        }
+        
+        return await query
+            .Select(ps => new ProductStockDto
+            {
+                ProductId = ps.ProductId,
+                ProductName = ps.Product.Name,
+                BranchId = ps.BranchId,
+                BranchName = ps.Branch.Name,
+                Quantity = ps.Quantity,
+                ReservedQuantity = ps.ReservedQuantity,
+                CriticalThreshold = ps.CriticalThreshold,
+                LastUpdatedAt = ps.LastUpdatedAt
+            })
+            .ToListAsync(ct);
     }
 
     private int GetAlreadyReservedQty(int orderItemId) =>

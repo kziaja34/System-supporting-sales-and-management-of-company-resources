@@ -1,0 +1,74 @@
+﻿@page "/stocks"
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@using SSSMCR.Web.Components.Components.Tables
+@inject BranchesApiService BranchesApi
+@inject NavigationManager Nav
+@inject IUserService UserService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Stocks</MudText>
+
+    @if (_isManager)
+    {
+        <MudSelect T="int?" Label="Select branch" @bind-Value="_selectedBranchId" Style="min-width:250px" Class="mb-3">
+            <MudSelectItem T="int?" Value="@null">All branches</MudSelectItem>
+            @foreach (var b in _branches)
+            {
+                <MudSelectItem T="int?" Value="@b.Id">@b.Name</MudSelectItem>
+            }
+        </MudSelect>
+    }
+
+    <ProductStocksTable BranchId="_selectedBranchId" />
+</MudPaper>
+
+@code {
+    private List<BranchResponse> _branches = new();
+    private int? _selectedBranchId;
+    private string? user_role;
+    private bool _isManager;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            user_role = await LocalStorage.GetItemAsync<string>("user_role");
+            var me = await UserService.GetMeAsync();
+
+
+            if (string.IsNullOrWhiteSpace(user_role))
+            {
+                Nav.NavigateTo("/login");
+                return;
+            }
+            
+            if (user_role != "Manager" && user_role != "WarehouseWorker")
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+
+            if (user_role == "Manager")
+            {
+                _isManager = true;
+                _branches = await BranchesApi.GetBranchesAsync();
+                _selectedBranchId = null;
+            }
+            else if (user_role == "WarehouseWorker")
+            {
+                _isManager = false;
+
+                _selectedBranchId = me.BranchId;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
+        StateHasChanged();
+    }
+}

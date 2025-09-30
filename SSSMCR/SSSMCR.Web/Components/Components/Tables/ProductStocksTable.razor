@@ -1,0 +1,57 @@
+﻿@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject ProductStocksApiService StocksApi
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h6" Class="mb-2">Product stocks</MudText>
+
+    <MudTable T="ProductStockDto" Items="_stocks" Dense="true" Bordered="true" Hover="true" Striped="true">
+        <HeaderContent>
+            <MudTh>Product</MudTh>
+            <MudTh>Branch</MudTh>
+            <MudTh style="text-align:right">Quantity</MudTh>
+            <MudTh style="text-align:right">Reserved</MudTh>
+            <MudTh style="text-align:right">Available</MudTh>
+            <MudTh style="text-align:right">Critical</MudTh>
+            <MudTh>Last updated</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.ProductName</MudTd>
+            <MudTd>@context.BranchName</MudTd>
+            <MudTd Style="text-align:right">@context.Quantity</MudTd>
+            <MudTd Style="text-align:right">@context.ReservedQuantity</MudTd>
+            <MudTd Style="text-align:right">
+                <MudChip T="string" Color="@(context.Available <= context.CriticalThreshold ? Color.Error : Color.Success)" Variant="Variant.Filled">
+                    @context.Available
+                </MudChip>
+            </MudTd>
+            <MudTd Style="text-align:right">@context.CriticalThreshold</MudTd>
+            <MudTd>@context.LastUpdatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Parameter] public int? BranchId { get; set; }
+    private List<ProductStockDto> _stocks = new();
+    private int? _currentBranchId;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _stocks = await StocksApi.GetStocksAsync(BranchId);
+        _currentBranchId = BranchId;
+        StateHasChanged();
+    }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_currentBranchId != BranchId)
+        {
+            _stocks = await StocksApi.GetStocksAsync(BranchId);
+            _currentBranchId = BranchId;
+            StateHasChanged();
+        }
+    }
+}

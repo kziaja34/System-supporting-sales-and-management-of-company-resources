@@ -188,6 +188,19 @@ public class ReservationDto
     public DateTime CreatedAt { get; set; }
 }
 
+public class ProductStockDto
+{
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public int BranchId { get; set; }
+    public string BranchName { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public int ReservedQuantity { get; set; }
+    public int Available => Quantity - ReservedQuantity;
+    public int CriticalThreshold { get; set; }
+
+    public DateTime LastUpdatedAt { get; set; }
+}
 
 public record ReserveResult(IReadOnlyList<ReserveLineResult> Lines, bool IsPartial);
 public record ReserveLineResult(int OrderItemId, int ReservedQuantity, int MissingQuantity)

@@ -127,6 +127,24 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
         }
     }
     
+    [HttpGet("stocks")]
+    public async Task<IActionResult> GetStocks([FromQuery] int? branchId, CancellationToken ct)
+    {
+        try
+        {
+            var stocks = await svc.GetStocksAsync(branchId, ct);
+            return Ok(stocks);
+        }
+        catch (BranchNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Unexpected error", details = ex.Message });
+        }
+    }
+    
     private static ReservationDto ToResponse(StockReservation r) => new()
     {
         Id = r.Id,
