@@ -43,7 +43,8 @@ public record OrderDetailsDto(
     string Status,
     int Priority,
     IEnumerable<OrderItemDto> Items,
-    decimal TotalPrice
+    decimal TotalPrice,
+    string ShippingAddress
 );
 
 public class PageResponse<T>

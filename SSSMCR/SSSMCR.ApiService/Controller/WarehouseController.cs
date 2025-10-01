@@ -167,7 +167,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
             OrderStatus = r.OrderItem.Order.Status.ToString(),
             Priority = prio.ToString(),
             CustomerName = r.OrderItem.Order.CustomerName,
-            ShippingAddress = "testowy adres"
+            ShippingAddress = r.OrderItem.Order.ShippingAddress
         };
     }
 }

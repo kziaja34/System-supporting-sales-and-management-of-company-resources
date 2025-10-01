@@ -26,4 +26,5 @@ public class Order
     public int Priority { get; set; }
     
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+    public string ShippingAddress { get; set; }
 }
