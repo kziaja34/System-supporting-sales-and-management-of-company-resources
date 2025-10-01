@@ -94,24 +94,19 @@ public static class DbSeeder
             Name = "TechSupplies Ltd",
             ContactEmail = "kontakt@techsupplies.pl",
             Phone = "123-456-789",
-            Address = "Warszawa, ul. Nowa 3"
+            Address = "Warszawa, ul. Nowa 3",
+            Products = new List<SupplierProduct>()
         };
         context.Suppliers.Add(supplier1);
-
-        // SupplyOrder + SupplyItem
-        var supplyOrder1 = new SupplyOrder
+        
+        var supplierProducts = new List<SupplierProduct>
         {
-            Branch = branch1,
-            Supplier = supplier1,
-            Status = Model.Common.SupplyOrderStatus.Ordered
+            new SupplierProduct { Supplier = supplier1, Product = product1, Price = 3300m },
+            new SupplierProduct { Supplier = supplier1, Product = product2, Price = 1100m },
+            new SupplierProduct { Supplier = supplier1, Product = product3, Price = 140m }
         };
-        context.SupplyOrders.Add(supplyOrder1);
-
-        context.SupplyItems.AddRange(
-            new SupplyItem { SupplyOrder = supplyOrder1, Product = product1, Quantity = 5 },
-            new SupplyItem { SupplyOrder = supplyOrder1, Product = product2, Quantity = 3 }
-        );
-
+        context.SupplierProducts.AddRange(supplierProducts);
+        
         // Order + OrderItem
         var order1 = new Order
         {

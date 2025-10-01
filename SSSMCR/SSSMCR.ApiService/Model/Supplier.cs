@@ -22,4 +22,6 @@ public class Supplier
     [Required]
     [MaxLength(500)]
     public string Address { get; set; }
+    
+    public ICollection<SupplierProduct> Products { get; set; } = new List<SupplierProduct>();
 }

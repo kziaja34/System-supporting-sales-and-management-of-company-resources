@@ -12,6 +12,12 @@ public enum OrderStatus
     Completed,
     Cancelled
 }
+public enum SupplyOrderStatus
+{
+    Pending,
+    Received,
+    Cancelled
+}
 
 public enum ReservationStatus { Active, Released, Fulfilled }
 public enum StockMovementType { Inbound, Outbound, Adjustment }
@@ -212,3 +218,37 @@ public record ReserveLineResult(
     int ReservedQuantity,
     int MissingQuantity
 );
+
+public class SupplyOrderCreateDto
+{
+    public int SupplierId { get; set; }
+    public int BranchId { get; set; }
+    public List<SupplyItemCreateDto> Items { get; set; } = new();
+}
+
+public class SupplyItemCreateDto
+{
+    public int ProductId { get; set; }
+    public int Quantity { get; set; }
+}
+
+public class SupplyOrderResponseDto
+{
+    public int Id { get; set; }
+    public string SupplierName { get; set; } = string.Empty;
+    public string BranchName { get; set; } = string.Empty;
+
+    public DateTime OrderedAt { get; set; }
+    public DateTime? ReceivedAt { get; set; }
+    public string Status { get; set; } = string.Empty;
+
+    public List<SupplyItemResponseDto> Items { get; set; } = new();
+}
+
+public class SupplyItemResponseDto
+{
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+}
+

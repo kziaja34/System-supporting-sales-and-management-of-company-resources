@@ -28,12 +28,11 @@ builder.Services.AddScoped<IBranchService, BranchService>();
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
-builder.Services.AddScoped<ISupplyOrderService, SupplyOrderService>();
+builder.Services.AddScoped<ISupplyService, SupplyService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IWarehouseService, WarehouseService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 
