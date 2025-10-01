@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using SSSMCR.ApiService.Model.Common;
+using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Model;
 
@@ -19,6 +19,7 @@ public class SupplyOrder
     public SupplyOrderStatus Status { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime ReceivedAt { get; set; }
     
     public Supplier Supplier { get; set; }
     public Branch Branch { get; set; }
