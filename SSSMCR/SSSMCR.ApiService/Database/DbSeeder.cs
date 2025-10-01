@@ -123,8 +123,7 @@ public static class DbSeeder
         context.Orders.Add(order1);
 
         context.OrderItems.AddRange(
-            new OrderItem { Order = order1, Product = product1, Quantity = 1, UnitPrice = product1.UnitPrice },
-            new OrderItem { Order = order1, Product = product3, Quantity = 2, UnitPrice = product3.UnitPrice }
+            new OrderItem { Order = order1, Product = product1, Quantity = 1, UnitPrice = product1.UnitPrice }
         );
         
         var order2 = new Order

@@ -49,12 +49,10 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         {
             var need = item.Quantity - GetAlreadyReservedQty(item.Id);
             if (need <= 0)
-            {
-                perItemReport.Add(ReserveLineResult.Done(item.Id, 0, 0));
                 continue;
-            }
 
             var stocks = await _dbSet
+                .Include(s => s.Branch)
                 .Where(s => s.ProductId == item.ProductId)
                 .Select(s => new
                 {
@@ -67,46 +65,59 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
                 .ThenByDescending(x => x.Available)
                 .ToListAsync(ct);
 
-            var reservedHere = 0;
-
-            foreach (var x in stocks)
-            {
-                if (need <= 0) break;
-                var take = Math.Min(need, x.Available);
-
-                x.s.ReservedQuantity += take;
-                x.s.LastUpdatedAt = DateTime.UtcNow;
-
-                var existingReservation = await context.StockReservations
-                    .FirstOrDefaultAsync(r =>
-                        r.OrderItemId == item.Id &&
-                        r.ProductStockId == x.s.Id &&
-                        (r.Status == ReservationStatus.Released || r.Status == ReservationStatus.Active), ct);
-
-                if (existingReservation != null)
+                foreach (var x in stocks)
                 {
-                    existingReservation.Status = ReservationStatus.Active;
-                    existingReservation.Quantity = take;
-                    existingReservation.CreatedAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    context.StockReservations.Add(new StockReservation
+                    if (need <= 0) break;
+                    var take = Math.Min(need, x.Available);
+
+                    x.s.ReservedQuantity += take;
+                    x.s.LastUpdatedAt = DateTime.UtcNow;
+
+                    var existingReservation = await context.StockReservations
+                        .FirstOrDefaultAsync(r =>
+                            r.OrderItemId == item.Id &&
+                            r.ProductStockId == x.s.Id &&
+                            (r.Status == ReservationStatus.Released || r.Status == ReservationStatus.Active), ct);
+
+                    if (existingReservation != null)
                     {
-                        OrderItemId = item.Id,
-                        ProductStockId = x.s.Id,
-                        Quantity = take,
-                        Status = ReservationStatus.Active,
-                        CreatedAt = DateTime.UtcNow
-                    });
+                        existingReservation.Status = ReservationStatus.Active;
+                        existingReservation.Quantity = take;
+                        existingReservation.CreatedAt = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        context.StockReservations.Add(new StockReservation
+                        {
+                            OrderItemId = item.Id,
+                            ProductStockId = x.s.Id,
+                            Quantity = take,
+                            Status = ReservationStatus.Active,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    perItemReport.Add(new ReserveLineResult(
+                        item.Id,
+                        item.Product.Name,
+                        x.s.Branch.Name ?? "Unknown",
+                        take,
+                        need - take
+                    ));
+
+                    need -= take;
                 }
                 
-                reservedHere += take;
-                need -= take;
-            }
-
-
-            perItemReport.Add(new ReserveLineResult(item.Id, reservedHere, need));
+                if (need > 0)
+                {
+                    perItemReport.Add(new ReserveLineResult(
+                        item.Id,
+                        item.Product.Name,
+                        "—",
+                        0,
+                        need
+                    ));
+                }
         }
 
         var isPartial = perItemReport.Any(r => r.MissingQuantity > 0);

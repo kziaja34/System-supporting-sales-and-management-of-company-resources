@@ -135,12 +135,14 @@
 
                 <MudTable T="ReserveLineResult" Items="@reserveResult.Lines" Dense="true" Bordered="true" Hover="true" Striped="true" Class="mt-3">
                     <HeaderContent>
-                        <MudTh>Order Item Id</MudTh>
+                        <MudTh>Product</MudTh>
+                        <MudTh>Branch</MudTh>
                         <MudTh style="text-align:right">Reserved</MudTh>
                         <MudTh style="text-align:right">Missing</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@context.OrderItemId</MudTd>
+                        <MudTd>@context.ProductName</MudTd>
+                        <MudTd>@context.BranchName</MudTd>
                         <MudTd Style="text-align:right">@context.ReservedQuantity</MudTd>
                         <MudTd Style="text-align:right">@context.MissingQuantity</MudTd>
                     </RowTemplate>

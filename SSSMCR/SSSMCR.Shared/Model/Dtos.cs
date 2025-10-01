@@ -203,8 +203,11 @@ public class ProductStockDto
 }
 
 public record ReserveResult(IReadOnlyList<ReserveLineResult> Lines, bool IsPartial);
-public record ReserveLineResult(int OrderItemId, int ReservedQuantity, int MissingQuantity)
-{
-    public static ReserveLineResult Done(int orderItemId, int reserved, int missing) =>
-        new(orderItemId, reserved, missing);
-}
+
+public record ReserveLineResult(
+    int OrderItemId,
+    string ProductName,
+    string BranchName,
+    int ReservedQuantity,
+    int MissingQuantity
+);
