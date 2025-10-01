@@ -10,9 +10,11 @@ namespace SSSMCR.ApiService.Controller;
 [ApiController]
 [Route("api/warehouse")]
 [Authorize]
-public class WarehouseController(IWarehouseService svc, IReservationService reservationSvc) : ControllerBase
+public class WarehouseController(IWarehouseService svc, IReservationService reservationSvc, IOrderService orderSvc)
+    : ControllerBase
 {
     private readonly IReservationService _reservationSvc = reservationSvc;
+    private readonly IOrderService _orderSvc = orderSvc;
 
     [HttpPost("orders/{orderId}/reserve")]
     [Authorize(Roles = "Manager,Seller, Administrator")]
@@ -116,7 +118,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
             var query = await _reservationSvc.GetReservations(branchId);
 
             var reservations = query.Select(ToResponse);
-            
+
             return Ok(reservations);
         }
         catch (ReservationNotFoundException ex)
@@ -125,10 +127,10 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Unexpected error", details = ex.Message });       
+            return StatusCode(500, new { message = "Unexpected error", details = ex.Message });
         }
     }
-    
+
     [HttpGet("stocks")]
     [Authorize(Roles = "Manager, WarehouseWorker, Administrator")]
     public async Task<IActionResult> GetStocks([FromQuery] int? branchId, CancellationToken ct)
@@ -147,20 +149,25 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
             return StatusCode(500, new { message = "Unexpected error", details = ex.Message });
         }
     }
-    
-    private static ReservationDto ToResponse(StockReservation r) => new()
+
+    private ReservationDto ToResponse(StockReservation r)
     {
-        Id = r.Id,
-        OrderId = r.OrderItem.OrderId,
-        ProductName = r.ProductStock.Product.Name,
-        BranchId = r.ProductStock.BranchId,
-        BranchName = r.ProductStock.Branch.Name,
-        Quantity = r.Quantity,
-        Status = r.Status.ToString(),
-        CreatedAt = r.CreatedAt,
-        OrderStatus = r.OrderItem.Order.Status.ToString(),
-        Priority = r.OrderItem.Order.Priority.ToString(),
-        CustomerName = r.OrderItem.Order.CustomerName,
-        ShippingAddress = "testowy adres"
-    };
+        var prio = _orderSvc.CalculatePriority(r.OrderItem.Order);
+
+        return new ReservationDto()
+        {
+            Id = r.Id,
+            OrderId = r.OrderItem.OrderId,
+            ProductName = r.ProductStock.Product.Name,
+            BranchId = r.ProductStock.BranchId,
+            BranchName = r.ProductStock.Branch.Name,
+            Quantity = r.Quantity,
+            Status = r.Status.ToString(),
+            CreatedAt = r.CreatedAt,
+            OrderStatus = r.OrderItem.Order.Status.ToString(),
+            Priority = prio.ToString(),
+            CustomerName = r.OrderItem.Order.CustomerName,
+            ShippingAddress = "testowy adres"
+        };
+    }
 }
