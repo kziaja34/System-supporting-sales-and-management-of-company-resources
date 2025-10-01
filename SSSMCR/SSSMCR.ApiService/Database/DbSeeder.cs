@@ -118,7 +118,8 @@ public static class DbSeeder
             CustomerName = "Jan Kowalski",
             CustomerEmail = "jan.kowalski@example.com",
             Status = OrderStatus.Pending,
-            Priority = 1
+            Priority = 1,
+            ShippingAddress = "Warszawa, ul. Nowa 3",
         };
         context.Orders.Add(order1);
 
@@ -132,7 +133,8 @@ public static class DbSeeder
             CustomerEmail = "anna.nowak@example.com",
             Status = OrderStatus.Pending,
             Priority = 2,
-            CreatedAt = DateTime.UtcNow.AddDays(-2)
+            CreatedAt = DateTime.UtcNow.AddDays(-2),
+            ShippingAddress = "Będzin, ul. Norwida 17"
         };
         context.Orders.Add(order2);
 

@@ -31,6 +31,7 @@
             <MudItem xs="12" md="8">
                 <MudStack>
                     <MudText><b>Customer:</b> @_order.CustomerName (@_order.CustomerEmail)</MudText>
+                    <MudText><b>Shipping Address:</b> @_order.ShippingAddress</MudText>
                     <MudText><b>Created at:</b> @_order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudText>
                     <MudText><b>Priority:</b> @_order.Priority</MudText>
                     <MudText><b>Total price:</b> @_order.TotalPrice.ToString("C")</MudText>

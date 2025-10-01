@@ -71,7 +71,8 @@ public class OrderController : ControllerBase
                 UnitPrice: i.UnitPrice,
                 LineTotal: i.TotalPrice
             )),
-            TotalPrice: order.Items.Sum(i => i.TotalPrice)
+            TotalPrice: order.Items.Sum(i => i.TotalPrice),
+            ShippingAddress: order.ShippingAddress
         );
     }
 }
