@@ -18,6 +18,8 @@ public class AppDbContext : DbContext
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<StockReservation> StockReservations => Set<StockReservation>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,7 +52,16 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(oi => oi.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<ProductStock>(eb =>
+        {
+            eb.HasIndex(x => new { x.ProductId, x.BranchId }).IsUnique();
+            eb.ToTable(t => t.HasCheckConstraint(
+                "CK_ProductStock_ReservedRange",
+                "[Quantity] >= 0 AND [ReservedQuantity] >= 0 AND [ReservedQuantity] <= [Quantity]"));
 
+            eb.Property(x => x.RowVersion).IsRowVersion();
+        });
     }
 
 }

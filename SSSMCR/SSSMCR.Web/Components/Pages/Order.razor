@@ -1,8 +1,13 @@
 ﻿@page "/orders/{OrderId:int}"
 @using SSSMCR.Shared.Model
+@using SSSMCR.Web.Components.Components.Dialogs
 @using SSSMCR.Web.Services
 @inject OrdersApiService OrdersService
+@inject BranchesApiService BranchesService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IAuthService AuthService
+@inject NavigationManager Nav
 
 <PageTitle>Order details</PageTitle>
 
@@ -38,19 +43,19 @@
                         @_order.Status
                     </MudChip>
                     
-                    <MudSelect T="OrderStatus" Label="Change status" @bind-Value="_newStatus">
-                        @foreach (var status in Enum.GetValues<OrderStatus>())
-                        {
-                            <MudSelectItem Value="@status">@status</MudSelectItem>
-                        }
-                    </MudSelect>
-                    <MudButton OnClick="UpdateStatus"
-                               Disabled="_order is null"
-                               Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               Class="mt-2">
-                        Update status
-                    </MudButton>
+                    @* <MudSelect T="OrderStatus" Label="Change status" @bind-Value="_newStatus"> *@
+                    @*     @foreach (var status in Enum.GetValues<OrderStatus>()) *@
+                    @*     { *@
+                    @*         <MudSelectItem Value="@status">@status</MudSelectItem> *@
+                    @*     } *@
+                    @* </MudSelect> *@
+                    @* <MudButton OnClick="UpdateStatus" *@
+                    @*            Disabled="_order is null" *@
+                    @*            Variant="Variant.Filled" *@
+                    @*            Color="Color.Primary" *@
+                    @*            Class="mt-2"> *@
+                    @*     Update status *@
+                    @* </MudButton> *@
                 </MudStack>
             </MudItem>
         </MudGrid>
@@ -82,23 +87,163 @@
                 <MudTd Style="text-align:right"><b>@_order.TotalPrice.ToString("C")</b></MudTd>
             </FooterContent>
         </MudTable>
+        
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.h6" Class="mb-2">Reserve products</MudText>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+            <MudSelect T="int?" Label="Select preferred branch" @bind-Value="selectedBranchId" Style="min-width:250px">
+                @foreach (var b in branches)
+                {
+                    <MudSelectItem T="int?" Value="@b.Id">@b.Name (@b.Location)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReserveOrder"
+                       Disabled="_order is null || selectedBranchId is null || 
+                       (_order.Status != nameof(OrderStatus.Pending) && 
+                        _order.Status != nameof(OrderStatus.PartiallyFulfilled))">
+                Reserve
+            </MudButton>
+            @if (user_role == "Manager")
+            {
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Secondary" 
+                           OnClick="ReleaseOrder"
+                           Disabled="_order is null || 
+                            (_order.Status != nameof(OrderStatus.Processing) && 
+                             _order.Status != nameof(OrderStatus.PartiallyFulfilled))">
+                    Release
+                </MudButton>
+            }
+        </MudStack>
+
+        @if (reserveResult != null)
+        {
+            <MudPaper Class="pa-3">
+                @if (reserveResult.IsPartial)
+                {
+                    <MudAlert Severity="Severity.Warning" Elevation="0" Dense="true">
+                        Reservation was only partially successful – some items are missing.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Success" Elevation="0" Dense="true">
+                        Reservation completed successfully.
+                    </MudAlert>
+                }
+
+                <MudTable T="ReserveLineResult" Items="@reserveResult.Lines" Dense="true" Bordered="true" Hover="true" Striped="true" Class="mt-3">
+                    <HeaderContent>
+                        <MudTh>Product</MudTh>
+                        <MudTh>Branch</MudTh>
+                        <MudTh style="text-align:right">Reserved</MudTh>
+                        <MudTh style="text-align:right">Missing</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.ProductName</MudTd>
+                        <MudTd>@context.BranchName</MudTd>
+                        <MudTd Style="text-align:right">@context.ReservedQuantity</MudTd>
+                        <MudTd Style="text-align:right">@context.MissingQuantity</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        }
     }
 </MudPaper>
 
 @code {
+    [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
     [Parameter] public int OrderId { get; set; }
     private OrderDetailsDto? _order;
+    private List<BranchResponse> branches = new();
+    private int? selectedBranchId;
+    private ReserveResult? reserveResult;
     private bool _loading = true;
     private OrderStatus _newStatus;
+    private string? user_role;
 
     protected override async Task OnInitializedAsync()
     {
         _order = await OrdersService.GetOrderByIdAsync(OrderId);
+        branches = await BranchesService.GetBranchesAsync();
         if (_order != null && Enum.TryParse<OrderStatus>(_order.Status, out var parsed))
         {
             _newStatus = parsed;
         }
         _loading = false;
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            user_role = await LocalStorage.GetItemAsync<string>("user_role");
+            if (!AuthService.PermittedForOrders(user_role))
+            {
+                Nav.NavigateTo("/");
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            
+        }
+        StateHasChanged();
+    }
+
+    private async Task ReserveOrder()
+    {
+        if (selectedBranchId == null)
+        {
+            Snackbar.Add("Choose preferred branch!", Severity.Info);
+        }
+
+        reserveResult = await OrdersService.ReserveOrderAsync(OrderId, selectedBranchId);
+        _order = await OrdersService.GetOrderByIdAsync(OrderId);
+        StateHasChanged();
+    }
+    
+    private async Task ReleaseOrder()
+    {
+        if (_order == null)
+            return;
+
+        var result = await OrdersService.ReleaseOrderAsync(_order.Id);
+
+        if (result.Success)
+        {
+            _order = await OrdersService.GetOrderByIdAsync(OrderId);
+            reserveResult = null;
+            StateHasChanged();
+        }
+        else if (result.RequireConfirm)
+        {
+            var parameters = new DialogParameters
+            {
+                { "ContentText", "Part of this order is already fulfilled. Do you really want to release the remaining reservations?" },
+                { "ButtonText", "Yes, release" },
+                { "Color", Color.Error }
+            };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+            var dialog = DialogService.Show<ConfirmDialog>("Confirm release", parameters, options);
+            var dialogResult = await dialog.Result;
+
+            if (!dialogResult.Canceled)
+            {
+                var forceResult = await OrdersService.ReleaseOrderAsync(_order.Id, confirm: true);
+                if (forceResult.Success)
+                {
+                    _order = await OrdersService.GetOrderByIdAsync(OrderId);
+                    reserveResult = null;
+                    Snackbar.Add("Remaining reservations have been released.", Severity.Info);
+                    StateHasChanged();
+                }
+            }
+        }
     }
 
 

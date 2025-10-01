@@ -1,0 +1,159 @@
+﻿@page "/reservations"
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject ReservationsApiService ReservationsApi
+@inject BranchesApiService BranchesApi
+@inject IUserService UserService
+@inject NavigationManager Nav
+@inject IAuthService AuthService
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Reservations</MudText>
+
+    <MudStack Row="true" Spacing="2" Class="mb-3">
+        <MudSelect T="int?" ToStringFunc="@(id => GetBranchName(id))"
+                   Label="Filter by branch" @bind-Value="_selectedBranchId" Style="min-width:250px">
+            <MudSelectItem T="int?" Value="@null">All branches</MudSelectItem>
+            @foreach (var b in _branches)
+            {
+                <MudSelectItem T="int?" Value="@b.Id">@b.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReservations">
+            Refresh
+        </MudButton>
+    </MudStack>
+
+    <MudTable T="ReservationDto" Items="_reservations" Dense="true" Bordered="true" Hover="true" Striped="true">
+        <HeaderContent>
+            <MudTh>Order</MudTh>
+            <MudTh>Priority</MudTh>
+            <MudTh>Customer</MudTh>
+            <MudTh>Address</MudTh>
+            <MudTh>Product</MudTh>
+            <MudTh>Branch</MudTh>
+            <MudTh style="text-align:right">Quantity</MudTh>
+            <MudTh>Reservation Status</MudTh>
+            <MudTh>Order Status</MudTh>
+            <MudTh>Reserved At</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>#@context.OrderId</MudTd>
+            <MudTd>
+                <MudChip T="string" Color="@GetPriorityColor(context.Priority)" Variant="Variant.Filled">
+                    @context.Priority
+                </MudChip>
+            </MudTd>
+            <MudTd>@context.CustomerName</MudTd>
+            <MudTd>@context.ShippingAddress</MudTd>
+            <MudTd>@context.ProductName</MudTd>
+            <MudTd>@context.BranchName</MudTd>
+            <MudTd Style="text-align:right">@context.Quantity</MudTd>
+            <MudTd>
+                <MudChip T="string" Color="@GetReservationStatusColor(context.Status)" Variant="Variant.Filled">
+                    @context.Status
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudChip T="string" Color="@GetOrderStatusColor(context.OrderStatus)" Variant="Variant.Filled">
+                    @context.OrderStatus
+                </MudChip>
+            </MudTd>
+            <MudTd>@context.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                           Disabled="@(_userBranchId != context.BranchId || context.Status != "Active")"
+                           OnClick="() => Fulfill(context.OrderId, context.BranchId)">
+                    Fulfill
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
+    private List<BranchResponse> _branches = new();
+    private List<ReservationDto> _reservations = new();
+    private int? _selectedBranchId;
+    private int _userBranchId;
+    private string? user_role;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                user_role = await LocalStorage.GetItemAsync<string>("user_role");
+                if (!AuthService.PermittedForWarehouse(user_role))
+                {
+                    Nav.NavigateTo("/");
+                }
+            }
+            catch (InvalidOperationException)
+            {
+            
+            }
+            
+            _branches = await BranchesApi.GetBranchesAsync();
+
+            var me = await UserService.GetMeAsync();
+            _userBranchId = me.BranchId;
+
+            _selectedBranchId = _userBranchId;
+            await LoadReservations();
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadReservations()
+    {
+        _reservations = await ReservationsApi.GetReservationsAsync(_selectedBranchId);
+    }
+
+    private async Task Fulfill(int orderId, int branchId)
+    {
+        var ok = await ReservationsApi.FulfillBranchReservationsAsync(orderId, branchId);
+        if (ok)
+            await LoadReservations();
+    }
+    
+    private Color GetPriorityColor(string priority) => priority switch
+    {
+        "High" => Color.Error,
+        "Medium" => Color.Warning,
+        "Low" => Color.Success,
+        _ => Color.Default
+    };
+    
+    private Color GetReservationStatusColor(string status) => status switch
+    {
+        "Active" => Color.Info,
+        "Fulfilled" => Color.Success,
+        "Released" => Color.Default,
+        _ => Color.Default
+    };
+    
+    private Color GetOrderStatusColor(string status) => status switch
+    {
+        "Processing" => Color.Info,
+        "PartiallyFulfilled" => Color.Warning,
+        "Completed" => Color.Success,
+        "Pending" => Color.Default,
+        "Cancelled" => Color.Error,
+        _ => Color.Default
+    };
+    
+    private string GetBranchName(int? branchId)
+    {
+        if (branchId == null)
+            return "All branches";
+        
+        var branch = _branches.FirstOrDefault(b => b.Id == branchId);
+        return branch?.Name ?? branchId.ToString();
+    }
+
+}

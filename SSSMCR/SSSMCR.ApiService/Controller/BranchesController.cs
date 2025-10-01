@@ -9,10 +9,11 @@ namespace SSSMCR.ApiService.Controller;
 
 [ApiController]
 [Route("api/branches")]
-[Authorize(Roles = "Administrator")]
+[Authorize]
 public class BranchesController(IBranchService branchService) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = "Administrator, Seller, Manager, WarehouseWorker")]
     public async Task<IEnumerable<BranchResponse>> GetAll()
     {
         var branches = await branchService.GetAllAsync();
@@ -20,6 +21,7 @@ public class BranchesController(IBranchService branchService) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Administrator, Seller, Manager, WarehouseWorker")]
     public async Task<ActionResult<BranchResponse>> GetById(int id)
     {
         var branch = await branchService.GetByIdAsync(id);
@@ -28,6 +30,7 @@ public class BranchesController(IBranchService branchService) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<BranchResponse>> Create([FromBody] BranchCreateRequest req, CancellationToken ct)
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
@@ -47,6 +50,7 @@ public class BranchesController(IBranchService branchService) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<BranchResponse>> Update(int id, [FromBody] BranchCreateRequest req,
         CancellationToken ct)
     {
@@ -72,6 +76,7 @@ public class BranchesController(IBranchService branchService) : ControllerBase
     }
     
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Delete(int id)
     {
         try

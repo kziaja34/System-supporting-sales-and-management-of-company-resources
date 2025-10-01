@@ -2,6 +2,7 @@
 @using SSSMCR.Web.Components.Components.Tables
 @inherits LayoutComponentBase
 @inject NavigationManager Nav
+@inject IAuthService AuthService
 
 <PageTitle>Branches</PageTitle>
 
@@ -23,7 +24,7 @@
         try
         {
             user_role = await LocalStorage.GetItemAsync<string>("user_role");
-            if (user_role != "Administrator")
+            if (!AuthService.PermittedForManagement(user_role))
             {
                 Nav.NavigateTo("/");
             }

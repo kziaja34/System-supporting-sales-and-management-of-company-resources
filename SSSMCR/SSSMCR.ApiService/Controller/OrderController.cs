@@ -1,20 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Services;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Controller;
 
-public class OrderDto
-{
-    public int Id { get; set; }
-    public string CustomerName { get; set; }
-    public DateTime OrderDate { get; set; }
-    public decimal Total { get; set; }
-}
-
 [ApiController]
 [Route("api/orders")]
+[Authorize (Roles = "Administrator, Seller, Manager")]
 public class OrderController : ControllerBase
 {
     private readonly IOrderService _orderService;

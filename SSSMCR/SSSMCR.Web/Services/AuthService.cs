@@ -10,6 +10,10 @@ public interface IAuthService
     IEnumerable<string> PasswordStrengthOptional(string pw);
     IEnumerable<string> PasswordStrengthRequired(string pw);
     IEnumerable<string> EmailValidation(string pw);
+    
+    bool PermittedForOrders(string? role);
+    bool PermittedForManagement(string? role);
+    bool PermittedForWarehouse(string? role);
 }
 
 public sealed class AuthService(
@@ -36,8 +40,7 @@ public sealed class AuthService(
         }
 
         logger.LogInformation("LoginAsync <- HTTP {Status} ({Code})", res.StatusCode, (int)res.StatusCode);
-
-        // Na czas debugowania rzuć wyjątkiem przy błędzie, żeby mieć pełny stack/diagnozę
+        
         if (!res.IsSuccessStatusCode)
         {
             string body = string.Empty;
@@ -45,8 +48,7 @@ public sealed class AuthService(
             logger.LogWarning("LoginAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
             return false;
         }
-
-        // Spróbuj najpierw tekst – łatwiej zdiagnozować, co przyszło
+        
         string raw = await res.Content.ReadAsStringAsync();
         logger.LogDebug("LoginAsync response body (first 500 chars): {Body}", Truncate(raw, 500));
 
@@ -123,6 +125,24 @@ public sealed class AuthService(
         {
             yield return "Email is not valid!";
         }
+    }
+
+    public bool PermittedForOrders(string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role)) return false;
+        return role.Contains("Manager") || role.Contains("Administrator") || role.Contains("Seller");
+    }
+
+    public bool PermittedForManagement(string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role)) return false;
+        return role.Contains("Administrator");
+    }
+
+    public bool PermittedForWarehouse(string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role)) return false;
+        return role.Contains("WarehouseWorker") || role.Contains("Administrator") || role.Contains("Manager");   
     }
 
     private static string Truncate(string? s, int max)

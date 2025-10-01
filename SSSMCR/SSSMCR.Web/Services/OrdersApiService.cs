@@ -100,4 +100,41 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
         return res.IsSuccessStatusCode;
     }
 
+    public async Task<ReserveResult?> ReserveOrderAsync(int orderId, int? preferredBranchId = null)
+    {
+        var http = _httpFactory.CreateClient("api");
+        await AttachBearerAsync(http);
+
+        var res = await http.PostAsJsonAsync($"/api/warehouse/orders/{orderId}/reserve", preferredBranchId);
+
+        if (!res.IsSuccessStatusCode)
+        {
+            string body = string.Empty;
+            try { body = await res.Content.ReadAsStringAsync(); } catch { }
+            _logger.LogWarning("ReserveOrderAsync failed: {Status} body: {Body}", res.StatusCode, body);
+            return null;
+        }
+
+        return await res.Content.ReadFromJsonAsync<ReserveResult>(
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+
+    public async Task<(bool Success, bool RequireConfirm)> ReleaseOrderAsync(int orderId, bool confirm = false)
+    {
+        var http = _httpFactory.CreateClient("api");
+        await AttachBearerAsync(http);
+
+        var url = $"/api/warehouse/orders/{orderId}/release?confirm={confirm.ToString().ToLower()}";
+        var res = await http.PostAsync(url, null);
+
+        if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            var body = await res.Content.ReadAsStringAsync();
+            if (body.Contains("requireConfirm", StringComparison.OrdinalIgnoreCase))
+                return (false, true);
+        }
+
+        return (res.IsSuccessStatusCode, false);
+    }
+
 }

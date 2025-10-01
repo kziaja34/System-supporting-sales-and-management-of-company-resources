@@ -12,6 +12,7 @@ public interface IOrderService : IGenericService<Order>
     Task<PageResponse<OrderListItemDto>> GetPagedAsync(int page, int size, string sort, string? search = null, CancellationToken ct = default);
     
     Task<bool> UpdateStatusAsync(int id, string newStatus);
+    int CalculatePriority(Order order);
 }
 
 public class OrderService : GenericService<Order>, IOrderService
@@ -115,7 +116,7 @@ public class OrderService : GenericService<Order>, IOrderService
         return true;
     }
     
-    private int CalculatePriority(Order order)
+    public int CalculatePriority(Order order)
     {
         var ageFactor = (DateTime.UtcNow - order.CreatedAt).Days;
         var valueFactor = (int)order.Items.Sum(i => i.TotalPrice) / 100;

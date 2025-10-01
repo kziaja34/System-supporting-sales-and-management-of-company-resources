@@ -17,9 +17,9 @@ public static class DbSeeder
 
         // Roles
         var adminRole = new Role { Name = "Administrator" };
-        var managerRole = new Role { Name = "Kierownik Oddziału" };
-        var sellerRole = new Role { Name = "Handlowiec" };
-        var warehouseRole = new Role { Name = "Magazynier" };
+        var managerRole = new Role { Name = "Manager" };
+        var sellerRole = new Role { Name = "Seller" };
+        var warehouseRole = new Role { Name = "WarehouseWorker" };
         context.Roles.AddRange(adminRole, managerRole, sellerRole, warehouseRole);
 
         // Branches
@@ -42,7 +42,7 @@ public static class DbSeeder
             FirstName = "Anna",
             LastName = "Sprzedawczyni",
             Email = "anna@example.com",
-            PasswordHash = "hashed456",
+            PasswordHash = hasher.Hash("hashed123"),
             Role = sellerRole,
             Branch = branch1
         };
@@ -51,11 +51,29 @@ public static class DbSeeder
             FirstName = "Piotr",
             LastName = "Magazynier",
             Email = "piotr@example.com",
-            PasswordHash = "hashed789",
+            PasswordHash = hasher.Hash("hashed123"),
             Role = warehouseRole,
             Branch = branch2
         };
-        context.Users.AddRange(admin, seller, warehouseman);
+        var manager = new User()
+        {
+            FirstName = "Manager",
+            LastName = "Super",
+            Email = "manager@example.com",
+            PasswordHash = hasher.Hash("hashed123"),
+            Role = managerRole,
+            Branch = branch1
+        };
+        var manager2 = new User()
+        {
+            FirstName = "Manager",
+            LastName = "Super",
+            Email = "manager2@example.com",
+            PasswordHash = hasher.Hash("hashed123"),
+            Role = managerRole,
+            Branch = branch2
+        };
+        context.Users.AddRange(admin, seller, warehouseman, manager, manager2);
 
         // Products
         var product1 = new Product { Name = "Laptop X", Description = "Laptop 15 cali", UnitPrice = 2500m };
@@ -65,9 +83,9 @@ public static class DbSeeder
 
         // ProductStock
         context.ProductStock.AddRange(
-            new ProductStock { Product = product1, Branch = branch1, Quantity = 10, CriticalThreshold = 3 },
-            new ProductStock { Product = product2, Branch = branch1, Quantity = 5, CriticalThreshold = 2 },
-            new ProductStock { Product = product3, Branch = branch2, Quantity = 20, CriticalThreshold = 5 }
+            new ProductStock { Product = product1, Branch = branch1, Quantity = 10, ReservedQuantity = 0, CriticalThreshold = 3 },
+            new ProductStock { Product = product2, Branch = branch1, Quantity = 5, ReservedQuantity = 0, CriticalThreshold = 2 },
+            new ProductStock { Product = product3, Branch = branch2, Quantity = 20, ReservedQuantity = 0, CriticalThreshold = 5 }
         );
 
         // Supplier
@@ -105,15 +123,14 @@ public static class DbSeeder
         context.Orders.Add(order1);
 
         context.OrderItems.AddRange(
-            new OrderItem { Order = order1, Product = product1, Quantity = 1, UnitPrice = product1.UnitPrice },
-            new OrderItem { Order = order1, Product = product3, Quantity = 2, UnitPrice = product3.UnitPrice }
+            new OrderItem { Order = order1, Product = product1, Quantity = 1, UnitPrice = product1.UnitPrice }
         );
         
         var order2 = new Order
         {
             CustomerName = "Anna Nowak",
             CustomerEmail = "anna.nowak@example.com",
-            Status = OrderStatus.Processing,
+            Status = OrderStatus.Pending,
             Priority = 2,
             CreatedAt = DateTime.UtcNow.AddDays(-2)
         };

@@ -17,11 +17,13 @@ public class ProductStock
     public int BranchId { get; set; }
 
     public int Quantity { get; set; }
-
+    public int ReservedQuantity { get; set; }
     public int CriticalThreshold { get; set; }
 
     public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
     
     public Product Product { get; set; }
     public Branch Branch { get; set; }
+    
+    [Timestamp] public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 }

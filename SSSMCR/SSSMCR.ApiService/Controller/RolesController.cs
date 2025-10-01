@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 
 [ApiController]
 [Route("api/roles")]
+[Authorize (Roles = "Administrator")]
 public class RolesController : ControllerBase
 {
     private readonly AppDbContext _db;
