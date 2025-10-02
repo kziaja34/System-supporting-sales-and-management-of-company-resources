@@ -10,6 +10,7 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using SSSMCR.ApiService.Database;
 
 namespace SSSMCR.ApiService.Services
 {
@@ -18,8 +19,17 @@ namespace SSSMCR.ApiService.Services
         Task<PdfDocument> GetInvoice(int orderId);
     }
 
-    public class InvoiceService(IOrderService orderService) : IInvoiceService
+    public class InvoiceService : IInvoiceService
     {
+        public InvoiceService(AppDbContext context, IOrderService orderService)
+        {
+            this.orderService = orderService;
+            this.company = context.Companies.FirstOrDefault() ?? new();
+        }
+        
+        private readonly IOrderService orderService;
+        private readonly Company company = new();
+        
         private static readonly CultureInfo Pl = new("pl-PL");
         private const decimal VatRate = 0.23m;
 
@@ -39,12 +49,15 @@ namespace SSSMCR.ApiService.Services
         {
             var order = await orderService.GetByIdAsync(orderId);
             if (order is null) throw new InvalidOperationException("Order not found.");
+            
+            if (order.Status.ToString() != "Completed")
+                throw new InvalidOperationException("Cannot generate invoice for order in status " + order.Status);
 
             if (Capabilities.Build.IsCoreBuild)
                 GlobalFontSettings.FontResolver = new FailsafeFontResolver();
 
-            document.Info.Title = "Faktura VAT";
-            document.Info.Subject = "Faktura za zakup towaru/usług";
+            document.Info.Title = "VAT Invoice";
+            document.Info.Subject = "Invoice for the purchase of goods/services";
             document.Info.Author = "SSSMCR";
 
             DefineStyles(document);
@@ -60,29 +73,29 @@ namespace SSSMCR.ApiService.Services
             var header = section.Headers.Primary.AddParagraph();
             header.AddFormattedText("SSSMCR", TextFormat.Bold);
             header.AddLineBreak();
-            header.AddText("ul. Przykładowa 1, 00-001 Warszawa | NIP: 123-456-78-90");
+            header.AddText($"{company.Address}, {company.PostalCode} {company.City} | NIP: {company.TaxIdentificationNumber}");
             header.Format.Font.Size = 9;
             header.Format.Alignment = ParagraphAlignment.Left;
 
             // Stopka
             var footer = section.Footers.Primary.AddParagraph();
-            footer.AddText("Strona ");
+            footer.AddText("Page ");
             footer.AddPageField();
-            footer.AddText(" z ");
+            footer.AddText(" out of ");
             footer.AddNumPagesField();
             footer.Format.Alignment = ParagraphAlignment.Center;
             footer.Format.Font.Size = 9;
 
             // Tytuł i meta
-            section.AddParagraph("FAKTURA VAT", "Heading1");
+            section.AddParagraph("VAT Invoice", "Heading1");
 
             var meta = section.AddParagraph();
             meta.Style = "Label";
-            meta.AddFormattedText($"Numer: FV/{order.Id}/{DateTime.Now:yyyy}", TextFormat.Bold);
+            meta.AddFormattedText($"Number: FV/{order.Id}/{DateTime.Now:yyyy}", TextFormat.Bold);
             meta.AddLineBreak();
-            meta.AddText($"Data wystawienia: {DateTime.Now:yyyy-MM-dd}");
+            meta.AddText($"Date of issue: {DateTime.Now:yyyy-MM-dd}");
             meta.AddLineBreak();
-            meta.AddText($"Data sprzedaży: {order.CreatedAt:yyyy-MM-dd}");
+            meta.AddText($"Date of sale: {order.CreatedAt:yyyy-MM-dd}");
 
             section.AddParagraph().AddLineBreak();
 
@@ -102,18 +115,18 @@ namespace SSSMCR.ApiService.Services
 
             var r0 = parties.AddRow();
             r0.Shading.Color = Colors.LightGray;
-            r0.Cells[0].AddParagraph("Sprzedawca").Format.Font.Bold = true;
-            r0.Cells[1].AddParagraph("Nabywca").Format.Font.Bold = true;
+            r0.Cells[0].AddParagraph("Seller").Format.Font.Bold = true;
+            r0.Cells[1].AddParagraph("Buyer").Format.Font.Bold = true;
 
             var r1 = parties.AddRow();
             var pSeller = r1.Cells[0].AddParagraph();
             pSeller.AddFormattedText("SSSMCR", TextFormat.Bold);
             pSeller.AddLineBreak();
-            pSeller.AddText("ul. Przykładowa 1");
+            pSeller.AddText($"{company.Address}");
             pSeller.AddLineBreak();
-            pSeller.AddText("00-001 Warszawa");
+            pSeller.AddText($"{company.PostalCode} {company.City}");
             pSeller.AddLineBreak();
-            pSeller.AddText("NIP: 123-456-78-90");
+            pSeller.AddText($"NIP: {company.TaxIdentificationNumber}");
 
             var pBuyer = r1.Cells[1].AddParagraph();
             pBuyer.AddFormattedText(order.CustomerName ?? "N/A", TextFormat.Bold);
@@ -132,7 +145,7 @@ namespace SSSMCR.ApiService.Services
             items.Format.Font.Size = 9;
 
             items.AddColumn(Unit.FromCentimeter(6.2)); // Nazwa
-            items.AddColumn(Unit.FromCentimeter(1.0)); // Ilość
+            items.AddColumn(Unit.FromCentimeter(2.0)); // Ilość
             items.AddColumn(Unit.FromCentimeter(2.0)); // Cena netto
             items.AddColumn(Unit.FromCentimeter(2.4)); // Wartość netto
             items.AddColumn(Unit.FromCentimeter(1.2)); // VAT %
@@ -144,13 +157,13 @@ namespace SSSMCR.ApiService.Services
             headerRow.HeadingFormat = true;
             headerRow.Format.Font.Bold = true;
             headerRow.VerticalAlignment = VerticalAlignment.Center;
-            headerRow.Cells[0].AddParagraph("Nazwa towaru/usługi");
-            headerRow.Cells[1].AddParagraph("Ilość").Format.Alignment = ParagraphAlignment.Right;
-            headerRow.Cells[2].AddParagraph("Cena netto").Format.Alignment = ParagraphAlignment.Right;
-            headerRow.Cells[3].AddParagraph("Wartość netto").Format.Alignment = ParagraphAlignment.Right;
+            headerRow.Cells[0].AddParagraph("Product/Service Name");
+            headerRow.Cells[1].AddParagraph("Quantity").Format.Alignment = ParagraphAlignment.Right;
+            headerRow.Cells[2].AddParagraph("Net Price").Format.Alignment = ParagraphAlignment.Right;
+            headerRow.Cells[3].AddParagraph("Net Value").Format.Alignment = ParagraphAlignment.Right;
             headerRow.Cells[4].AddParagraph("VAT").Format.Alignment = ParagraphAlignment.Right;
-            headerRow.Cells[5].AddParagraph("Kwota VAT").Format.Alignment = ParagraphAlignment.Right;
-            headerRow.Cells[6].AddParagraph("Wartość brutto").Format.Alignment = ParagraphAlignment.Right;
+            headerRow.Cells[5].AddParagraph("VAT Amount").Format.Alignment = ParagraphAlignment.Right;
+            headerRow.Cells[6].AddParagraph("Gross Value").Format.Alignment = ParagraphAlignment.Right;
 
             foreach (Cell c in headerRow.Cells)
             {
@@ -171,7 +184,7 @@ namespace SSSMCR.ApiService.Services
                 var lineGross = Round(lineNet + vatAmount);
 
                 var row = items.AddRow();
-                row.Cells[0].AddParagraph(item.Product?.Name ?? "Pozycja").Format.Alignment = ParagraphAlignment.Left;
+                row.Cells[0].AddParagraph(item.Product?.Name ?? "Position").Format.Alignment = ParagraphAlignment.Left;
                 row.Cells[1].AddParagraph(qty.ToString()).Format.Alignment = ParagraphAlignment.Right;
                 row.Cells[2].AddParagraph(Money(unitNet)).Format.Alignment = ParagraphAlignment.Right;
                 row.Cells[3].AddParagraph(Money(lineNet)).Format.Alignment = ParagraphAlignment.Right;
@@ -204,27 +217,28 @@ namespace SSSMCR.ApiService.Services
             totals.Format.Alignment = ParagraphAlignment.Right;
 
             var t1 = totals.AddRow();
-            t1.Cells[0].AddParagraph("Suma netto:");
+            t1.Cells[0].AddParagraph("Net Total:");
             t1.Cells[1].AddParagraph(Money(sumNet)).Format.Alignment = ParagraphAlignment.Right;
 
             var t2 = totals.AddRow();
-            t2.Cells[0].AddParagraph("Suma VAT:");
+            t2.Cells[0].AddParagraph("VAT Total:");
             t2.Cells[1].AddParagraph(Money(sumVat)).Format.Alignment = ParagraphAlignment.Right;
 
             var t3 = totals.AddRow();
             t3.Shading.Color = Colors.LightGray;
             t3.Format.Font.Bold = true;
-            t3.Cells[0].AddParagraph("Suma brutto:");
+            t3.Cells[0].AddParagraph("Gross Total:");
             t3.Cells[1].AddParagraph(Money(sumGross)).Format.Alignment = ParagraphAlignment.Right;
+
 
             section.AddParagraph().AddLineBreak();
 
             // Informacje o płatności
             var pay = section.AddParagraph();
             pay.Style = "Label";
-            pay.AddText("Sposób płatności: przelew | Termin płatności: 14 dni");
+            pay.AddText("Payment Method: bank transfer | Payment Terms: 14 days");
             pay.AddLineBreak();
-            pay.AddText("Rachunek: 12 3456 7890 1234 5678 9012 3456 (Bank XYZ)");
+            pay.AddText($"Account: {company.BankAccountNumber}");
         }
 
         private decimal CalculateBrutto(decimal netto)
