@@ -1,26 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SSSMCR.ApiService.Services;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SSSMCR.ApiService.Controller
 {
     [Route("api/invoices")]
     [ApiController]
-    public class InvoiceController : ControllerBase
+    [Authorize]
+    public class InvoiceController(IInvoiceService invoiceService) : ControllerBase
     {
-        private readonly IInvoiceService _invoiceService;
-
-        public InvoiceController(IInvoiceService invoiceService)
-        {
-            _invoiceService = invoiceService;
-        }
-        
         [HttpGet("generate/{orderId}")]
+        [Authorize(Roles = "Administrator, Seller, Manager")]
         public async Task<IActionResult> GenerateInvoice(int orderId)
         {
             try
             {
-                var pdfDocument = await _invoiceService.GetInvoice(orderId);
+                var pdfDocument = await invoiceService.GetInvoice(orderId);
                 
                 MemoryStream stream = new MemoryStream();
                 pdfDocument.Save(stream);
