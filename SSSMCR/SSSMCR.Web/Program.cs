@@ -43,6 +43,7 @@ builder.Services.AddScoped<UsersApiService>();
 builder.Services.AddScoped<OrdersApiService>();
 builder.Services.AddScoped<ReservationsApiService>();
 builder.Services.AddScoped<ProductStocksApiService>();
+builder.Services.AddScoped<InvoiceApiService>();
 builder.AddServiceDefaults();
 
 var app = builder.Build();

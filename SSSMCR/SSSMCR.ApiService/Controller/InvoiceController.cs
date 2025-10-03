@@ -22,8 +22,6 @@ namespace SSSMCR.ApiService.Controller
             {
                 var pdfDocument = await _invoiceService.GetInvoice(orderId);
                 
-                //pdfDocument.Save("Invoice.pdf");
-                
                 MemoryStream stream = new MemoryStream();
                 pdfDocument.Save(stream);
                 
