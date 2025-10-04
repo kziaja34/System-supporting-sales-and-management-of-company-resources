@@ -3,10 +3,8 @@ using SSSMCR.ApiService.Model;
 
 namespace SSSMCR.ApiService.Database;
 
-public class AppDbContext : DbContext
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();

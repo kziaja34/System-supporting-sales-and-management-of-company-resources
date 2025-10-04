@@ -14,24 +14,25 @@ public class BranchService(AppDbContext context) : GenericService<Branch>(contex
     public new async Task<Branch> GetByIdAsync(int id, CancellationToken ct = default)
     {
         return await _dbSet.AsNoTracking()
-            .FirstOrDefaultAsync(b => b.Id == id, ct);
+            .FirstOrDefaultAsync(b => b.Id == id, ct) ?? throw new KeyNotFoundException("Branch not found");
     }
 
     public new async Task<Branch> CreateAsync(Branch branch, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(branch);
+
         var name = branch?.Name?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name is required", nameof(branch.Name));
         
         var exists = await _dbSet.AsNoTracking()
-            .AnyAsync(b => b.Name.ToLower() == name.ToLower(), ct);
+            .AnyAsync(b => b.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase), ct);
         
         if (exists)
             throw new InvalidOperationException("Branch with this name already exists");
-        
-        await _dbSet.AddAsync(branch, ct);
+
+
+        await _dbSet.AddAsync(branch ?? throw new ArgumentNullException(nameof(branch)), ct);
         await _context.SaveChangesAsync(ct);
-        
+
         return await _dbSet
             .FirstAsync(b => b.Id == branch.Id, ct);
     }

@@ -58,7 +58,7 @@ public class UserService(
         => await _dbSet.AsNoTracking()
             .Include(u => u.Role)
             .Include(u => u.Branch)
-            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+            .FirstOrDefaultAsync(u => u.Id == userId, ct) ?? throw new KeyNotFoundException("User not found");
 
     public new async Task<IEnumerable<User>> GetAllAsync(CancellationToken ct = default)
     {

@@ -41,14 +41,15 @@ public class OrderService : GenericService<Order>, IOrderService
             .ToListAsync(ct);
     }
 
-    public new async Task<Order?> GetByIdAsync(int id, CancellationToken ct = default)
+    public new async Task<Order> GetByIdAsync(int id, CancellationToken ct = default)
     {
         var order = await _dbSet
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
             .FirstOrDefaultAsync(o => o.Id == id, ct);
         
-        if (order is null) return null;
+        if (order == null) throw new KeyNotFoundException("Order not found.");
+        
         order.Priority = CalculatePriority(order);
         
         return order;

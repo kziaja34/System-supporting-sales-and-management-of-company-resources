@@ -18,11 +18,11 @@ namespace SSSMCR.ApiService.Controller
             {
                 var pdfDocument = await invoiceService.GetInvoice(orderId);
                 
-                MemoryStream stream = new MemoryStream();
+                var stream = new MemoryStream();
                 pdfDocument.Save(stream);
                 
                 Response.ContentType = "application/pdf";
-                Response.Headers.Add("content-length", stream.Length.ToString());
+                Response.Headers.Append("content-length", stream.Length.ToString());
                 byte[] bytes = stream.ToArray();
                 stream.Close();
                 

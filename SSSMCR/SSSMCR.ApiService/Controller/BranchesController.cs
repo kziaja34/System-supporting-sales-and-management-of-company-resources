@@ -24,9 +24,15 @@ public class BranchesController(IBranchService branchService) : ControllerBase
     [Authorize(Roles = "Administrator, Seller, Manager, WarehouseWorker")]
     public async Task<ActionResult<BranchResponse>> GetById(int id)
     {
-        var branch = await branchService.GetByIdAsync(id);
-        if (branch is null) return NotFound();
-        return Ok(ToResponse(branch));
+        try
+        {
+            var branch = await branchService.GetByIdAsync(id);
+            return Ok(ToResponse(branch));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     [HttpPost]

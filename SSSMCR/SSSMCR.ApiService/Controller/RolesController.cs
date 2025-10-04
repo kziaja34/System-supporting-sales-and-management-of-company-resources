@@ -3,17 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 
+namespace SSSMCR.ApiService.Controller;
+
 [ApiController]
 [Route("api/roles")]
 [Authorize (Roles = "Administrator")]
-public class RolesController : ControllerBase
+public class RolesController(AppDbContext db) : ControllerBase
 {
-    private readonly AppDbContext _db;
-    public RolesController(AppDbContext db) => _db = db;
-
     [HttpGet]
     public async Task<IEnumerable<object>> GetAll()
-        => await _db.Roles
+        => await db.Roles
             .Select(r => new { r.Id, r.Name })
             .ToListAsync();
 }

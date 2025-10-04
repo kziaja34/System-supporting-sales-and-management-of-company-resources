@@ -165,8 +165,9 @@ namespace SSSMCR.ApiService.Services
             headerRow.Cells[5].AddParagraph("VAT Amount").Format.Alignment = ParagraphAlignment.Right;
             headerRow.Cells[6].AddParagraph("Gross Value").Format.Alignment = ParagraphAlignment.Right;
 
-            foreach (Cell c in headerRow.Cells)
+            foreach (var o in headerRow.Cells)
             {
+                var c = (Cell)o!;
                 c.Format.Font.Size = 9;
                 c.Format.SpaceBefore = 1;
                 c.Format.SpaceAfter = 1;
@@ -249,14 +250,20 @@ namespace SSSMCR.ApiService.Services
         private void DefineStyles(Document document)
         {
             var style = document.Styles["Normal"];
-            style.Font.Name = "Segoe UI";
-            style.Font.Size = 10;
+            if (style != null)
+            {
+                style.Font.Name = "Segoe UI";
+                style.Font.Size = 10;
+            }
 
             var h1 = document.Styles["Heading1"];
-            h1.Font.Name = "Segoe UI";
-            h1.Font.Size = 16;
-            h1.Font.Bold = true;
-            h1.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            if (h1 != null)
+            {
+                h1.Font.Name = "Segoe UI";
+                h1.Font.Size = 16;
+                h1.Font.Bold = true;
+                h1.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            }
 
             var label = document.Styles.AddStyle("Label", "Normal");
             label.Font.Size = 10;

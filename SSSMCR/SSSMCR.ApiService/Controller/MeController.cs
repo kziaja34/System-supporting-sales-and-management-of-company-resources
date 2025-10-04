@@ -15,40 +15,52 @@ public sealed class MeController(IUserService users) : ControllerBase
     [HttpGet("data")]
     public async Task<ActionResult<UserResponse>> GetMe(CancellationToken ct)
     {
-        var u = await users.GetByIdAsync(CurrentUserId, ct);
-        
-        if (u is null) return NotFound();
-
-        return Ok(new UserResponse()
+        try
         {
-            Id = u.Id,
-            Email = u.Email,
-            FirstName = u.FirstName,
-            LastName = u.LastName,
-            RoleId = u.RoleId,
-            RoleName = u.Role.Name,
-            BranchId = u.BranchId ?? 0,
-            BranchName = u.Branch.Name
-        });
+            var u = await users.GetByIdAsync(CurrentUserId, ct);
+
+
+
+            return Ok(new UserResponse()
+            {
+                Id = u.Id,
+                Email = u.Email,
+                FirstName = u.FirstName,
+                LastName = u.LastName,
+                RoleId = u.RoleId,
+                RoleName = u.Role.Name,
+                BranchId = u.BranchId ?? 0,
+                BranchName = u.Branch.Name
+            });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     [HttpPut]
     public async Task<IActionResult> UpdateMe([FromBody] UpdateMeRequest req, CancellationToken ct)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return ValidationProblem(ModelState);
-        }
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
         
-        var user = await users.GetByIdAsync(CurrentUserId, ct);
+            var user = await users.GetByIdAsync(CurrentUserId, ct);
+            
+            user.FirstName = req.FirstName;
+            user.LastName  = req.LastName;
 
-        if (user is null) return NotFound();
-
-        user.FirstName = req.FirstName;
-        user.LastName  = req.LastName;
-
-        await users.UpdateProfileAsync(user.Id, user, ct);
-        return NoContent();
+            await users.UpdateProfileAsync(user.Id, user, ct);
+            return NoContent();
+        }
+        catch(KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
 

@@ -9,15 +9,8 @@ namespace SSSMCR.ApiService.Controller;
 [ApiController]
 [Route("api/orders")]
 [Authorize (Roles = "Administrator, Seller, Manager")]
-public class OrderController : ControllerBase
+public class OrderController(IOrderService orderService) : ControllerBase
 {
-    private readonly IOrderService _orderService;
-
-    public OrderController(IOrderService orderService)
-    {
-        _orderService = orderService;
-    }
-
     [HttpGet]
     public async Task<ActionResult<PageResponse<OrderListItemDto>>> GetOrders(
         [FromQuery] int page = 0,
@@ -25,17 +18,23 @@ public class OrderController : ControllerBase
         [FromQuery] string sort = "priority,desc",
         [FromQuery] string? search = null)
     {
-        var result = await _orderService.GetPagedAsync(page, size, sort, search);
+        var result = await orderService.GetPagedAsync(page, size, sort, search);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<OrderDetailsDto>> GetOrder(int id)
     {
-        var order = await _orderService.GetByIdAsync(id);
-        if (order == null) return NotFound();
+        try
+        {
+            var order = await orderService.GetByIdAsync(id);
 
-        return Ok(ToDetailsDto(order));
+            return Ok(ToDetailsDto(order));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
     
     [HttpPut("{id}/status")]
@@ -43,7 +42,7 @@ public class OrderController : ControllerBase
     {
         try
         {
-            var success = await _orderService.UpdateStatusAsync(id, newStatus);
+            var success = await orderService.UpdateStatusAsync(id, newStatus);
             if (!success) return NotFound();
 
             return NoContent();

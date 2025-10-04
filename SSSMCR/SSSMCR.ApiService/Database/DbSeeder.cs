@@ -6,14 +6,14 @@ namespace SSSMCR.ApiService.Database;
 
 public static class DbSeeder
 {
-    public static async Task Seed(AppDbContext context, IServiceProvider services)
+    public static Task Seed(AppDbContext context, IServiceProvider services)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         
         // Company
-        if (context.Companies.Any()) return; // seed only once
+        if (context.Companies.Any()) return Task.CompletedTask;
 
         var company = new Company
         {
@@ -28,7 +28,7 @@ public static class DbSeeder
         };
         context.Companies.Add(company);
         
-        if (context.Roles.Any()) return; // seed only once
+        if (context.Roles.Any()) return Task.CompletedTask;
 
         // Roles
         var adminRole = new Role { Name = "Administrator" };
@@ -159,5 +159,6 @@ public static class DbSeeder
         );
 
         context.SaveChanges();
+        return Task.CompletedTask;
     }
 }

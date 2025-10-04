@@ -19,9 +19,9 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 {
     public async Task<ReserveResult> ReserveForOrderAsync(int orderId, int? preferredBranchId, CancellationToken ct)
     {
-        await using var tx = await context.Database.BeginTransactionAsync(ct);
+        await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
-        var order = await context.Orders
+        var order = await _context.Orders
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
             .FirstOrDefaultAsync(o => o.Id == orderId, ct)
@@ -32,7 +32,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         
         if (order.Status == OrderStatus.PartiallyFulfilled)
         {
-            var releasedReservations = await context.StockReservations
+            var releasedReservations = await _context.StockReservations
                 .Where(r => r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Released)
                 .ToListAsync(ct);
 
@@ -73,7 +73,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
                     x.s.ReservedQuantity += take;
                     x.s.LastUpdatedAt = DateTime.UtcNow;
 
-                    var existingReservation = await context.StockReservations
+                    var existingReservation = await _context.StockReservations
                         .FirstOrDefaultAsync(r =>
                             r.OrderItemId == item.Id &&
                             r.ProductStockId == x.s.Id &&
@@ -87,7 +87,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
                     }
                     else
                     {
-                        context.StockReservations.Add(new StockReservation
+                        _context.StockReservations.Add(new StockReservation
                         {
                             OrderItemId = item.Id,
                             ProductStockId = x.s.Id,
@@ -123,7 +123,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         var isPartial = perItemReport.Any(r => r.MissingQuantity > 0);
         order.Status = OrderStatus.Processing;
 
-        await context.SaveChangesAsync(ct);
+        await _context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
         return new ReserveResult(perItemReport, isPartial);
@@ -132,14 +132,14 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 
     public async Task FulfillReservationsAsync(int orderId, CancellationToken ct)
     {
-        await using var tx = await context.Database.BeginTransactionAsync(ct);
+        await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
-        var order = await context.Orders.FindAsync(orderId, ct);
+        var order = await _context.Orders.FindAsync(orderId, ct);
         if (order == null) throw new InvalidOperationException("Order not found.");
         if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Pending)
             throw new InvalidOperationException("You can only fulfill processing orders.");
 
-        var reservations = await context.StockReservations
+        var reservations = await _context.StockReservations
             .Include(r => r.ProductStock)
             .Include(r => r.OrderItem)
             .Where(r => r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Active)
@@ -157,7 +157,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             stock.ReservedQuantity -= r.Quantity;
             stock.LastUpdatedAt    = DateTime.UtcNow;
 
-            context.StockMovements.Add(new StockMovement {
+            _context.StockMovements.Add(new StockMovement {
                 ProductStockId = stock.Id,
                 QuantityDelta  = -r.Quantity,
                 Type           = StockMovementType.Outbound,
@@ -169,7 +169,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             r.FulfilledAt = DateTime.UtcNow;
         }
         
-        var allReservations = await context.StockReservations
+        var allReservations = await _context.StockReservations
             .Where(r => r.OrderItem.OrderId == orderId)
             .ToListAsync(ct);
 
@@ -178,21 +178,21 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             order.Status = OrderStatus.Completed;
         }
 
-        await context.SaveChangesAsync(ct);
+        await _context.SaveChangesAsync(ct);
         
         await tx.CommitAsync(ct);
     }
     
     public async Task FulfillReservationForBranchAsync(int orderId, int branchId, CancellationToken ct)
     {
-        await using var tx = await context.Database.BeginTransactionAsync(ct);
+        await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
-        var order = await context.Orders.FindAsync(orderId, ct);
+        var order = await _context.Orders.FindAsync(orderId, ct);
         if (order == null) throw new InvalidOperationException("Order not found.");
         if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Pending)
             throw new InvalidOperationException("You can only fulfill processing orders.");
 
-        var reservations = await context.StockReservations
+        var reservations = await _context.StockReservations
             .Include(r => r.ProductStock)
             .Include(r => r.OrderItem)
             .Where(r => r.OrderItem.OrderId == orderId 
@@ -212,7 +212,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             stock.ReservedQuantity -= r.Quantity;
             stock.LastUpdatedAt    = DateTime.UtcNow;
 
-            context.StockMovements.Add(new StockMovement
+            _context.StockMovements.Add(new StockMovement
             {
                 ProductStockId = stock.Id,
                 QuantityDelta  = -r.Quantity,
@@ -225,7 +225,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             r.FulfilledAt = DateTime.UtcNow;
         }
 
-        var allReservations = await context.StockReservations
+        var allReservations = await _context.StockReservations
             .Where(r => r.OrderItem.OrderId == orderId && r.Status != ReservationStatus.Released)
             .ToListAsync(ct);
         
@@ -242,7 +242,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             order.Status = OrderStatus.Processing;
         }
         
-        await context.SaveChangesAsync(ct);
+        await _context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         
     }
@@ -250,14 +250,14 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 
     public async Task ReleaseReservationsForOrderAsync(int orderId, bool confirm, CancellationToken ct)
     {
-        await using var tx = await context.Database.BeginTransactionAsync(ct);
+        await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
-        var order = await context.Orders.FindAsync(orderId, ct);
+        var order = await _context.Orders.FindAsync(orderId, ct);
         if (order == null) throw new InvalidOperationException("Order not found.");
         if (order.Status == OrderStatus.Completed)
             throw new InvalidOperationException("Cannot release a completed order.");
 
-        var reservations = await context.StockReservations
+        var reservations = await _context.StockReservations
             .Include(r => r.ProductStock)
             .Where(r => r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Active)
             .ToListAsync(ct);
@@ -266,7 +266,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             throw new ReservationNotFoundException(orderId);
 
 
-        var allReservations = await context.StockReservations
+        var allReservations = await _context.StockReservations
             .Where(r => r.OrderItem.OrderId == orderId)
             .ToListAsync(ct);
 
@@ -290,7 +290,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             order.Status = OrderStatus.Pending;
 
 
-        await context.SaveChangesAsync(ct);
+        await _context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
     }
     
@@ -303,7 +303,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 
         if (branchId.HasValue)
         {
-            var exists = await context.Branches.AnyAsync(b => b.Id == branchId.Value, ct);
+            var exists = await _context.Branches.AnyAsync(b => b.Id == branchId.Value, ct);
             if (!exists)
                 throw new BranchNotFoundException(branchId.Value);
             
@@ -326,7 +326,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
     }
 
     private int GetAlreadyReservedQty(int orderItemId) =>
-        context.StockReservations
+        _context.StockReservations
             .Where(r => r.OrderItemId == orderItemId 
                         && (r.Status == ReservationStatus.Active || r.Status == ReservationStatus.Fulfilled))
             .Sum(r => (int?)r.Quantity) ?? 0;

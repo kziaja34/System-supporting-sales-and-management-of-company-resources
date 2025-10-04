@@ -10,7 +10,7 @@ namespace SSSMCR.ApiService.Controller;
 [ApiController]
 [Route("api/users")]
 [Authorize(Roles = "Administrator")]
-public class UsersController(IUserService userService, IPasswordHasher hasher, IRoleService roleService, IBranchService branchService) : ControllerBase
+public class UsersController(IUserService userService, IPasswordHasher hasher) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserResponse>>> GetAll(CancellationToken ct)
@@ -22,9 +22,15 @@ public class UsersController(IUserService userService, IPasswordHasher hasher, I
     [HttpGet("{id:int}")]
     public async Task<ActionResult<UserResponse>> GetById(int id, CancellationToken ct)
     {
-        var user = await userService.GetByIdAsync(id, ct);
-        if (user is null) return NotFound();
-        return Ok(ToResponse(user));
+        try
+        {
+            var user = await userService.GetByIdAsync(id, ct);
+            return Ok(ToResponse(user));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
     
     [HttpPost]

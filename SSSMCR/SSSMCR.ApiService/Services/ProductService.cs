@@ -15,9 +15,9 @@ public class ProductService(
 {
     public new async Task<Product> CreateAsync(Product product, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(product);
+
         var name = product?.Name?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name is required", nameof(product.Name));
         
         var exists = await _dbSet.AsNoTracking()
             .AnyAsync(p => p.Name.ToLower() == name.ToLower(), ct);
@@ -25,7 +25,7 @@ public class ProductService(
         if (exists)
             throw new InvalidOperationException("Product with this name already exists");
         
-        await _dbSet.AddAsync(product, ct);
+        await _dbSet.AddAsync(product ?? throw new ArgumentNullException(nameof(product)), ct);
         await _context.SaveChangesAsync(ct);
         
         return await _dbSet.FirstAsync(p => p.Id == product.Id, ct);
