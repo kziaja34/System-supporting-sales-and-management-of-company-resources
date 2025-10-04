@@ -10,7 +10,6 @@ namespace SSSMCR.ApiService.Controller;
 [ApiController]
 [Route("api/warehouse")]
 [Authorize]
-[Authorize(Roles = "Manager, Administrator")]
 public class WarehouseController(IWarehouseService svc, IReservationService reservationSvc, IOrderService orderSvc)
     : ControllerBase
 {
@@ -152,6 +151,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
     }
     
     [HttpPost("stocks/recalculate-thresholds")]
+    [Authorize(Roles = "Manager, WarehouseWorker, Administrator")]
     public async Task<IActionResult> RecalculateThresholds(CancellationToken ct)
     {
         try

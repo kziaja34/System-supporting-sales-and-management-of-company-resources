@@ -43,20 +43,6 @@
                     <MudChip T="string" Variant="Variant.Filled" Color="@GetStatusColor(_order.Status)">
                         @_order.Status
                     </MudChip>
-                    
-                    @* <MudSelect T="OrderStatus" Label="Change status" @bind-Value="_newStatus"> *@
-                    @*     @foreach (var status in Enum.GetValues<OrderStatus>()) *@
-                    @*     { *@
-                    @*         <MudSelectItem Value="@status">@status</MudSelectItem> *@
-                    @*     } *@
-                    @* </MudSelect> *@
-                    @* <MudButton OnClick="UpdateStatus" *@
-                    @*            Disabled="_order is null" *@
-                    @*            Variant="Variant.Filled" *@
-                    @*            Color="Color.Primary" *@
-                    @*            Class="mt-2"> *@
-                    @*     Update status *@
-                    @* </MudButton> *@
                 </MudStack>
             </MudItem>
         </MudGrid>
