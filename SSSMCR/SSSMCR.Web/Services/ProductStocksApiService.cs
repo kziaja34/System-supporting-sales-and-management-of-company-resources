@@ -1,4 +1,5 @@
-﻿using Blazored.LocalStorage;
+﻿using System.Text.Json;
+using Blazored.LocalStorage;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.Web.Services;
@@ -9,6 +10,23 @@ public class ProductStocksApiService(IHttpClientFactory httpFactory, ILocalStora
     private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<ProductStocksApiService> _logger = logger;
     
+    public async Task<string> RecalculateThresholdsAsync()
+    {
+        var http = _httpFactory.CreateClient("api");
+        await AttachBearerAsync(http);
+
+        var url = "api/warehouse/stocks/recalculate-thresholds";
+        var res = await http.PostAsync(url, null);
+
+        if (!res.IsSuccessStatusCode)
+            throw new Exception($"Error recalculating thresholds: {res.StatusCode}");
+
+        var json = await res.Content.ReadAsStringAsync();
+        var doc = JsonDocument.Parse(json);
+        return doc.RootElement.GetProperty("message").GetString() ?? "Thresholds recalculated.";
+    }
+
+
     public async Task<List<ProductStockDto>> GetStocksAsync(int? branchId = null)
     {
         var http = _httpFactory.CreateClient("api");

@@ -1,10 +1,20 @@
 ﻿@using SSSMCR.Shared.Model
 @using SSSMCR.Web.Services
 @inject ProductStocksApiService StocksApi
+@inject ISnackbar Snackbar
 
 <MudPaper Class="pa-4">
     <MudText Typo="Typo.h6" Class="mb-2">Product stocks</MudText>
 
+    <MudStack Row="true" Spacing="2" Class="mb-3">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshStocks">
+            Refresh
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RecalculateThresholds">
+            Recalculate thresholds
+        </MudButton>
+    </MudStack>
+    
     <MudTable T="ProductStockDto" Items="_stocks" Dense="true" Bordered="true" Hover="true" Striped="true">
         <HeaderContent>
             <MudTh>Product</MudTh>
@@ -54,4 +64,25 @@
             StateHasChanged();
         }
     }
+    
+    private async Task RecalculateThresholds()
+    {
+        try
+        {
+            var message = await StocksApi.RecalculateThresholdsAsync();
+            Snackbar.Add(message, Severity.Success);
+            await RefreshStocks();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to recalculate thresholds: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RefreshStocks()
+    {
+        _stocks = await StocksApi.GetStocksAsync(BranchId);
+        StateHasChanged();
+    }
+
 }

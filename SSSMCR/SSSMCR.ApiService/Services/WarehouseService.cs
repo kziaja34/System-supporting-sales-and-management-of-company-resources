@@ -13,6 +13,8 @@ public interface IWarehouseService : IGenericService<ProductStock>
     Task FulfillReservationForBranchAsync(int orderId, int branchId, CancellationToken ct = default);
     Task ReleaseReservationsForOrderAsync(int orderId, bool confirm, CancellationToken ct = default);
     Task<List<ProductStockDto>> GetStocksAsync(int? branchId, CancellationToken ct);
+
+    Task UpdateDynamicCriticalThresholdsAsync(CancellationToken ct = default);
 }
 
 public class WarehouseService(AppDbContext context) : GenericService<ProductStock>(context), IWarehouseService
@@ -324,6 +326,41 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             })
             .ToListAsync(ct);
     }
+    
+    public async Task UpdateDynamicCriticalThresholdsAsync(CancellationToken ct = default)
+    {
+        var now = DateTime.UtcNow;
+        var monthAgo = now.AddDays(-30);
+
+        var stocks = await context.ProductStock
+            .Include(s => s.Product)
+            .Include(s => s.Branch)
+            .ToListAsync(ct);
+
+        foreach (var stock in stocks)
+        {
+            var movements = await context.StockMovements
+                .Where(m => m.ProductStockId == stock.Id &&
+                            m.Type == StockMovementType.Outbound &&
+                            m.CreatedAt >= monthAgo)
+                .ToListAsync(ct);
+
+            var avgDailyOrders = movements
+                .GroupBy(m => m.CreatedAt.Date)
+                .Select(g => g.Sum(m => Math.Abs(m.QuantityDelta)))
+                .DefaultIfEmpty(0)
+                .Average();
+
+            var dynamicPart = (int)Math.Ceiling(avgDailyOrders * 2);
+
+            stock.CriticalThreshold = stock.Product.BaseCriticalThreshold + dynamicPart;
+            stock.LastUpdatedAt = now;
+        }
+
+        await context.SaveChangesAsync(ct);
+    }
+
+
 
     private int GetAlreadyReservedQty(int orderItemId) =>
         _context.StockReservations

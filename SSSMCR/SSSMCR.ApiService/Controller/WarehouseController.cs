@@ -10,6 +10,7 @@ namespace SSSMCR.ApiService.Controller;
 [ApiController]
 [Route("api/warehouse")]
 [Authorize]
+[Authorize(Roles = "Manager, Administrator")]
 public class WarehouseController(IWarehouseService svc, IReservationService reservationSvc, IOrderService orderSvc)
     : ControllerBase
 {
@@ -143,6 +144,20 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
         catch (BranchNotFoundException ex)
         {
             return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Unexpected error", details = ex.Message });
+        }
+    }
+    
+    [HttpPost("stocks/recalculate-thresholds")]
+    public async Task<IActionResult> RecalculateThresholds(CancellationToken ct)
+    {
+        try
+        {
+            await svc.UpdateDynamicCriticalThresholdsAsync(ct);
+            return Ok(new { message = "Critical thresholds recalculated successfully." });
         }
         catch (Exception ex)
         {

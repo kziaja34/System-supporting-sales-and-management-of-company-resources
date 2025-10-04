@@ -19,6 +19,8 @@ public class Product
     [Required]
     [Column(TypeName = "decimal(18,2)")]
     public decimal UnitPrice { get; set; }
+    
+    public int BaseCriticalThreshold { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

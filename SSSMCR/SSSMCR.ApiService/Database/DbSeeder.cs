@@ -91,9 +91,9 @@ public static class DbSeeder
         context.Users.AddRange(admin, seller, warehouseman, manager, manager2);
 
         // Products
-        var product1 = new Product { Name = "Laptop X", Description = "Laptop 15 cali", UnitPrice = 2500m };
-        var product2 = new Product { Name = "Monitor Y", Description = "Monitor 24 cale", UnitPrice = 800m };
-        var product3 = new Product { Name = "Mysz Z", Description = "Mysz bezprzewodowa", UnitPrice = 120m };
+        var product1 = new Product { Name = "Laptop X", Description = "Laptop 15 cali", UnitPrice = 2500m, BaseCriticalThreshold = 3 };
+        var product2 = new Product { Name = "Monitor Y", Description = "Monitor 24 cale", UnitPrice = 800m, BaseCriticalThreshold = 5 };
+        var product3 = new Product { Name = "Mysz Z", Description = "Mysz bezprzewodowa", UnitPrice = 120m, BaseCriticalThreshold = 10 };
         context.Products.AddRange(product1, product2, product3);
 
         // ProductStock
