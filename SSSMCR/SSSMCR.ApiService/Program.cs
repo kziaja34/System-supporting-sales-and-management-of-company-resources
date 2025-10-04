@@ -27,13 +27,8 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IBranchService, BranchService>();
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-<<<<<<< HEAD
-builder.Services.AddScoped<ISupplyOrderService, SupplyOrderService>();
-=======
-builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ISupplyService, SupplyService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
->>>>>>> origin/sssmcr_17
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();

@@ -9,15 +9,11 @@ public interface ISupplyService : IGenericService<SupplyOrder>
 {
     Task<SupplyOrder> CreateOrderAsync(int supplierId, int branchId, List<(int productId, int quantity)> items, CancellationToken ct);
     Task<List<SupplyOrder>> GetOrdersAsync(CancellationToken ct);
-    Task<SupplyOrder?> GetOrderByIdAsync(int orderId, CancellationToken ct);
+    Task<SupplyOrder> GetOrderByIdAsync(int orderId, CancellationToken ct);
     Task ReceiveOrderAsync(int orderId, CancellationToken ct);
 }
 
-public class SupplyService(
-        AppDbContext context,
-        IPasswordHasher hasher,
-        IRoleService roleService,
-        IBranchService branchService)
+public class SupplyService(AppDbContext context)
     : GenericService<SupplyOrder>(context), ISupplyService
 {
     
@@ -70,14 +66,14 @@ public class SupplyService(
             .ToListAsync(ct);
     }
 
-    public async Task<SupplyOrder?> GetOrderByIdAsync(int orderId, CancellationToken ct)
+    public async Task<SupplyOrder> GetOrderByIdAsync(int orderId, CancellationToken ct)
     {
         return await _context.SupplyOrders
             .Include(o => o.Supplier)
             .Include(o => o.Branch)
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
-            .FirstOrDefaultAsync(o => o.Id == orderId, ct);
+            .FirstOrDefaultAsync(o => o.Id == orderId, ct) ?? throw new KeyNotFoundException("Supply order not found");
     }
 
     public async Task ReceiveOrderAsync(int orderId, CancellationToken ct)

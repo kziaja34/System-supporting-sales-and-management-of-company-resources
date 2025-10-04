@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Services;
 using SSSMCR.Shared.Model;
@@ -7,28 +8,28 @@ namespace SSSMCR.ApiService.Controller;
 
 [ApiController]
 [Route("api/supply")]
-public class SupplyController : ControllerBase
+[Authorize (Roles = "Administrator, WarehouseWorker, Manager")]
+public class SupplyController(ISupplyService supplyService) : ControllerBase
 {
-    private readonly ISupplyService _supplyService;
-
-    public SupplyController(ISupplyService supplyService)
-    {
-        _supplyService = supplyService;
-    }
-
     [HttpGet("orders")]
     public async Task<IActionResult> GetOrders(CancellationToken ct)
     {
-        var orders = await _supplyService.GetOrdersAsync(ct);
+        var orders = await supplyService.GetOrdersAsync(ct);
         return Ok(orders.Select(ToResponse));
     }
 
     [HttpGet("orders/{orderId}")]
     public async Task<IActionResult> GetOrder(int orderId, CancellationToken ct)
     {
-        var order = await _supplyService.GetOrderByIdAsync(orderId, ct);
-        if (order == null) return NotFound();
-        return Ok(ToResponse(order));
+        try
+        {
+            var order = await supplyService.GetOrderByIdAsync(orderId, ct);
+            return Ok(ToResponse(order));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     [HttpPost("orders")]
@@ -36,7 +37,7 @@ public class SupplyController : ControllerBase
     {
         try
         {
-            var order = await _supplyService.CreateOrderAsync(dto.SupplierId, dto.BranchId,
+            var order = await supplyService.CreateOrderAsync(dto.SupplierId, dto.BranchId,
                 dto.Items.Select(i => (i.ProductId, i.Quantity)).ToList(), ct);
 
             return Ok(ToResponse(order));
@@ -53,8 +54,8 @@ public class SupplyController : ControllerBase
     {
         try
         {
-            await _supplyService.ReceiveOrderAsync(orderId, ct);
-            var order = await _supplyService.GetOrderByIdAsync(orderId, ct);
+            await supplyService.ReceiveOrderAsync(orderId, ct);
+            var order = await supplyService.GetOrderByIdAsync(orderId, ct);
             return Ok(ToResponse(order!));
         }
         catch (InvalidOperationException ex)
@@ -67,15 +68,15 @@ public class SupplyController : ControllerBase
     private static SupplyOrderResponseDto ToResponse(SupplyOrder order) => new()
     {
         Id = order.Id,
-        SupplierName = order.Supplier?.Name ?? "Unknown",  // Zapewnienie, że nie jest null
-        BranchName = order.Branch?.Name ?? "Unknown",  // Zapewnienie, że nie jest null
+        SupplierName = order.Supplier?.Name ?? "Unknown",
+        BranchName = order.Branch?.Name ?? "Unknown",
         OrderedAt = order.CreatedAt,
         ReceivedAt = order.ReceivedAt,
         Status = order.Status.ToString(),
         Items = order.Items.Select(i => new SupplyItemResponseDto
         {
             ProductId = i.ProductId,
-            ProductName = i.Product?.Name ?? "Unknown",  // Upewnienie się, że Product nie jest null
+            ProductName = i.Product?.Name ?? "Unknown",
             Quantity = i.Quantity
         }).ToList()
     };
