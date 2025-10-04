@@ -12,6 +12,21 @@ public static class DbSeeder
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         
+        // Company
+        if (context.Companies.Any()) return; // seed only once
+
+        var company = new Company
+        {
+           CompanyName = "Company Name",
+           Address = "Address",
+           City = "City",
+           PostalCode = "Postal Code",
+           TaxIdentificationNumber = "NIP",
+           BankAccountNumber = "Bank account Number",
+           ContactEmail = "Contact Email",
+           ContactPhone = "Contact Phone"
+        };
+        context.Companies.Add(company);
         
         if (context.Roles.Any()) return; // seed only once
 
@@ -142,15 +157,6 @@ public static class DbSeeder
             new OrderItem { Order = order2, Product = product2, Quantity = 1, UnitPrice = product2.UnitPrice },
             new OrderItem { Order = order2, Product = product3, Quantity = 2, UnitPrice = product3.UnitPrice }
         );
-
-        // Invoice (opcjonalnie)
-        var invoice1 = new Invoice
-        {
-            Order = order1,
-            FilePath = "/invoices/invoice1.pdf",
-            GeneratedAt = DateTime.UtcNow
-        };
-        context.Invoices.Add(invoice1);
 
         context.SaveChanges();
     }

@@ -1,0 +1,33 @@
+﻿@page "/invoices"
+@using MudBlazor
+@using SSSMCR.Web.Components.Components
+@inject NavigationManager Nav
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IAuthService AuthService
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-5">
+    <InvoiceComponent />
+</MudContainer>
+
+@code {
+    private string? user_role;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            user_role = await LocalStorage.GetItemAsync<string>("user_role");
+            if (!AuthService.PermittedForOrders(user_role))
+            {
+                Nav.NavigateTo("/");
+            }
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
+        StateHasChanged();
+    }
+}
