@@ -16,16 +16,38 @@ public class ProductStocksApiService(IHttpClientFactory httpFactory, ILocalStora
         await AttachBearerAsync(http);
 
         var url = "api/warehouse/stocks/recalculate-thresholds";
-        var res = await http.PostAsync(url, null);
+        HttpResponseMessage res;
+        try
+        {
+            res = await http.PostAsync(url, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RecalculateThresholdsAsync: request exception");
+            throw;
+        }
 
         if (!res.IsSuccessStatusCode)
-            throw new Exception($"Error recalculating thresholds: {res.StatusCode}");
+        {
+            var error = await ReadApiErrorAsync(res);
+            _logger.LogWarning("RecalculateThresholdsAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
+            throw new HttpRequestException(error);
+        }
 
-        var json = await res.Content.ReadAsStringAsync();
-        var doc = JsonDocument.Parse(json);
-        return doc.RootElement.GetProperty("message").GetString() ?? "Thresholds recalculated.";
+        try
+        {
+            var json = await res.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("message", out var msgEl) && msgEl.ValueKind == JsonValueKind.String
+                ? msgEl.GetString() ?? "Thresholds recalculated."
+                : "Thresholds recalculated.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RecalculateThresholdsAsync: response parse error");
+            return "Thresholds recalculated.";
+        }
     }
-
 
     public async Task<List<ProductStockDto>> GetStocksAsync(int? branchId = null)
     {
@@ -36,19 +58,31 @@ public class ProductStocksApiService(IHttpClientFactory httpFactory, ILocalStora
         if (branchId.HasValue)
             url += $"?branchId={branchId.Value}";
 
-        var res = await http.GetAsync(url);
+        HttpResponseMessage res;
+        try
+        {
+            res = await http.GetAsync(url);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetStocksAsync: request exception");
+            throw;
+        }
 
         if (!res.IsSuccessStatusCode)
         {
+            var error = await ReadApiErrorAsync(res);
+
             if (res.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                throw new UnauthorizedAccessException("Unauthorized to access stocks.");
+                throw new UnauthorizedAccessException(string.IsNullOrWhiteSpace(error) ? "Unauthorized to access stocks." : error);
             else if (res.StatusCode == System.Net.HttpStatusCode.NotFound)
-                throw new KeyNotFoundException("Stocks not found for the given branch.");
-            else
-                throw new Exception($"Error fetching stocks: {res.StatusCode}");
+                throw new KeyNotFoundException(string.IsNullOrWhiteSpace(error) ? "Stocks not found for the given branch." : error);
+
+            _logger.LogWarning("GetStocksAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
+            throw new HttpRequestException(error);
         }
 
-        var stocks = await res.Content.ReadFromJsonAsync<List<ProductStockDto>>();
+        var stocks = await ReadJsonAsync<List<ProductStockDto>>(res.Content);
         return stocks ?? new List<ProductStockDto>();
     }
 }

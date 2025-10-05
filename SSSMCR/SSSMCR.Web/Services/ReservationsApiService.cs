@@ -18,13 +18,25 @@ public class ReservationsApiService(IHttpClientFactory httpFactory, ILocalStorag
         if (branchId.HasValue)
             url += $"?branchId={branchId}";
 
-        var res = await http.GetAsync(url);
+        try
+        {
+            var res = await http.GetAsync(url);
 
-        if (!res.IsSuccessStatusCode)
-            return new List<ReservationDto>();
+            if (!res.IsSuccessStatusCode)
+            {
+                var error = await ReadApiErrorAsync(res);
+                _logger.LogWarning("GetReservationsAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
+                return new();
+            }
 
-        return await res.Content.ReadFromJsonAsync<List<ReservationDto>>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+            var dto = await ReadJsonAsync<List<ReservationDto>>(res.Content);
+            return dto ?? new();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetReservationsAsync: request exception");
+            return new();
+        }
     }
     
     public async Task<bool> FulfillBranchReservationsAsync(int orderId, int branchId)
@@ -32,8 +44,16 @@ public class ReservationsApiService(IHttpClientFactory httpFactory, ILocalStorag
         var http = _httpFactory.CreateClient("api");
         await AttachBearerAsync(http);
 
-        var res = await http.PostAsync($"/api/warehouse/orders/{orderId}/fulfill/{branchId}", null);
-
-        return res.IsSuccessStatusCode;
+        try
+        {
+            var res = await http.PostAsync($"/api/warehouse/orders/{orderId}/fulfill/{branchId}", null);
+            await EnsureSuccessOrThrowAsync(res, "FulfillBranchReservationsAsync");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "FulfillBranchReservationsAsync failed (orderId={OrderId}, branchId={BranchId})", orderId, branchId);
+            return false;
+        }
     }
 }

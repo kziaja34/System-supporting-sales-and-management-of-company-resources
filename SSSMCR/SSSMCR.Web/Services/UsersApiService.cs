@@ -21,14 +21,12 @@ public class UsersApiService(IHttpClientFactory httpFactory, ILocalStorageServic
             var res = await http.GetAsync(url);
             if (!res.IsSuccessStatusCode)
             {
-                string body = string.Empty;
-                try { body = await res.Content.ReadAsStringAsync(); } catch { }
-                _logger.LogWarning("GetUsersAsync failed: {Status} body: {Body}", res.StatusCode, body);
+                var error = await ReadApiErrorAsync(res);
+                _logger.LogWarning("GetUsersAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
                 return new List<UserResponse>();
             }
 
-            var dto = await res.Content.ReadFromJsonAsync<List<UserResponse>>(
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var dto = await ReadJsonAsync<List<UserResponse>>(res.Content);
             return dto ?? new List<UserResponse>();
         }
         catch (Exception ex)
@@ -56,16 +54,9 @@ public class UsersApiService(IHttpClientFactory httpFactory, ILocalStorageServic
             throw;
         }
 
-        if (!res.IsSuccessStatusCode)
-        {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("CreateUserAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-            throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
-        }
+        await EnsureSuccessOrThrowAsync(res, "CreateUserAsync");
 
-        return await res.Content.ReadFromJsonAsync<UserResponse>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return await ReadJsonAsync<UserResponse>(res.Content);
     }
 
 
@@ -87,16 +78,9 @@ public class UsersApiService(IHttpClientFactory httpFactory, ILocalStorageServic
             throw;
         }
 
-        if (!res.IsSuccessStatusCode)
-        {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("UpdateUserAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-            throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
-        }
+        await EnsureSuccessOrThrowAsync(res, "UpdateUserAsync");
 
-        return await res.Content.ReadFromJsonAsync<UserResponse>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return await ReadJsonAsync<UserResponse>(res.Content);
     }
 
 
@@ -107,11 +91,17 @@ public class UsersApiService(IHttpClientFactory httpFactory, ILocalStorageServic
         
         await AttachBearerAsync(http);
 
-        var res = await http.DeleteAsync(url);
-        res.EnsureSuccessStatusCode();
+        HttpResponseMessage res;
+        try
+        {
+            res = await http.DeleteAsync(url);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeleteUserAsync: request exception");
+            throw;
+        }
+
+        await EnsureSuccessOrThrowAsync(res, "DeleteUserAsync");
     }
-
-    private static string Truncate(string? s, int max)
-        => string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s.Substring(0, max));
-
 }

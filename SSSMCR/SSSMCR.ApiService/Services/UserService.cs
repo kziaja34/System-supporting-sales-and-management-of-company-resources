@@ -3,6 +3,7 @@ using SSSMCR.ApiService.Model;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Identity;
 using SSSMCR.ApiService.Database;
+using SSSMCR.ApiService.Model.Exceptions;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services;
@@ -13,7 +14,9 @@ public interface IUserService : IGenericService<User>
     Task<bool> VerifyPasswordAsync(string email, string password, CancellationToken ct = default);
     Task<Role> GetRoleAsync(int userId, CancellationToken ct = default);
     Task UpdateProfileAsync(int userId, User user, CancellationToken ct = default);
-    Task UpdateUserAsync(int userId, User user, CancellationToken ct = default);
+    Task UpdateUserAsync(int userId, int currentUserId, User user, CancellationToken ct = default);
+
+    Task DeleteUserAsync(int id, int currentUserId, CancellationToken ct = default);
     Task ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken ct = default);
 }
 public class UserService(
@@ -102,10 +105,13 @@ public class UserService(
         await _context.SaveChangesAsync(ct);
     }
     
-    public async Task UpdateUserAsync(int userId, User user, CancellationToken ct = default)
+    public async Task UpdateUserAsync(int userId, int currentUserId, User user, CancellationToken ct = default)
     {
         var existing = await _dbSet.FirstOrDefaultAsync(u => u.Id == userId, ct)
                        ?? throw new KeyNotFoundException("User not found");
+
+        if (userId.Equals(currentUserId))
+            throw new CurrentUserException(currentUserId, "To edit your profile, use the profile page.");
 
         var email = user.Email?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(email))
@@ -133,7 +139,14 @@ public class UserService(
         await _context.SaveChangesAsync(ct);
     }
 
-
+    public async Task DeleteUserAsync(int id, int currentUserId, CancellationToken ct = default)
+    {
+        var entity = await GetByIdAsync(id, ct);
+        if (entity is null) throw new KeyNotFoundException("Entity not found");
+        if (id.Equals(currentUserId)) throw new CurrentUserException(currentUserId);
+        _dbSet.Remove(entity);
+        await _context.SaveChangesAsync(ct);
+    }
 
     public async Task ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken ct = default)
     {

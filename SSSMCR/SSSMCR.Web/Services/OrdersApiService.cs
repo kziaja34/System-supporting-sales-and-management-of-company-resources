@@ -24,9 +24,8 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
             var res = await http.GetAsync(url);
             if (!res.IsSuccessStatusCode)
             {
-                string body = string.Empty;
-                try { body = await res.Content.ReadAsStringAsync(); } catch { }
-                _logger.LogWarning("GetOrdersPageAsync failed: {Status} body: {Body}", res.StatusCode, body);
+                var error = await ReadApiErrorAsync(res);
+                _logger.LogWarning("GetOrdersPageAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
                 return new PageResponse<OrderListItemDto>
                 {
                     Items = [],
@@ -37,8 +36,7 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
                 };
             }
 
-            var dto = await res.Content.ReadFromJsonAsync<PageResponse<OrderListItemDto>>(
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var dto = await ReadJsonAsync<PageResponse<OrderListItemDto>>(res.Content);
 
             return dto ?? new PageResponse<OrderListItemDto>
             {
@@ -75,14 +73,12 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
             var res = await http.GetAsync(url);
             if (!res.IsSuccessStatusCode)
             {
-                string body = string.Empty;
-                try { body = await res.Content.ReadAsStringAsync(); } catch { }
-                _logger.LogWarning("GetOrderByIdAsync failed: {Status} body: {Body}", res.StatusCode, body);
+                var error = await ReadApiErrorAsync(res);
+                _logger.LogWarning("GetOrderByIdAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
                 return null;
             }
 
-            return await res.Content.ReadFromJsonAsync<OrderDetailsDto>(
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return await ReadJsonAsync<OrderDetailsDto>(res.Content);
         }
         catch (Exception ex)
         {
@@ -96,8 +92,17 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
         var http = _httpFactory.CreateClient("api");
         await AttachBearerAsync(http);
 
-        var res = await http.PutAsJsonAsync($"/api/orders/{id}/status", newStatus);
-        return res.IsSuccessStatusCode;
+        try
+        {
+            var res = await http.PutAsJsonAsync($"/api/orders/{id}/status", newStatus);
+            await EnsureSuccessOrThrowAsync(res, "UpdateOrderStatusAsync");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "UpdateOrderStatusAsync failed (id={Id}, status={Status})", id, newStatus);
+            return false;
+        }
     }
 
     public async Task<ReserveResult?> ReserveOrderAsync(int orderId, int? preferredBranchId = null)
@@ -109,14 +114,12 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
 
         if (!res.IsSuccessStatusCode)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("ReserveOrderAsync failed: {Status} body: {Body}", res.StatusCode, body);
+            var error = await ReadApiErrorAsync(res);
+            _logger.LogWarning("ReserveOrderAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
             return null;
         }
 
-        return await res.Content.ReadFromJsonAsync<ReserveResult>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return await ReadJsonAsync<ReserveResult>(res.Content);
     }
 
     public async Task<(bool Success, bool RequireConfirm)> ReleaseOrderAsync(int orderId, bool confirm = false)
@@ -132,6 +135,12 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
             var body = await res.Content.ReadAsStringAsync();
             if (body.Contains("requireConfirm", StringComparison.OrdinalIgnoreCase))
                 return (false, true);
+        }
+
+        if (!res.IsSuccessStatusCode)
+        {
+            var error = await ReadApiErrorAsync(res);
+            _logger.LogWarning("ReleaseOrderAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
         }
 
         return (res.IsSuccessStatusCode, false);
