@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SSSMCR.ApiService.Model;
+using SSSMCR.ApiService.Model.Exceptions;
 using SSSMCR.ApiService.Services;
 using SSSMCR.Shared.Model;
 
@@ -12,6 +14,9 @@ namespace SSSMCR.ApiService.Controller;
 [Authorize(Roles = "Administrator")]
 public class UsersController(IUserService userService, IPasswordHasher hasher) : ControllerBase
 {
+    private int CurrentUserId =>
+        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserResponse>>> GetAll(CancellationToken ct)
     {
@@ -69,7 +74,7 @@ public class UsersController(IUserService userService, IPasswordHasher hasher) :
                 entity.PasswordHash = hasher.Hash(req.NewPassword);
             }
 
-            await userService.UpdateUserAsync(id, entity, ct);
+            await userService.UpdateUserAsync(id, CurrentUserId, entity, ct);
 
             var updated = await userService.GetByIdAsync(id, ct);
             return Ok(ToResponse(updated));
@@ -82,6 +87,10 @@ public class UsersController(IUserService userService, IPasswordHasher hasher) :
         {
             return NotFound(new { error = ex.Message });
         }
+        catch (CurrentUserException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
 
@@ -91,12 +100,16 @@ public class UsersController(IUserService userService, IPasswordHasher hasher) :
     {
         try
         {
-            await userService.DeleteAsync(id);
+            await userService.DeleteUserAsync(id, CurrentUserId);
             return NoContent();
         }
         catch (KeyNotFoundException ex)
         {
             return NotFound(new { error = ex.Message });
+        }
+        catch (CurrentUserException ex)
+        {
+            return BadRequest(new { error = ex.Message });
         }
     }
 

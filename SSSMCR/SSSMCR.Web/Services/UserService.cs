@@ -10,13 +10,14 @@ public interface IUserService
     Task ChangePasswordAsync(ChangePasswordRequest req);
 }
 
-public class UserService : IUserService
+public class UserService : SSSMCR.Web.Services.GenericService<UserService>, IUserService
 {
     private readonly IHttpClientFactory _httpFactory;
     private readonly ILocalStorageService _storage;
     private readonly ILogger<UserService> _logger;
 
     public UserService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UserService> logger)
+        : base(logger, storage)
     {
         _httpFactory = httpFactory;
         _storage = storage;
@@ -43,23 +44,13 @@ public class UserService : IUserService
 
         if (!res.IsSuccessStatusCode)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("GetMeAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            var error = await ReadApiErrorAsync(res);
+            _logger.LogWarning("GetMeAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
             return new UserResponse();
         }
 
-        try
-        {
-            var dto = await res.Content.ReadFromJsonAsync<UserResponse>(
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return dto ?? new UserResponse();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetMeAsync: JSON deserialize error");
-            return new UserResponse();
-        }
+        var dto = await ReadJsonAsync<UserResponse>(res.Content);
+        return dto ?? new UserResponse();
     }
 
     public async Task<bool> UpdateMeAsync(UpdateMeRequest req)
@@ -69,27 +60,17 @@ public class UserService : IUserService
 
         await AttachBearerAsync(http);
 
-        HttpResponseMessage res;
         try
         {
-            res = await http.PutAsJsonAsync(url, req);
+            var res = await http.PutAsJsonAsync(url, req);
+            await EnsureSuccessOrThrowAsync(res, "UpdateMeAsync");
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "UpdateMeAsync: request exception");
+            _logger.LogWarning(ex, "UpdateMeAsync failed");
             return false;
         }
-
-        if (!res.IsSuccessStatusCode)
-        {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("UpdateMeAsync failed: {Status} body: {Body}",
-                res.StatusCode, Truncate(body, 1000));
-            return false;
-        }
-
-        return true;
     }
 
 
@@ -111,32 +92,6 @@ public class UserService : IUserService
             throw;
         }
 
-        res.EnsureSuccessStatusCode();
+        await EnsureSuccessOrThrowAsync(res, "ChangePasswordAsync");
     }
-
-    private async Task AttachBearerAsync(HttpClient http)
-    {
-        var token = await _storage.GetItemAsStringAsync("jwt");
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            http.DefaultRequestHeaders.Authorization = null;
-            return;
-        }
-
-        var raw = NormalizeToken(token);
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", raw);
-    }
-
-    private static string NormalizeToken(string token)
-    {
-        var t = token.Trim();
-        if (t.StartsWith("\"") && t.EndsWith("\"") && t.Length >= 2)
-            t = t.Substring(1, t.Length - 2);
-        if (t.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-            t = t.Substring("Bearer ".Length);
-        return t.Trim();
-    }
-
-    private static string Truncate(string? s, int max)
-        => string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s.Substring(0, max));
 }

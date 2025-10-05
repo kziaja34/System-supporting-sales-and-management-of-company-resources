@@ -29,23 +29,13 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
 
         if (!res.IsSuccessStatusCode)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("GetBranchesAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            var error = await ReadApiErrorAsync(res);
+            _logger.LogWarning("GetBranchesAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
             return new();
         }
 
-        try
-        {
-            var dto = await res.Content.ReadFromJsonAsync<List<BranchResponse>>(
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return dto ?? new();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetBranchesAsync: JSON deserialize error");
-            return new();
-        }
+        var dto = await ReadJsonAsync<List<BranchResponse>>(res.Content);
+        return dto ?? new();
     }
     
     public async Task<BranchResponse?> CreateBranchAsync(BranchCreateRequest req)
@@ -66,16 +56,9 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
             throw;
         }
         
-        if (!res.IsSuccessStatusCode)
-        {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("CreateBranchAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-            throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
-        }
+        await EnsureSuccessOrThrowAsync(res, "CreateBranchAsync");
 
-        return await res.Content.ReadFromJsonAsync<BranchResponse>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return await ReadJsonAsync<BranchResponse>(res.Content);
     }
 
     public async Task<BranchResponse?> UpdateBranchAsync(int id, BranchCreateRequest req)
@@ -96,16 +79,9 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
             throw;
         }
         
-        if (!res.IsSuccessStatusCode)
-        {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("UpdateBranchAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-            throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
-        }
+        await EnsureSuccessOrThrowAsync(res, "UpdateBranchAsync");
         
-        return await res.Content.ReadFromJsonAsync<BranchResponse>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return await ReadJsonAsync<BranchResponse>(res.Content);
     }
     
     public async Task DeleteBranchAsync(int id)
@@ -126,26 +102,15 @@ public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageSer
             throw;
         }
 
-        if (!res.IsSuccessStatusCode)
+        if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-
-            if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
-            {
-                var message = string.IsNullOrWhiteSpace(body)
-                    ? "Cannot delete branch, it is used in other records."
-                    : body;
-
-                _logger.LogWarning("DeleteBranchAsync conflict: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-                throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {message}");
-            }
-
-            _logger.LogWarning("DeleteBranchAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-            throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
+            var error = await ReadApiErrorAsync(res);
+            if (string.IsNullOrWhiteSpace(error))
+                error = "Cannot delete branch, it is used in other records.";
+            _logger.LogWarning("DeleteBranchAsync conflict: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
+            throw new HttpRequestException(error);
         }
-    }
 
-    private static string Truncate(string? s, int max)
-        => string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s.Substring(0, max));
+        await EnsureSuccessOrThrowAsync(res, "DeleteBranchAsync");
+    }
 }

@@ -4,6 +4,8 @@ using System.Security.Claims;
 using SSSMCR.ApiService.Services;
 using SSSMCR.Shared.Model;
 
+namespace SSSMCR.ApiService.Controller;
+
 [ApiController]
 [Route("api/me")]
 [Authorize]

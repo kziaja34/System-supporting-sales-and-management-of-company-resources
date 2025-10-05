@@ -9,8 +9,6 @@
 @inject ISnackbar Snackbar
 
 <MudPaper Class="pa-4">
-    <MudText Typo="Typo.h5" Class="mb-4">User Management</MudText>
-
     <MudTable Items="users" Dense="true" Hover="true">
         <HeaderContent>
             <MudTh>Id</MudTh>
@@ -75,9 +73,16 @@
 
         if (confirmed)
         {
-            await UserApi.DeleteUserAsync(id);
-            users.RemoveAll(u => u.Id == id);
-            Snackbar.Add("User deleted", Severity.Success);
+            try
+            {
+                await UserApi.DeleteUserAsync(id);
+                users.RemoveAll(u => u.Id == id);
+                Snackbar.Add("User deleted", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(string.IsNullOrWhiteSpace(ex.Message) ? "Operation failed." : ex.Message, Severity.Error);
+            }
         }
     }
 

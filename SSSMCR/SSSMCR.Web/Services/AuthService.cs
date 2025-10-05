@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using Blazored.LocalStorage;
 using SSSMCR.Shared.Model;
+using SSSMCR.Web.Services;
 
 public interface IAuthService
 {
@@ -20,7 +21,7 @@ public sealed class AuthService(
     IHttpClientFactory httpFactory,
     ILocalStorageService storage,
     ILogger<AuthService> logger)
-    : IAuthService
+    : GenericService<AuthService>(logger, storage), IAuthService
 {
     public async Task<bool> LoginAsync(LoginRequest req)
     {
@@ -43,31 +44,16 @@ public sealed class AuthService(
         
         if (!res.IsSuccessStatusCode)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { /* ignore */ }
-            logger.LogWarning("LoginAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            var error = await ReadApiErrorAsync(res);
+            logger.LogWarning("LoginAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
             return false;
         }
         
-        string raw = await res.Content.ReadAsStringAsync();
-        logger.LogDebug("LoginAsync response body (first 500 chars): {Body}", Truncate(raw, 500));
-
-        TokenResponse? token;
-        try
-        {
-            token = System.Text.Json.JsonSerializer.Deserialize<TokenResponse>(raw, new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "LoginAsync: JSON deserialize error");
-            return false;
-        }
-
+        var token = await ReadJsonAsync<TokenResponse>(res.Content);
         if (token is null || string.IsNullOrWhiteSpace(token.AccessToken))
         {
+            string raw = string.Empty;
+            try { raw = await res.Content.ReadAsStringAsync(); } catch { }
             logger.LogWarning("LoginAsync: token is null or AccessToken empty. Response body: {Body}", Truncate(raw, 1000));
             return false;
         }
@@ -79,10 +65,10 @@ public sealed class AuthService(
         if (!string.IsNullOrWhiteSpace(req?.Email))
             await storage.SetItemAsStringAsync("user_email", req.Email);
 
-
         logger.LogInformation("LoginAsync succeeded, token stored");
         return true;
     }
+
 
     public async Task LogoutAsync()
     {

@@ -29,23 +29,13 @@ public class ProductsApiService(IHttpClientFactory httpFactory, ILocalStorageSer
 
         if (!res.IsSuccessStatusCode)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("GetProductsAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            var error = await ReadApiErrorAsync(res);
+            _logger.LogWarning("GetProductsAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
             return new();
         }
 
-        try
-        {
-            var dto = await res.Content.ReadFromJsonAsync<List<ProductResponse>>(
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return dto ?? new();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetProductsAsync: JSON deserialize error");
-            return new();
-        }
+        var dto = await ReadJsonAsync<List<ProductResponse>>(res.Content);
+        return dto ?? new();
     }
     
     public async Task<ProductResponse?> CreateProductAsync(ProductCreateRequest req)
@@ -66,16 +56,9 @@ public class ProductsApiService(IHttpClientFactory httpFactory, ILocalStorageSer
             throw;
         }
         
-        if (!res.IsSuccessStatusCode)
-        {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("CreateProductAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-            throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
-        }
+        await EnsureSuccessOrThrowAsync(res, "CreateProductAsync");
 
-        return await res.Content.ReadFromJsonAsync<ProductResponse>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return await ReadJsonAsync<ProductResponse>(res.Content);
     }
     
     public async Task<ProductResponse?> UpdateProductAsync(int id, ProductCreateRequest req)
@@ -96,16 +79,9 @@ public class ProductsApiService(IHttpClientFactory httpFactory, ILocalStorageSer
             throw;
         }
         
-        if (!res.IsSuccessStatusCode)
-        {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("UpdateProductAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-            throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
-        }
+        await EnsureSuccessOrThrowAsync(res, "UpdateProductAsync");
         
-        return await res.Content.ReadFromJsonAsync<ProductResponse>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return await ReadJsonAsync<ProductResponse>(res.Content);
     }
     
     public async Task DeleteProductAsync(int id)
@@ -125,28 +101,16 @@ public class ProductsApiService(IHttpClientFactory httpFactory, ILocalStorageSer
             _logger.LogError(ex, "DeleteProductAsync: request exception");
             throw;
         }
-
-        if (!res.IsSuccessStatusCode)
+        
+        if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-
-            if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
-            {
-                var message = string.IsNullOrWhiteSpace(body)
-                    ? "Cannot delete product, it is used in other records."
-                    : body;
-
-                _logger.LogWarning("DeleteProductAsync conflict: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-                throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {message}");
-            }
-
-            _logger.LogWarning("DeleteProductAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
-            throw new HttpRequestException($"HTTP {(int)res.StatusCode} {res.StatusCode}: {body}");
+            var error = await ReadApiErrorAsync(res);
+            if (string.IsNullOrWhiteSpace(error))
+                error = "Cannot delete product, it is used in other records.";
+            _logger.LogWarning("DeleteProductAsync conflict: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
+            throw new HttpRequestException(error);
         }
-    }
 
-    
-    private static string Truncate(string? s, int max)
-        => string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s.Substring(0, max));
+        await EnsureSuccessOrThrowAsync(res, "DeleteProductAsync");
+    }
 }

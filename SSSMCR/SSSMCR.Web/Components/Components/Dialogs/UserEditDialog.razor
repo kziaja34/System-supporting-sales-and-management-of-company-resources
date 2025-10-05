@@ -7,6 +7,8 @@
 @inject RolesApiService RolesApiService
 @inject BranchesApiService BranchesApiService
 @inject IAuthService AuthService
+@inject ISnackbar Snackbar
+
 
 <MudDialog>
     <DialogContent>
@@ -135,9 +137,10 @@
             }
             else
             {
-                emailError = "An unexpected error occurred.";
+                Snackbar.Add(string.IsNullOrWhiteSpace(ex.Message) ? "Operation failed." : ex.Message, Severity.Error);
             }
         }
+        
     }
 
     private void Cancel() => MudDialog.Cancel();

@@ -31,9 +31,8 @@ public class InvoiceApiService(IHttpClientFactory httpFactory, ILocalStorageServ
 
         if (!res.IsSuccessStatusCode)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("GetInvoiceDataUrlAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            var error = await ReadApiErrorAsync(res);
+            _logger.LogWarning("GetInvoiceDataUrlAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
             return null;
         }
 
@@ -50,6 +49,4 @@ public class InvoiceApiService(IHttpClientFactory httpFactory, ILocalStorageServ
         }
     }
 
-    private static string Truncate(string? s, int max)
-        => string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s.Substring(0, max));
 }

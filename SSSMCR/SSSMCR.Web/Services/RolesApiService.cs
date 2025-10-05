@@ -29,25 +29,12 @@ public class RolesApiService(IHttpClientFactory httpFactory, ILocalStorageServic
 
         if (!res.IsSuccessStatusCode)
         {
-            string body = string.Empty;
-            try { body = await res.Content.ReadAsStringAsync(); } catch { }
-            _logger.LogWarning("GetRolesAsync failed: {Status} body: {Body}", res.StatusCode, Truncate(body, 1000));
+            var error = await ReadApiErrorAsync(res);
+            _logger.LogWarning("GetRolesAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
             return new();
         }
 
-        try
-        {
-            var dto = await res.Content.ReadFromJsonAsync<List<RoleResponse>>(
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return dto ?? new();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetRolesAsync: JSON deserialize error");
-            return new();
-        }
+        var dto = await ReadJsonAsync<List<RoleResponse>>(res.Content);
+        return dto ?? new();
     }
-
-    private static string Truncate(string? s, int max)
-        => string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s.Substring(0, max));
 }
