@@ -1,15 +1,22 @@
 ﻿@inject InvoiceApiService InvoiceService
 @using MudBlazor
 @using SSSMCR.Web.Services
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 
-<MudPaper Class="pa-4">
+<MudPaper Class="pa-4 position-relative">
     <MudText Typo="Typo.h6">Generate Invoice</MudText>
 
     <MudTextField @bind-Value="OrderId" Label="Order ID" Variant="Variant.Outlined" />
 
-    <MudButton OnClick="GenerateInvoice" Color="Color.Primary" Variant="Variant.Filled" Class="mt-3">
-        Show Invoice
+    <MudButton OnClick="GenerateInvoice" Color="Color.Primary" Variant="Variant.Filled" Class="mt-3" Disabled="@IsLoading">
+        @if (IsLoading)
+        {
+            <MudProgressCircular Indeterminate="true" Size="Size.Medium" Class="me-2" />
+        }
+        else
+        {
+            @("Show Invoice")
+        }
     </MudButton>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -18,18 +25,20 @@
             @ErrorMessage
         </MudAlert>
     }
-    
+
     @if (!string.IsNullOrEmpty(PdfDataUrl))
     {
         <MudDivider Class="my-4" />
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.subtitle1">Preview</MudText>
+
             <MudButton Variant="Variant.Outlined"
                        Color="Color.Primary"
                        OnClick="OpenPdfInNewTab"
                        StartIcon="@Icons.Material.Filled.OpenInNew">
                 Open in new tab
             </MudButton>
+
             <MudButton Variant="Variant.Text"
                        Color="Color.Secondary"
                        Href="@PdfDataUrl"
@@ -47,26 +56,43 @@
                     style="border:0;"></iframe>
         </MudPaper>
     }
+    
+    <MudOverlay Visible="@IsLoading" DarkBackground="true">
+        <MudProgressCircular Indeterminate="true" Size="Size.Large" Color="Color.Primary" />
+    </MudOverlay>
 </MudPaper>
 
 @code {
     private int OrderId { get; set; }
     private string? ErrorMessage { get; set; }
     private string? PdfDataUrl { get; set; }
+    private bool IsLoading { get; set; } = false;
 
     private async Task GenerateInvoice()
     {
         ErrorMessage = null;
         PdfDataUrl = null;
+        IsLoading = true;
 
-        var dataUrl = await InvoiceService.GetInvoiceDataUrlAsync(OrderId);
-        if (string.IsNullOrEmpty(dataUrl))
+        try
         {
-            ErrorMessage = "Failed to generate invoice.";
+            var dataUrl = await InvoiceService.GetInvoiceDataUrlAsync(OrderId);
+            if (string.IsNullOrEmpty(dataUrl))
+            {
+                ErrorMessage = "Failed to generate invoice.";
+            }
+            else
+            {
+                PdfDataUrl = dataUrl;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            PdfDataUrl = dataUrl;
+            ErrorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
@@ -74,7 +100,7 @@
     {
         if (!string.IsNullOrEmpty(PdfDataUrl))
         {
-            await JS.InvokeVoidAsync("open", PdfDataUrl, "_blank", "noopener");
+            await Js.InvokeVoidAsync("open", PdfDataUrl, "_blank", "noopener");
         }
     }
 }
