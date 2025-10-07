@@ -44,7 +44,7 @@
             }
             var me = await UserService.GetMeAsync();
 
-            if (user_role == "Manager")
+            if (user_role == "Manager" || user_role == "Administrator")
             {
                 _isManager = true;
                 _branches = await BranchesApi.GetBranchesAsync();

@@ -32,9 +32,6 @@
                         Role: @_me.RoleName
                     </MudText>
                 </div>
-                <MudSpacer />
-                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Refresh"
-                           OnClick="Reload">Refresh</MudButton>
             </MudStack>
         </MudPaper>
 
@@ -142,8 +139,6 @@
         }
         finally { _loading = false; }
     }
-
-    private Task Reload() => LoadMe();
 
     private async Task OpenChangePassword()
     {
