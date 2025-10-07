@@ -65,3 +65,5 @@ SSSMCR/SSSMCR.Web/appsettings.json
 SSSMCR/SSSMCR.AppHost/appsettings.Development.json
 
 SSSMCR/SSSMCR.ApiService/Migrations/
+
+SSSMCR/.idea/.idea.SSSMCR/.idea/data_source_mapping.xml
