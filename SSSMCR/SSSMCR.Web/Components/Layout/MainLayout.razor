@@ -6,6 +6,7 @@
 @inject IAuthService AuthService
 @using MudBlazor
 @using SSSMCR.Web.Components.Components
+@inject NavigationManager Nav
 
 <MudThemeProvider Theme="_theme" @bind-IsDarkMode="_dark" />
 <MudDialogProvider />
@@ -16,7 +17,18 @@
     <MudAppBar Elevation="0">
         <MudIconButton Icon="@Icons.Material.Filled.Menu"
                        OnClick="@ToggleDrawer"
-                       Edge="Edge.Start" /><MudText Typo="Typo.h6" Class="ml-2">SSSMCR</MudText>
+                       Edge="Edge.Start" />
+        
+        <MudButton OnClick="@(() => Nav.NavigateTo("/"))"
+                   Variant="Variant.Text"
+                   Class="inline-flex items-center px-3 py-1 rounded-full cursor-pointer"
+                   Style="background-color:transparent; box-shadow:none; transition:background-color 0.2s;"
+                   onmouseover="this.style.backgroundColor='rgba(255,255,255,0.05)'"
+                   onmouseout="this.style.backgroundColor='transparent'">
+            <MudText Class="ml-1" Typo="Typo.h6" Color="Color.Info">
+                SSSMCR
+            </MudText>
+        </MudButton>
         <MudSpacer />
         <MudIconButton Icon="@(_dark ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                        OnClick="@ToggleDark" />
