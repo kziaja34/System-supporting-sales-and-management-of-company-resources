@@ -4,9 +4,9 @@
 @inject IJSRuntime Js
 
 <MudPaper Class="pa-4 position-relative">
-    <MudText Typo="Typo.h6">Generate Invoice</MudText>
+    <MudText Typo="Typo.h6">Generate Invoice for Order #@OrderId</MudText>
 
-    <MudTextField @bind-Value="OrderId" Label="Order ID" Variant="Variant.Outlined" />
+    <MudTextField @bind-Value="OrderId" Label="Order ID" Variant="Variant.Outlined" Disabled="true" />
 
     <MudButton OnClick="GenerateInvoice" Color="Color.Primary" Variant="Variant.Filled" Class="mt-3" Disabled="@IsLoading">
         @if (IsLoading)
@@ -63,7 +63,7 @@
 </MudPaper>
 
 @code {
-    private int OrderId { get; set; }
+    [Parameter] public int OrderId { get; set; }
     private string? ErrorMessage { get; set; }
     private string? PdfDataUrl { get; set; }
     private bool IsLoading { get; set; } = false;

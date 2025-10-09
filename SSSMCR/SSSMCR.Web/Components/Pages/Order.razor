@@ -97,12 +97,19 @@
                            Color="Color.Secondary" 
                            OnClick="ReleaseOrder"
                            Disabled="_order is null || 
-                            (_order.Status != nameof(OrderStatus.Processing) && 
-                             _order.Status != nameof(OrderStatus.PartiallyFulfilled))">
+                           (_order.Status != nameof(OrderStatus.Processing) && 
+                            _order.Status != nameof(OrderStatus.PartiallyFulfilled))">
                     Release
                 </MudButton>
             }
         </MudStack>
+        <MudDivider Class="my-4" />
+        @if (_order.Status == "Completed")
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GoToInvoicePage" Class="mt-3">
+                Go to Invoice
+            </MudButton>
+        }
 
         @if (reserveResult != null)
         {
@@ -242,6 +249,13 @@
         "Cancelled" => Color.Error,
         _ => Color.Default
     };
+    
+    private async Task GoToInvoicePage()
+    {
+        await LocalStorage.SetItemAsync("OrderId", _order.Id);
+        
+        Nav.NavigateTo("/invoices");
+    }
     
     private async Task UpdateStatus()
     {
