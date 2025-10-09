@@ -3,7 +3,7 @@
 @inject ReportsApiService ReportsApi
 @inject ISnackbar Snackbar
 
-<MudPaper Class="pa-6 d-flex flex-column align-center">
+<MudContainer Class="pa-6 d-flex flex-column align-center">
     <MudText Typo="Typo.h5" Class="mb-6">Sales Dashboard</MudText>
 
     @if (_loading)
@@ -12,22 +12,35 @@
     }
     else
     {
-        <!-- Wykres kołowy -->
-        <MudCard Class="mb-6" Style="max-width: 600px; width: 100%; text-align:center;">
+        <MudCard Class="mb-6" Style="max-width: 800px; width: 100%;">
             <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-4">Sales by Branch (Last 30 Days)</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4" Align="Align.Center">Sales by Branch (Last 30 Days)</MudText>
                 <MudChart ChartType="ChartType.Pie"
                           InputData="@_branchData"
                           InputLabels="@_branchLabels"
-                          Width="400px"
-                          Height="400px" />
+                          ChartOptions="@_pieChartOptions"
+                          Width="100%"
+                          Height="400px"
+                          LegendPosition="Position.Right" />
+                
+                <MudDivider Class="my-4" />
+                <MudGrid Justify="Justify.Center">
+                    @for (int i = 0; i < _branchLabels.Length; i++)
+                    {
+                        var index = i;
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudText Typo="Typo.body2" Align="Align.Center">
+                                <strong>@_branchLabels[index]:</strong> @_branchData[index].ToString("N0") zł
+                            </MudText>
+                        </MudItem>
+                    }
+                </MudGrid>
             </MudCardContent>
         </MudCard>
-
-        <!-- Wykres liniowy -->
+        
         <MudCard Class="mb-4" Style="max-width: 900px; width: 100%; text-align:center;">
             <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-4">Sales Trend (Last 30 Days)</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4">Sales Trend (Last 30 Days) - Values in PLN</MudText>
                 <MudChart ChartType="ChartType.Line"
                           ChartSeries="@_trendSeries"
                           XAxisLabels="@_trendLabels"
@@ -38,29 +51,45 @@
             </MudCardContent>
         </MudCard>
     }
-</MudPaper>
+</MudContainer>
 
 @code {
     private bool _loading = true;
-
-    // === PIE CHART ===
+    
     private string[] _branchLabels = Array.Empty<string>();
     private double[] _branchData = Array.Empty<double>();
-
-    // === LINE CHART ===
+    
     private string[] _trendLabels = Array.Empty<string>();
     private List<ChartSeries> _trendSeries = new();
-
-    // Opcje wykresu liniowego
+    
     private ChartOptions _chartOptions = new()
     {
-        LineStrokeWidth = 3
+        LineStrokeWidth = 2,
+        InterpolationOption = InterpolationOption.Straight,
+        YAxisFormat = "#,##0 'zł'",
+        YAxisLines = true,
     };
 
     private AxisChartOptions _axisChartOptions = new()
     {
         XAxisLabelRotation = 30,
         MatchBoundsToSize = true
+    };
+    
+    private ChartOptions _pieChartOptions = new()
+    {
+        ChartPalette = new[]
+        {
+            "#1976D2", // blue 700
+            "#43A047", // green 600
+            "#FB8C00", // orange 600
+            "#E53935", // red 600
+            "#8E24AA", // purple 600
+            "#00ACC1", // cyan 600
+            "#FDD835", // yellow 600
+            "#6D4C41"  // brown 600
+        },
+        YAxisFormat = "#,##0 'zł'",
     };
 
     private string _width = "650px";
