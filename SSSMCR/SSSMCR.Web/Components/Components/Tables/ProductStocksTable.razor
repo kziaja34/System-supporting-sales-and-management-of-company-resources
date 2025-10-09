@@ -1,7 +1,9 @@
 ﻿@using SSSMCR.Shared.Model
 @using SSSMCR.Web.Services
+@using SSSMCR.Web.Components.Components.Dialogs
 @inject ProductStocksApiService StocksApi
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudPaper Class="pa-4">
     <MudText Typo="Typo.h6" Class="mb-2">Product stocks</MudText>
@@ -24,6 +26,7 @@
             <MudTh style="text-align:right">Available</MudTh>
             <MudTh style="text-align:right">Critical</MudTh>
             <MudTh>Last updated</MudTh>
+            <MudTh style="width:1%">Supply</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.ProductName</MudTd>
@@ -37,6 +40,11 @@
             </MudTd>
             <MudTd Style="text-align:right">@context.CriticalThreshold</MudTd>
             <MudTd>@context.LastUpdatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" OnClick="@(() => OpenQuickSupply(context))">
+                    Order
+                </MudButton>
+            </MudTd>
         </RowTemplate>
     </MudTable>
 </MudPaper>
@@ -85,4 +93,16 @@
         StateHasChanged();
     }
 
+    private void OpenQuickSupply(ProductStockDto row)
+    {
+        var parameters = new DialogParameters<QuickSupplyDialog>
+        {
+            { x => x.ProductId, row.ProductId },
+            { x => x.ProductName, row.ProductName },
+            { x => x.BranchId, row.BranchId }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        DialogService.Show<QuickSupplyDialog>("Quick supply", parameters, options);
+    }
 }

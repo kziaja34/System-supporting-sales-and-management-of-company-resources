@@ -252,3 +252,41 @@ public class SupplyItemResponseDto
     public int Quantity { get; set; }
 }
 
+public class SupplierResponse
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string ContactEmail { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+}
+
+public class SupplierCreateRequest
+{
+    [Required, MaxLength(255)]
+    public string Name { get; set; } = default!;
+
+    [Required, MaxLength(255), EmailAddress]
+    public string ContactEmail { get; set; } = default!;
+
+    [Required, MaxLength(50)]
+    public string Phone { get; set; } = default!;
+
+    [Required, MaxLength(500)]
+    public string Address { get; set; } = default!;
+}
+
+public class SupplierUpdateRequest
+{
+    [Required, MaxLength(255)]
+    public string Name { get; set; } = default!;
+
+    [Required, MaxLength(255), EmailAddress]
+    public string ContactEmail { get; set; } = default!;
+
+    [Required, MaxLength(50)]
+    public string Phone { get; set; } = default!;
+
+    [Required, MaxLength(500)]
+    public string Address { get; set; } = default!;
+}

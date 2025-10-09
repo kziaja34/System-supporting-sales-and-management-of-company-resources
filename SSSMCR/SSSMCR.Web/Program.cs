@@ -45,6 +45,8 @@ builder.Services.AddScoped<ReservationsApiService>();
 builder.Services.AddScoped<ProductStocksApiService>();
 builder.Services.AddScoped<InvoiceApiService>();
 builder.Services.AddScoped<ReportsApiService>();
+builder.Services.AddScoped<SupplyApiService>();
+builder.Services.AddScoped<SuppliersApiService>();
 builder.AddServiceDefaults();
 
 var app = builder.Build();

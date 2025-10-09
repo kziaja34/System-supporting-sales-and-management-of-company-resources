@@ -1,0 +1,115 @@
+﻿@page "/supplies"
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject SupplyApiService SupplyApi
+@inject IAuthService AuthService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+        <MudText Typo="Typo.h5">Supply orders</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@LoadOrders">Refresh</MudButton>
+    </MudStack>
+
+    <MudTable T="SupplyOrderResponseDto" Items="_orders" Dense="true" Hover="true" Striped="true" Bordered="true">
+        <HeaderContent>
+            <MudTh>Id</MudTh>
+            <MudTh>Supplier</MudTh>
+            <MudTh>Branch</MudTh>
+            <MudTh>Ordered at</MudTh>
+            <MudTh>Received at</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh style="width:1%">Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate Context="order">
+            <MudTd>@order.Id</MudTd>
+            <MudTd>@order.SupplierName</MudTd>
+            <MudTd>@order.BranchName</MudTd>
+            <MudTd>@order.OrderedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+            <MudTd>@(order.ReceivedAt is null ? "-" : order.ReceivedAt?.ToString("yyyy-MM-dd HH:mm"))</MudTd>
+            <MudTd>
+                <MudChip T="string" Color="@(order.Status?.Equals("Received", StringComparison.OrdinalIgnoreCase) == true ? Color.Success : Color.Info)">
+                    @order.Status
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Disabled="@((order.Status?.Equals("Received", StringComparison.OrdinalIgnoreCase) ?? false))"
+                           OnClick="() => Receive(order.Id)">
+                    Receive
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+
+        <ChildRowContent Context="order">
+            <MudPaper Class="pa-2" Outlined="true">
+                <MudText Typo="Typo.subtitle2" Class="mb-1">Items</MudText>
+                <MudTable T="SupplyItemResponseDto" Items="order.Items" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Product</MudTh>
+                        <MudTh style="text-align:right">Quantity</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="item">
+                        <MudTd>@item.ProductName</MudTd>
+                        <MudTd Style="text-align:right">@item.Quantity</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </ChildRowContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<SupplyOrderResponseDto> _orders = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            var role = await LocalStorage.GetItemAsync<string>("user_role");
+            if (!AuthService.PermittedForWarehouse(role))
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+        }
+        catch
+        {
+            // ignore prerender exceptions
+        }
+
+        await LoadOrders();
+        StateHasChanged();
+    }
+
+    private async Task LoadOrders()
+    {
+        _orders = await SupplyApi.GetOrdersAsync();
+    }
+
+    private async Task Receive(int id)
+    {
+        try
+        {
+            var updated = await SupplyApi.ReceiveOrderAsync(id);
+            if (updated is not null)
+            {
+                Snackbar.Add("Order received.", Severity.Success);
+                await LoadOrders();
+                StateHasChanged();
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to receive order: {ex.Message}", Severity.Error);
+        }
+    }
+}
