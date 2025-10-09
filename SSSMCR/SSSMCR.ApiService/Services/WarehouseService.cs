@@ -8,7 +8,7 @@ namespace SSSMCR.ApiService.Services;
 
 public interface IWarehouseService : IGenericService<ProductStock>
 {
-    Task<ReserveResult> ReserveForOrderAsync(int orderId, int? preferredBranchId = null, CancellationToken ct = default);
+    Task<ReserveResult> ReserveForOrderAsync(int orderId, int currentUserId, int? preferredBranchId = null, CancellationToken ct = default);
     Task FulfillReservationsAsync(int orderId, CancellationToken ct = default);
     Task FulfillReservationForBranchAsync(int orderId, int branchId, CancellationToken ct = default);
     Task ReleaseReservationsForOrderAsync(int orderId, bool confirm, CancellationToken ct = default);
@@ -19,7 +19,7 @@ public interface IWarehouseService : IGenericService<ProductStock>
 
 public class WarehouseService(AppDbContext context) : GenericService<ProductStock>(context), IWarehouseService
 {
-    public async Task<ReserveResult> ReserveForOrderAsync(int orderId, int? preferredBranchId, CancellationToken ct)
+    public async Task<ReserveResult> ReserveForOrderAsync(int orderId, int currentUserId, int? preferredBranchId, CancellationToken ct)
     {
         await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
@@ -125,6 +125,19 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         var isPartial = perItemReport.Any(r => r.MissingQuantity > 0);
         order.Status = OrderStatus.Processing;
 
+        if (order.BranchId == null)
+        {
+            var userBranchId = await context.Users
+                .Where(u => u.Id == currentUserId)
+                .Select(u => u.BranchId)
+                .FirstOrDefaultAsync(ct);
+
+            if (userBranchId != 0)
+                order.BranchId = userBranchId;
+            else if (preferredBranchId.HasValue)
+                order.BranchId = preferredBranchId;
+        }
+        
         await _context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 

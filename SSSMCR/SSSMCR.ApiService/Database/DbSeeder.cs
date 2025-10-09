@@ -152,6 +152,39 @@ public static class DbSeeder
             new OrderItem { Order = order2, Product = product2, Quantity = 1, UnitPrice = product2.UnitPrice },
             new OrderItem { Order = order2, Product = product3, Quantity = 2, UnitPrice = product3.UnitPrice }
         );
+        
+        var random = new Random();
+        var allProducts = new[] { product1, product2, product3 };
+        var allBranches = new[] { branch1, branch2 };
+        
+        for (int i = 0; i < 40; i++)
+        {
+            var branch = allBranches[random.Next(allBranches.Length)];
+            var product = allProducts[random.Next(allProducts.Length)];
+            var quantity = random.Next(1, 4);
+            var price = product.UnitPrice;
+
+            var order = new Order
+            {
+                CustomerName = $"Klient {i + 1}",
+                CustomerEmail = $"klient{i + 1}@example.com",
+                Status = OrderStatus.Completed,
+                Priority = random.Next(1, 3),
+                ShippingAddress = $"Adres klienta {i + 1}",
+                CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30)),
+                Branch = branch,
+            };
+
+            context.Orders.Add(order);
+            context.OrderItems.Add(new OrderItem
+            {
+                Order = order,
+                Product = product,
+                Quantity = quantity,
+                UnitPrice = price
+            });
+        }
+
 
         context.SaveChanges();
         return Task.CompletedTask;

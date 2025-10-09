@@ -50,26 +50,46 @@
     bool _drawerOpen = true;
     bool _dark = false;
 
-    MudTheme _theme = new()
+    readonly MudTheme _theme = new()
     {
         PaletteDark = new PaletteDark
         {
-            Black = "#1e1e2e",
-            Background = "#2C2F33",
-            Surface = "#23272A",
-            Primary = Colors.Indigo.Default,
-            Secondary = Colors.Pink.Default,
-            AppbarBackground = "#1e1e2e",
-            TextPrimary = "#E0E0E0"
+            // background
+            Black = "#0F1020",
+            Background = "#111224",
+            Surface = "#17182C",
+            // violet & magenta
+            Primary = "#7C4DFF",          // Indigo A200 vibe
+            Secondary = "#E64EC3",        // Magenta/Pink neon
+            Tertiary = "#9B6BFF",
+            AppbarBackground = "#14152A",
+            DrawerBackground = "#14152A",
+            // texts
+            TextPrimary = "#E6E6F0",
+            TextSecondary = "#B8B8D2",
+            Success = "#4ADE80",
+            Info = "#8AB4FF",
+            Warning = "#F59E0B",
+            Error = "#F87171",
+            // UI
+            ActionDefault = "#B8B8D2",
+            ActionDisabled = "#6B6E8C",
+            ActionDisabledBackground = "#232442",
+            Divider = "#262948",
+            TableLines = "#262948"
         },
         PaletteLight = new PaletteLight
         {
-            Primary = Colors.Indigo.Default,
-            Secondary = Colors.Pink.Lighten2,
-            Background = "#FAFAFA",
+            Primary = "#673AB7",
+            Secondary = "#D81B60",
+            Tertiary = "#8E7CFF",
+            Background = "#FAFAFF",
             Surface = "#FFFFFF",
-            AppbarBackground = Colors.Indigo.Darken1,
-            TextPrimary = "#212121"
+            AppbarBackground = "#5E35B1",
+            DrawerBackground = "#FFFFFF",
+            TextPrimary = "#1C1B29",
+            TextSecondary = "#4A4A68",
+            Divider = "#E7E7F3"
         }
     };
 
@@ -86,7 +106,10 @@
         {
             await LocalStorage.SetItemAsync(DrawerKey, _drawerOpen);
         }
-        catch {  }
+        catch
+        {
+            // ignored
+        }
     }
 
     async Task ToggleDark()
@@ -96,7 +119,11 @@
         {
             await LocalStorage.SetItemAsync(DarkKey, _dark);
         }
-        catch {  }
+        catch
+        {
+            // ignored
+        }
+
         StateHasChanged();
     }
 
@@ -118,7 +145,7 @@
         }
         catch
         {
-            
+            // ignored
         }
 
         if (firstRender && !_checked)
