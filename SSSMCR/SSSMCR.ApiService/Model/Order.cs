@@ -7,6 +7,8 @@ public class Order
 {
     [Key]
     public int Id { get; set; }
+    
+    public int? BranchId { get; set; }
 
     [Required]
     [MaxLength(255)]
@@ -25,5 +27,7 @@ public class Order
     public int Priority { get; set; }
     
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+    
+    public Branch? Branch { get; set; }
     public string ShippingAddress { get; set; }
 }

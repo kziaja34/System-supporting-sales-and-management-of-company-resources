@@ -51,6 +51,7 @@
             <MudNavGroup Title="Sales" Icon="@Icons.Material.Filled.PointOfSale" Expanded="false">
                 <MudNavLink Href="orders" Icon="@Icons.Material.Filled.Receipt" Match="NavLinkMatch.Prefix">Orders</MudNavLink>
                 <MudNavLink Href="invoices" Icon="@Icons.Material.Filled.ReceiptLong">Invoices</MudNavLink>
+                <MudNavLink Href="reports" Icon="@Icons.Material.Filled.ReceiptLong">Dashboard</MudNavLink>
             </MudNavGroup>
         }
         @if (Auth.PermittedForWarehouse(user_role))

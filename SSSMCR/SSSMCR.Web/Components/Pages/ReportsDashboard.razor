@@ -1,0 +1,104 @@
+﻿@page "/reports"
+@using SSSMCR.Web.Services
+@inject ReportsApiService ReportsApi
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-6 d-flex flex-column align-center">
+    <MudText Typo="Typo.h5" Class="mb-6">Sales Dashboard</MudText>
+
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Medium" />
+    }
+    else
+    {
+        <!-- Wykres kołowy -->
+        <MudCard Class="mb-6" Style="max-width: 600px; width: 100%; text-align:center;">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">Sales by Branch (Last 30 Days)</MudText>
+                <MudChart ChartType="ChartType.Pie"
+                          InputData="@_branchData"
+                          InputLabels="@_branchLabels"
+                          Width="400px"
+                          Height="400px" />
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Wykres liniowy -->
+        <MudCard Class="mb-4" Style="max-width: 900px; width: 100%; text-align:center;">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">Sales Trend (Last 30 Days)</MudText>
+                <MudChart ChartType="ChartType.Line"
+                          ChartSeries="@_trendSeries"
+                          XAxisLabels="@_trendLabels"
+                          ChartOptions="@_chartOptions"
+                          AxisChartOptions="_axisChartOptions"
+                          Width="100%"
+                          Height="400px" />
+            </MudCardContent>
+        </MudCard>
+    }
+</MudPaper>
+
+@code {
+    private bool _loading = true;
+
+    // === PIE CHART ===
+    private string[] _branchLabels = Array.Empty<string>();
+    private double[] _branchData = Array.Empty<double>();
+
+    // === LINE CHART ===
+    private string[] _trendLabels = Array.Empty<string>();
+    private List<ChartSeries> _trendSeries = new();
+
+    // Opcje wykresu liniowego
+    private ChartOptions _chartOptions = new()
+    {
+        LineStrokeWidth = 3
+    };
+
+    private AxisChartOptions _axisChartOptions = new()
+    {
+        XAxisLabelRotation = 30,
+        MatchBoundsToSize = true
+    };
+
+    private string _width = "650px";
+    private string _height = "350px";
+    private int _selectedIndex = -1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var branchSales = await ReportsApi.GetSalesByBranchAsync();
+            var trendSales = await ReportsApi.GetSalesTrendAsync();
+
+            // === DANE DO PIE ===
+            _branchLabels = branchSales.Select(b => b.Branch).ToArray();
+            _branchData = branchSales.Select(b => (double)b.Total).ToArray();
+
+            // === DANE DO LINE ===
+            _trendLabels = trendSales.Select(t => t.Date.ToString("dd.MM")).ToArray();
+            _trendSeries = new()
+            {
+                new ChartSeries
+                {
+                    Name = "Sales Trend",
+                    Data = trendSales.Select(t => (double)t.Total).ToArray(),
+                    LineDisplayType = LineDisplayType.Line,
+                    ShowDataMarkers = true
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load reports: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+}

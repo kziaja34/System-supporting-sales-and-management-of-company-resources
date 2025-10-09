@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Model.Exceptions;
@@ -15,6 +16,9 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
 {
     private readonly IReservationService _reservationSvc = reservationSvc;
     private readonly IOrderService _orderSvc = orderSvc;
+    
+    private int CurrentUserId =>
+        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpPost("orders/{orderId}/reserve")]
     [Authorize(Roles = "Manager,Seller, Administrator")]
@@ -22,7 +26,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
     {
         try
         {
-            var result = await svc.ReserveForOrderAsync(orderId, preferredBranchId);
+            var result = await svc.ReserveForOrderAsync(orderId, CurrentUserId, preferredBranchId);
             return Ok(result);
         }
         catch (InvalidOperationException ex)

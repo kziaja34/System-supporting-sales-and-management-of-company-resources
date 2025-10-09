@@ -50,7 +50,7 @@
     bool _drawerOpen = true;
     bool _dark = false;
 
-    MudTheme _theme = new()
+    readonly MudTheme _theme = new()
     {
         PaletteDark = new PaletteDark
         {
@@ -86,7 +86,10 @@
         {
             await LocalStorage.SetItemAsync(DrawerKey, _drawerOpen);
         }
-        catch {  }
+        catch
+        {
+            // ignored
+        }
     }
 
     async Task ToggleDark()
@@ -96,7 +99,11 @@
         {
             await LocalStorage.SetItemAsync(DarkKey, _dark);
         }
-        catch {  }
+        catch
+        {
+            // ignored
+        }
+
         StateHasChanged();
     }
 
@@ -118,7 +125,7 @@
         }
         catch
         {
-            
+            // ignored
         }
 
         if (firstRender && !_checked)
