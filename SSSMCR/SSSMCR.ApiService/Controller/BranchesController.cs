@@ -104,12 +104,16 @@ public class BranchesController(IBranchService branchService) : ControllerBase
     {
         Name = b.Name,
         Id = b.Id,
-        Location = b.Location
+        Location = b.Location,
+        Latitude = b.Latitude,
+        Longitude = b.Longitude
     };
     
     private static Branch ToEntity(BranchCreateRequest b) => new()
     {
         Name = b.Name,
-        Location = b.Location
+        Location = b.Location,
+        Latitude = b.Latitude,
+        Longitude = b.Longitude
     };
 }

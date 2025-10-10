@@ -51,6 +51,9 @@ public class BranchService(AppDbContext context) : GenericService<Branch>(contex
         existing.Name = branch.Name;
         existing.Location = branch.Location;
         
+        existing.Latitude = branch.Latitude;
+        existing.Longitude = branch.Longitude;
+        
         _dbSet.Update(existing);
         await _context.SaveChangesAsync(ct);
     }

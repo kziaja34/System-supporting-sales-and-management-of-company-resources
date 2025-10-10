@@ -169,6 +169,8 @@ public class BranchResponse
     public string Name { get; set; }
     [Required]
     public string Location { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }
 
 public class BranchCreateRequest
@@ -177,6 +179,8 @@ public class BranchCreateRequest
     public string Name { get; set; } = default!;
     [Required, MaxLength(500)]
     public string Location { get; set; } = default!;
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }
 
 public class ReservationDto

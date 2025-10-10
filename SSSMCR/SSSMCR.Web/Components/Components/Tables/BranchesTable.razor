@@ -10,14 +10,18 @@
     <MudTable Items="branches" Dense="true" Hover="true">
         <HeaderContent>
             <MudTh>Id</MudTh>
-            <MudTh>First Name</MudTh>
-            <MudTh>Last Name</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Location</MudTh>
+            <MudTh>Latitude</MudTh>
+            <MudTh>Longitude</MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Id">@context.Id</MudTd>
-            <MudTd DataLabel="FirstName">@context.Name</MudTd>
-            <MudTd DataLabel="LastName">@context.Location</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Location">@context.Location</MudTd>
+            <MudTd DataLabel="Latitude">@context.Latitude</MudTd>
+            <MudTd DataLabel="Longitude">@context.Longitude</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="() => OpenDialog(context)" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => Delete(context.Id)" />

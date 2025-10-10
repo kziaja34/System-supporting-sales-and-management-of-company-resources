@@ -11,6 +11,11 @@
                           Error="@(!string.IsNullOrEmpty(error))"
                           ErrorText="@error" />
             <MudTextField @bind-Value="model.Location" Label="Location" Required="true" />
+
+            <MudNumericField TValue="double?" @bind-Value="model.Latitude" Label="Latitude" 
+                             HelperText="Optional. Range: -90 to 90" Min="-90" Max="90" />
+            <MudNumericField TValue="double?" @bind-Value="model.Longitude" Label="Longitude" 
+                             HelperText="Optional. Range: -180 to 180" Min="-180" Max="180" />
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -36,7 +41,9 @@
             {
                 Id = Branch.Id,
                 Name = Branch.Name,
-                Location = Branch.Location
+                Location = Branch.Location,
+                Latitude = Branch.Latitude,
+                Longitude = Branch.Longitude
             };
         }
     }
@@ -54,7 +61,9 @@
                 var created = await BranchesApiService.CreateBranchAsync(new BranchCreateRequest
                 {
                     Name = model.Name,
-                    Location = model.Location
+                    Location = model.Location,
+                    Latitude = model.Latitude,
+                    Longitude = model.Longitude
                 }); 
                 MudDialog.Close(DialogResult.Ok(created));
             }
@@ -63,7 +72,9 @@
                 var updated = await BranchesApiService.UpdateBranchAsync(model.Id, new BranchCreateRequest
                 {
                     Name = model.Name,
-                    Location = model.Location
+                    Location = model.Location,
+                    Latitude = model.Latitude,
+                    Longitude = model.Longitude
                 });
                 MudDialog.Close(DialogResult.Ok(updated));
             }
@@ -89,5 +100,7 @@
         public int Id { get; set; }
         public string Name { get; set; }
         public string Location { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
     }
 }

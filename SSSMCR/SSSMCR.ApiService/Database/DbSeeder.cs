@@ -38,9 +38,10 @@ public static class DbSeeder
         context.Roles.AddRange(adminRole, managerRole, sellerRole, warehouseRole);
 
         // Branches
-        var branch1 = new Branch { Name = "Oddział Katowice", Location = "Katowice, ul. Główna 1" };
-        var branch2 = new Branch { Name = "Oddział Gliwice", Location = "Gliwice, ul. Słoneczna 2" };
-        context.Branches.AddRange(branch1, branch2);
+        var branch1 = new Branch { Name = "Oddział Katowice", Location = "Katowice, ul. Rozdzienskiego 1", Latitude = 50.264301, Longitude = 19.025333};
+        var branch3 = new Branch { Name = "Oddział Katowice", Location = "Katowice, ul. Rozdzienskiego 2", Latitude = 50.264399, Longitude = 19.025336};
+        var branch2 = new Branch { Name = "Oddział Gliwice", Location = "Gliwice, ul. Słoneczna 2", Latitude = 50.286375, Longitude = 18.616104 };
+        context.Branches.AddRange(branch1, branch2, branch3);
 
         // Users
         var admin = new User
@@ -100,7 +101,8 @@ public static class DbSeeder
         context.ProductStock.AddRange(
             new ProductStock { Product = product1, Branch = branch1, Quantity = 10, ReservedQuantity = 0, CriticalThreshold = 3 },
             new ProductStock { Product = product2, Branch = branch1, Quantity = 5, ReservedQuantity = 0, CriticalThreshold = 2 },
-            new ProductStock { Product = product3, Branch = branch2, Quantity = 20, ReservedQuantity = 0, CriticalThreshold = 5 }
+            new ProductStock { Product = product3, Branch = branch2, Quantity = 20, ReservedQuantity = 0, CriticalThreshold = 5 },
+            new ProductStock { Product = product1, Branch = branch3, Quantity = 1, ReservedQuantity = 0, CriticalThreshold = 3 }
         );
 
         // Supplier
