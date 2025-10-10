@@ -44,6 +44,17 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
                 r.CreatedAt = DateTime.UtcNow;
             }
         }
+        
+        double? originLat = null, originLon = null;
+        if (preferredBranchId.HasValue)
+        {
+            var origin = await _context.Branches
+                .Where(b => b.Id == preferredBranchId.Value)
+                .Select(b => new { b.Latitude, b.Longitude })
+                .FirstOrDefaultAsync(ct);
+            originLat = origin?.Latitude;
+            originLon = origin?.Longitude;
+        }
 
         var perItemReport = new List<ReserveLineResult>();
 
@@ -60,66 +71,79 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
                 {
                     s,
                     Available = s.Quantity - s.ReservedQuantity,
-                    Priority = (preferredBranchId.HasValue && s.BranchId == preferredBranchId.Value) ? 0 : 1
+                    Priority = (preferredBranchId.HasValue && s.BranchId == preferredBranchId.Value) ? 0 : 1,
+                    Lat = s.Branch.Latitude,
+                    Lon = s.Branch.Longitude
                 })
                 .Where(x => x.Available > 0)
-                .OrderBy(x => x.Priority)
-                .ThenByDescending(x => x.Available)
                 .ToListAsync(ct);
 
-                foreach (var x in stocks)
+            var sortedStocks = (originLat.HasValue && originLon.HasValue)
+                ? stocks
+                    .OrderBy(x => x.Priority)
+                    .ThenBy(x => (x.Lat.HasValue && x.Lon.HasValue)
+                        ? DistanceKm(originLat.Value, originLon.Value, x.Lat.Value, x.Lon.Value)
+                        : double.MaxValue)
+                    .ThenByDescending(x => x.Available)
+                    .ToList()
+                : stocks
+                    .OrderBy(x => x.Priority)
+                    .ThenByDescending(x => x.Available)
+                    .ToList();
+            
+            foreach (var x in sortedStocks)
+            {
+                if (need <= 0) break;
+                var take = Math.Min(need, x.Available);
+
+                x.s.ReservedQuantity += take;
+                x.s.LastUpdatedAt = DateTime.UtcNow;
+
+                var existingReservation = await _context.StockReservations
+                    .FirstOrDefaultAsync(r =>
+                        r.OrderItemId == item.Id &&
+                        r.ProductStockId == x.s.Id &&
+                        (r.Status == ReservationStatus.Released || r.Status == ReservationStatus.Active), ct);
+
+                if (existingReservation != null)
                 {
-                    if (need <= 0) break;
-                    var take = Math.Min(need, x.Available);
-
-                    x.s.ReservedQuantity += take;
-                    x.s.LastUpdatedAt = DateTime.UtcNow;
-
-                    var existingReservation = await _context.StockReservations
-                        .FirstOrDefaultAsync(r =>
-                            r.OrderItemId == item.Id &&
-                            r.ProductStockId == x.s.Id &&
-                            (r.Status == ReservationStatus.Released || r.Status == ReservationStatus.Active), ct);
-
-                    if (existingReservation != null)
-                    {
-                        existingReservation.Status = ReservationStatus.Active;
-                        existingReservation.Quantity = take;
-                        existingReservation.CreatedAt = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        _context.StockReservations.Add(new StockReservation
-                        {
-                            OrderItemId = item.Id,
-                            ProductStockId = x.s.Id,
-                            Quantity = take,
-                            Status = ReservationStatus.Active,
-                            CreatedAt = DateTime.UtcNow
-                        });
-                    }
-
-                    perItemReport.Add(new ReserveLineResult(
-                        item.Id,
-                        item.Product.Name,
-                        x.s.Branch.Name ?? "Unknown",
-                        take,
-                        need - take
-                    ));
-
-                    need -= take;
+                    existingReservation.Status = ReservationStatus.Active;
+                    existingReservation.Quantity = take;
+                    existingReservation.CreatedAt = DateTime.UtcNow;
                 }
-                
-                if (need > 0)
+                else
                 {
-                    perItemReport.Add(new ReserveLineResult(
-                        item.Id,
-                        item.Product.Name,
-                        "—",
-                        0,
-                        need
-                    ));
+                    _context.StockReservations.Add(new StockReservation
+                    {
+                        OrderItemId = item.Id,
+                        ProductStockId = x.s.Id,
+                        Quantity = take,
+                        Status = ReservationStatus.Active,
+                        CreatedAt = DateTime.UtcNow
+                    });
                 }
+
+                perItemReport.Add(new ReserveLineResult(
+                    item.Id,
+                    item.Product.Name,
+                    x.s.Branch.Name ?? "Unknown",
+                    take,
+                    need - take
+                ));
+
+                need -= take;
+            }
+            
+            if (need > 0)
+            {
+                perItemReport.Add(new ReserveLineResult(
+                    item.Id,
+                    item.Product.Name,
+                    "—",
+                    0,
+                    need
+                ));
+            }
         }
 
         var isPartial = perItemReport.Any(r => r.MissingQuantity > 0);
@@ -373,7 +397,18 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         await context.SaveChangesAsync(ct);
     }
 
-
+    private static double DistanceKm(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 6371.0; // km
+        double dLat = (lat2 - lat1) * Math.PI / 180.0;
+        double dLon = (lon2 - lon1) * Math.PI / 180.0;
+        double a =
+            Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+            Math.Cos(lat1 * Math.PI / 180.0) * Math.Cos(lat2 * Math.PI / 180.0) *
+            Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return R * c;
+    }
 
     private int GetAlreadyReservedQty(int orderItemId) =>
         _context.StockReservations
