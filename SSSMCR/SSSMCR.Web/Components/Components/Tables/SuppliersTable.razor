@@ -1,0 +1,108 @@
+﻿@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@using SSSMCR.Web.Components.Components.Dialogs
+@inject SuppliersApiService SuppliersApi
+@inject ProductsApiService ProductsApi
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudTable Items="_suppliers" Dense="true" Hover="true" Bordered="true" Striped="true">
+        <HeaderContent>
+            <MudTh style="width:1%">Id</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Phone</MudTh>
+            <MudTh>Address</MudTh>
+            <MudTh style="width:1%"></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Email">@context.ContactEmail</MudTd>
+            <MudTd DataLabel="Phone">@context.Phone</MudTd>
+            <MudTd DataLabel="Address">@context.Address</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>OpenEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Inventory" Color="Color.Secondary" Title="Edit offer"
+                               OnClick="@(()=>OpenOfferDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>Delete(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+        <ToolBarContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@(()=>OpenEditDialog(null))">
+                Add Supplier
+            </MudButton>
+        </ToolBarContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<SupplierResponse> _suppliers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _suppliers = await SuppliersApi.GetSuppliersAsync();
+    }
+
+    private async Task Refresh()
+    {
+        _suppliers = await SuppliersApi.GetSuppliersAsync();
+        StateHasChanged();
+    }
+
+    private async Task Delete(int id)
+    {
+        var confirm = await DialogService.ShowMessageBox(
+            "Confirm delete",
+            "Are you sure you want to delete this supplier?",
+            yesText: "Delete",
+            cancelText: "Cancel") == true;
+
+        if (!confirm) return;
+
+        try
+        {
+            await SuppliersApi.DeleteSupplierAsync(id);
+            _suppliers.RemoveAll(s => s.Id == id);
+            Snackbar.Add("Supplier deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task OpenEditDialog(SupplierResponse? supplier)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Supplier"] = supplier
+        };
+        var options = new DialogOptions { CloseButton = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = DialogService.Show<SuppliersEditDialog>("Supplier Editor", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await Refresh();
+        }
+    }
+
+    private async Task OpenOfferDialog(SupplierResponse supplier)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Supplier"] = supplier
+        };
+        var options = new DialogOptions { CloseButton = true, FullWidth = true, MaxWidth = MaxWidth.Large };
+        var dialog = DialogService.Show<SupplierOfferDialog>("Supplier Offer", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            Snackbar.Add("Offer updated.", Severity.Success);
+        }
+    }
+}

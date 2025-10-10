@@ -119,8 +119,7 @@ public static class DbSeeder
         var supplierProducts = new List<SupplierProduct>
         {
             new SupplierProduct { Supplier = supplier1, Product = product1, Price = 3300m },
-            new SupplierProduct { Supplier = supplier1, Product = product2, Price = 1100m },
-            new SupplierProduct { Supplier = supplier1, Product = product3, Price = 140m }
+            new SupplierProduct { Supplier = supplier1, Product = product2, Price = 1100m }
         };
         context.SupplierProducts.AddRange(supplierProducts);
         

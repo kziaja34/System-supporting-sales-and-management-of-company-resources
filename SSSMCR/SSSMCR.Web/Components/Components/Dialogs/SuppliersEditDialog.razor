@@ -1,0 +1,79 @@
+﻿@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject SuppliersApiService SuppliersApi
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" Model="_model" Validated="OnValidated">
+            <MudTextField @bind-Value="_model.Name" Label="Name" Required="true" />
+            <MudTextField @bind-Value="_model.ContactEmail" Label="Email" Required="true" />
+            <MudTextField @bind-Value="_model.Phone" Label="Phone" Required="true" />
+            <MudTextField @bind-Value="_model.Address" Label="Address" Required="true" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Save" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Default" Variant="Variant.Outlined">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public SupplierResponse? Supplier { get; set; }
+
+    private MudForm? _form;
+    private SupplierUpdateRequest _model = new();
+
+    protected override void OnInitialized()
+    {
+        if (Supplier is null)
+        {
+            _model = new SupplierUpdateRequest();
+        }
+        else
+        {
+            _model = new SupplierUpdateRequest
+            {
+                Name = Supplier.Name,
+                ContactEmail = Supplier.ContactEmail,
+                Phone = Supplier.Phone,
+                Address = Supplier.Address
+            };
+        }
+    }
+
+    private async Task Save()
+    {
+        await (_form?.Validate() ?? Task.CompletedTask);
+        if (!(_form?.IsValid ?? false)) return;
+
+        try
+        {
+            if (Supplier is null)
+            {
+                var created = await SuppliersApi.CreateSupplierAsync(new SupplierCreateRequest
+                {
+                    Name = _model.Name,
+                    ContactEmail = _model.ContactEmail,
+                    Phone = _model.Phone,
+                    Address = _model.Address
+                });
+                MudDialog.Close(DialogResult.Ok(created));
+            }
+            else
+            {
+                var updated = await SuppliersApi.UpdateSupplierAsync(Supplier.Id, _model);
+                MudDialog.Close(DialogResult.Ok(updated));
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void OnValidated() { }
+}

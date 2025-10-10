@@ -1,0 +1,111 @@
+﻿@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject SuppliersApiService SuppliersApi
+@inject ProductsApiService ProductsApi
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.subtitle1">Offer for: @Supplier?.Name</MudText>
+
+            <MudTable Items="_items" Dense="true" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh style="width:1%"></MudTh>
+                    <MudTh>Product</MudTh>
+                    <MudTh>Description</MudTh>
+                    <MudTh style="min-width: 180px; width: 220px;">Price (supplier)</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="i">
+                    <MudTd>
+                        <MudCheckBox @bind-Value="i.Selected" />
+                    </MudTd>
+                    <MudTd>@i.Name</MudTd>
+                    <MudTd>@i.Description</MudTd>
+                    <MudTd>
+                        <MudNumericField T="decimal?"
+                                         @bind-Value="i.Price"
+                                         Disabled="@(!i.Selected)"
+                                         Min="0"
+                                         Style="width: 100%;" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Save" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Default" Variant="Variant.Outlined">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public SupplierResponse? Supplier { get; set; }
+
+    private List<ItemVm> _items = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1) Wszystkie produkty
+        var products = await ProductsApi.GetProductsAsync();
+
+        // 2) Aktualna oferta dostawcy
+        var offer = await SuppliersApi.GetSupplierProductsAsync(Supplier!.Id);
+        var offerMap = offer.ToDictionary(o => o.ProductId, o => o.Price);
+
+        // 3) Zbuduj VM-y w oparciu o ofertę
+        _items = products.Select(p => new ItemVm
+        {
+            ProductId = p.Id,
+            Name = p.Name,
+            Description = p.Description,
+            Selected = offerMap.ContainsKey(p.Id),
+            Price = offerMap.TryGetValue(p.Id, out var price) ? price : null
+        }).ToList();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Save()
+    {
+        try
+        {
+            var items = _items
+                .Where(i => i.Selected)
+                .Select(i => new SupplierProductUpsertDto
+                {
+                    ProductId = i.ProductId,
+                    Price = i.Price
+                })
+                .ToList();
+
+            await SuppliersApi.SetSupplierProductsAsync(Supplier!.Id, items);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private sealed class ItemVm
+    {
+        public int ProductId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+
+        private bool _selected;
+        public bool Selected
+        {
+            get => _selected;
+            set
+            {
+                _selected = value;
+                if (!_selected) Price = null;
+            }
+        }
+
+        public decimal? Price { get; set; }
+    }
+}

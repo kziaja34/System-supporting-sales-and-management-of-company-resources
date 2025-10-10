@@ -294,3 +294,25 @@ public class SupplierUpdateRequest
     [Required, MaxLength(500)]
     public string Address { get; set; } = default!;
 }
+
+public class SupplierProductResponse
+{
+    [Required]
+    public int ProductId { get; set; }
+    [Required]
+    public string ProductName { get; set; } = string.Empty;
+    public decimal? Price { get; set; }
+}
+
+public class SupplierProductUpsertDto
+{
+    [Required]
+    public int ProductId { get; set; }
+    public decimal? Price { get; set; }
+}
+
+public class SupplierProductsUpdateRequest
+{
+    [Required]
+    public List<SupplierProductUpsertDto> Items { get; set; } = new();
+}

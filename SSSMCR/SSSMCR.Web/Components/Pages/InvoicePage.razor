@@ -74,14 +74,18 @@
     private string? PdfDataUrl { get; set; }
     private bool IsLoading { get; set; } = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender) return;
+        
         OrderId = await LocalStorage.GetItemAsync<int>("OrderId");
         
         if (OrderId.HasValue)
         {
             await LocalStorage.RemoveItemAsync("OrderId");
         }
+        
+        StateHasChanged();
     }
 
     private async Task GenerateInvoice()
@@ -92,7 +96,7 @@
 
         try
         {
-            var dataUrl = await InvoiceService.GetInvoiceDataUrlAsync(OrderId ?? 0); // Domyślnie 0 jeśli brak OrderId
+            var dataUrl = await InvoiceService.GetInvoiceDataUrlAsync(OrderId ?? 0);
             if (string.IsNullOrEmpty(dataUrl))
             {
                 ErrorMessage = "Failed to generate invoice.";

@@ -1,0 +1,34 @@
+﻿@page "/suppliers"
+@using SSSMCR.Web.Components.Components.Tables
+@inject NavigationManager Nav
+@inject IAuthService AuthService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<PageTitle>Suppliers</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Supplier Management</MudText>
+    <SuppliersTable />
+</MudContainer>
+
+@code {
+    private string? user_role;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            user_role = await LocalStorage.GetItemAsync<string>("user_role");
+            if (!AuthService.PermittedForManagement(user_role))
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+        }
+        catch { /* ignore prerender exceptions */ }
+
+        StateHasChanged();
+    }
+}

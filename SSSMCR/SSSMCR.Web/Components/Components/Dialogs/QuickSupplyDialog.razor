@@ -54,7 +54,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _suppliers = await SuppliersApi.GetSuppliersAsync();
+        _suppliers = await SuppliersApi.GetSuppliersByProductAsync(ProductId);
     }
 
     private void Cancel() => DialogInstance.Cancel();

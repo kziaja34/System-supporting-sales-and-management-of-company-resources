@@ -26,6 +26,19 @@ public class SupplyService(AppDbContext context)
         var branch = await _context.Branches.FindAsync(new object[] { branchId }, ct)
             ?? throw new InvalidOperationException("Branch not found");
 
+        var allowedProductIds = await _context.SupplierProducts
+            .Where(sp => sp.SupplierId == supplierId)
+            .Select(sp => sp.ProductId)
+            .ToListAsync(ct);
+
+        var requestedProductIds = items.Select(i => i.productId).Distinct().ToList();
+        var notAllowed = requestedProductIds.Except(allowedProductIds).ToList();
+        if (notAllowed.Any())
+        {
+            throw new InvalidOperationException(
+                $"Selected supplier does not provide products with IDs: {string.Join(", ", notAllowed)}");
+        }
+        
         var order = new SupplyOrder
         {
             SupplierId = supplierId,
