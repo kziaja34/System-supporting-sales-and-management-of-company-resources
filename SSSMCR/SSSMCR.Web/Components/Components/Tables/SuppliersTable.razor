@@ -81,10 +81,10 @@
             ["Supplier"] = supplier
         };
         var options = new DialogOptions { CloseButton = true, FullWidth = true, MaxWidth = MaxWidth.Small };
-        var dialog = DialogService.Show<SuppliersEditDialog>("Supplier Editor", parameters, options);
+        var dialog = await DialogService.ShowAsync<SuppliersEditDialog>("Supplier Editor", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result != null && !result.Canceled)
         {
             await Refresh();
         }
@@ -97,10 +97,10 @@
             ["Supplier"] = supplier
         };
         var options = new DialogOptions { CloseButton = true, FullWidth = true, MaxWidth = MaxWidth.Large };
-        var dialog = DialogService.Show<SupplierOfferDialog>("Supplier Offer", parameters, options);
+        var dialog = await DialogService.ShowAsync<SupplierOfferDialog>("Supplier Offer", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result != null && !result.Canceled)
         {
             Snackbar.Add("Offer updated.", Severity.Success);
         }

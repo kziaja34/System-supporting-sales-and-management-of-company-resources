@@ -223,10 +223,10 @@
 
             var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
 
-            var dialog = DialogService.Show<ConfirmDialog>("Confirm release", parameters, options);
-            var dialogResult = await dialog.Result;
+            var dialogRef = await DialogService.ShowAsync<ConfirmDialog>("Confirm release", parameters, options);
+            var dialogResult = await dialogRef.Result;
 
-            if (!dialogResult.Canceled)
+            if (dialogResult != null && !dialogResult.Canceled)
             {
                 var forceResult = await OrdersService.ReleaseOrderAsync(_order.Id, confirm: true);
                 if (forceResult.Success)
@@ -252,8 +252,8 @@
     
     private async Task GoToInvoicePage()
     {
-        await LocalStorage.SetItemAsync("OrderId", _order.Id);
-        
+        if (_order != null) await LocalStorage.SetItemAsync("OrderId", _order.Id);
+
         Nav.NavigateTo("/invoices");
     }
     

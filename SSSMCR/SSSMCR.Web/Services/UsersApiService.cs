@@ -6,7 +6,6 @@ namespace SSSMCR.Web.Services;
 public class UsersApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UsersApiService> logger) : GenericService<UsersApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
-    private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<UsersApiService> _logger = logger;
 
     public async Task<List<UserResponse>> GetUsersAsync()

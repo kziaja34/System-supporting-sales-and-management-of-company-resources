@@ -1,4 +1,5 @@
-﻿<MudNavMenu>
+﻿@using SSSMCR.Web.Services
+<MudNavMenu>
     <MudDivider Class="my-2" />
     <MudList T="object" Dense="true">
         @if (!string.IsNullOrEmpty(_email))
@@ -104,10 +105,11 @@
         StateHasChanged();
     }
 
-    private async Task RedirectToLogin()
+    private Task RedirectToLogin()
     {
-        StateHasChanged();
         Nav.NavigateTo("/login");
+        StateHasChanged();
+        return Task.CompletedTask;
     }
     
     protected override void OnInitialized()

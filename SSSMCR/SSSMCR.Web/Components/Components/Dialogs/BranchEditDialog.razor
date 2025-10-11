@@ -12,9 +12,9 @@
                           ErrorText="@error" />
             <MudTextField @bind-Value="model.Location" Label="Location" Required="true" />
 
-            <MudNumericField TValue="double?" @bind-Value="model.Latitude" Label="Latitude" 
+            <MudNumericField tValue="double?" @bind-Value="model.Latitude" Label="Latitude" 
                              HelperText="Optional. Range: -90 to 90" Min="-90" Max="90" />
-            <MudNumericField TValue="double?" @bind-Value="model.Longitude" Label="Longitude" 
+            <MudNumericField tValue="double?" @bind-Value="model.Longitude" Label="Longitude" 
                              HelperText="Optional. Range: -180 to 180" Min="-180" Max="180" />
         </MudForm>
     </DialogContent>
@@ -98,8 +98,8 @@
     class BranchEditModel
     {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Location { get; set; }
+        public string? Name { get; set; }
+        public string? Location { get; set; }
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
     }

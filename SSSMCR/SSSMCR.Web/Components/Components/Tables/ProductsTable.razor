@@ -58,7 +58,7 @@
                 products.RemoveAll(u => u.Id == id);
                 Snackbar.Add("Product deleted", Severity.Success);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Snackbar.Add("Cannot delete product as some Orders contain it.", Severity.Error);
             }
@@ -73,10 +73,10 @@
         };
         
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = DialogService.Show<ProductEditDialog>("Product Editor", parameters, options);
+        var dialog = await DialogService.ShowAsync<ProductEditDialog>("Product Editor", parameters, options);
         var result = await dialog.Result;
         
-        if (!result.Canceled && result.Data is ProductResponse updated)
+        if (result != null && !result.Canceled && result.Data is ProductResponse updated)
         {
             var idx = products.FindIndex(u => u.Id == updated.Id);
             if (idx >= 0) products[idx] = updated;

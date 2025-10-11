@@ -14,7 +14,7 @@
 
 <MudTable ServerData="LoadOrders"
           RowsPerPage="10"
-          RowsPerPageOptions="new int[]{10,25,50}"
+          rowsPerPageOptions="new int[]{10,25,50}"
           Bordered="true"
           Hover="true"
           Striped="true"
@@ -26,8 +26,8 @@
             <MudTableSortLabel T="OrderListItemDto"
                                SortLabel="id"
                                InitialDirection="SortDirection.Ascending"
-                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                               icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
                 Id
             </MudTableSortLabel>
         </MudTh>
@@ -35,8 +35,8 @@
             <MudTableSortLabel T="OrderListItemDto"
                                SortLabel="customerEmail"
                                InitialDirection="SortDirection.Ascending"
-                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                               icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
                 Email
             </MudTableSortLabel>
         </MudTh>
@@ -44,8 +44,8 @@
             <MudTableSortLabel T="OrderListItemDto"
                                SortLabel="customerName"
                                InitialDirection="SortDirection.Ascending"
-                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                               icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
                 Customer name
             </MudTableSortLabel>
         </MudTh>
@@ -53,8 +53,8 @@
             <MudTableSortLabel T="OrderListItemDto"
                                SortLabel="createdAt"
                                InitialDirection="SortDirection.Descending"
-                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                               icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
                 Created at
             </MudTableSortLabel>
         </MudTh>
@@ -62,10 +62,10 @@
         <MudTh>
             <MudTableSortLabel T="OrderListItemDto"
                                SortLabel="priority"
-                               SortActive="true"
+                               sortActive="true"
                                InitialDirection="SortDirection.Descending"
-                               Icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               IconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+                               icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
                 Priority
             </MudTableSortLabel>
         </MudTh>
@@ -96,7 +96,7 @@
                            Color="Color.Primary"
                            Size="Size.Small"
                            Href="@($"/orders/{context.Id}")"
-                           AriaLabel="View details" />
+                           />
         </MudTd>
     </RowTemplate>
     

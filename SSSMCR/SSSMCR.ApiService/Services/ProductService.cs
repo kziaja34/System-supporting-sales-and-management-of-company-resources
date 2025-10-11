@@ -17,7 +17,7 @@ public class ProductService(
     {
         ArgumentNullException.ThrowIfNull(product);
 
-        var name = product?.Name?.Trim() ?? string.Empty;
+        var name = product.Name.Trim();
         
         var exists = await _dbSet.AsNoTracking()
             .AnyAsync(p => p.Name.ToLower() == name.ToLower(), ct);

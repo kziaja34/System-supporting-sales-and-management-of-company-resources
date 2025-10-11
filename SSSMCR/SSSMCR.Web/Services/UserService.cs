@@ -1,7 +1,7 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using Blazored.LocalStorage;
+﻿using Blazored.LocalStorage;
 using SSSMCR.Shared.Model;
+
+namespace SSSMCR.Web.Services;
 
 public interface IUserService
 {
@@ -10,23 +10,14 @@ public interface IUserService
     Task ChangePasswordAsync(ChangePasswordRequest req);
 }
 
-public class UserService : SSSMCR.Web.Services.GenericService<UserService>, IUserService
+public class UserService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UserService> logger)
+    : GenericService<UserService>(logger, storage), IUserService
 {
-    private readonly IHttpClientFactory _httpFactory;
-    private readonly ILocalStorageService _storage;
-    private readonly ILogger<UserService> _logger;
-
-    public UserService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<UserService> logger)
-        : base(logger, storage)
-    {
-        _httpFactory = httpFactory;
-        _storage = storage;
-        _logger = logger;
-    }
+    private readonly ILogger<UserService> _logger = logger;
 
     public async Task<UserResponse> GetMeAsync()
     {
-        var http = _httpFactory.CreateClient("api");
+        var http = httpFactory.CreateClient("api");
         var url = "/api/me/data";
 
         await AttachBearerAsync(http);
@@ -55,7 +46,7 @@ public class UserService : SSSMCR.Web.Services.GenericService<UserService>, IUse
 
     public async Task<bool> UpdateMeAsync(UpdateMeRequest req)
     {
-        var http = _httpFactory.CreateClient("api");
+        var http = httpFactory.CreateClient("api");
         var url = "/api/me";
 
         await AttachBearerAsync(http);
@@ -76,7 +67,7 @@ public class UserService : SSSMCR.Web.Services.GenericService<UserService>, IUse
 
     public async Task ChangePasswordAsync(ChangePasswordRequest req)
     {
-        var http = _httpFactory.CreateClient("api");
+        var http = httpFactory.CreateClient("api");
         var url = "/api/me/change-password";
 
         await AttachBearerAsync(http);

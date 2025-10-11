@@ -1,11 +1,11 @@
 using System.Text;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using SSSMCR.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 

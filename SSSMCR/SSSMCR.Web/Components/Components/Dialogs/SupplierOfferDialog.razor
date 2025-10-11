@@ -47,14 +47,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // 1) Wszystkie produkty
         var products = await ProductsApi.GetProductsAsync();
 
-        // 2) Aktualna oferta dostawcy
         var offer = await SuppliersApi.GetSupplierProductsAsync(Supplier!.Id);
         var offerMap = offer.ToDictionary(o => o.ProductId, o => o.Price);
 
-        // 3) Zbuduj VM-y w oparciu o ofertę
         _items = products.Select(p => new ItemVm
         {
             ProductId = p.Id,

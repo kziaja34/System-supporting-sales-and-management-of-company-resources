@@ -1,8 +1,8 @@
-﻿using System.Net.Http.Json;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Blazored.LocalStorage;
 using SSSMCR.Shared.Model;
-using SSSMCR.Web.Services;
+
+namespace SSSMCR.Web.Services;
 
 public interface IAuthService
 {
@@ -23,11 +23,14 @@ public sealed class AuthService(
     ILogger<AuthService> logger)
     : GenericService<AuthService>(logger, storage), IAuthService
 {
+    private readonly ILogger<AuthService> _logger = logger;
+    private readonly ILocalStorageService _storage = storage;
+
     public async Task<bool> LoginAsync(LoginRequest req)
     {
         var http = httpFactory.CreateClient("api");
         var url = "/api/auth/login";
-        logger.LogInformation("LoginAsync -> POST {Url} (email={Email})", url, req?.Email);
+        _logger.LogInformation("LoginAsync -> POST {Url} (email={Email})", url, req?.Email);
 
         HttpResponseMessage res;
         try
@@ -36,16 +39,16 @@ public sealed class AuthService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "LoginAsync: request exception (connectivity?)");
+            _logger.LogError(ex, "LoginAsync: request exception (connectivity?)");
             return false;
         }
 
-        logger.LogInformation("LoginAsync <- HTTP {Status} ({Code})", res.StatusCode, (int)res.StatusCode);
+        _logger.LogInformation("LoginAsync <- HTTP {Status} ({Code})", res.StatusCode, (int)res.StatusCode);
         
         if (!res.IsSuccessStatusCode)
         {
             var error = await ReadApiErrorAsync(res);
-            logger.LogWarning("LoginAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
+            _logger.LogWarning("LoginAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
             return false;
         }
         
@@ -54,29 +57,29 @@ public sealed class AuthService(
         {
             string raw = string.Empty;
             try { raw = await res.Content.ReadAsStringAsync(); } catch { }
-            logger.LogWarning("LoginAsync: token is null or AccessToken empty. Response body: {Body}", Truncate(raw, 1000));
+            _logger.LogWarning("LoginAsync: token is null or AccessToken empty. Response body: {Body}", Truncate(raw, 1000));
             return false;
         }
 
-        await storage.SetItemAsync("jwt", token.AccessToken);
-        if (token.ExpiresAtUtc is not null) await storage.SetItemAsync("jwt_expires", token.ExpiresAtUtc);
-        if (!string.IsNullOrWhiteSpace(token.RefreshToken)) await storage.SetItemAsync("refresh", token.RefreshToken);
+        await _storage.SetItemAsync("jwt", token.AccessToken);
+        if (token.ExpiresAtUtc is not null) await _storage.SetItemAsync("jwt_expires", token.ExpiresAtUtc);
+        if (!string.IsNullOrWhiteSpace(token.RefreshToken)) await _storage.SetItemAsync("refresh", token.RefreshToken);
         
         if (!string.IsNullOrWhiteSpace(req?.Email))
-            await storage.SetItemAsStringAsync("user_email", req.Email);
+            await _storage.SetItemAsStringAsync("user_email", req.Email);
 
-        logger.LogInformation("LoginAsync succeeded, token stored");
+        _logger.LogInformation("LoginAsync succeeded, token stored");
         return true;
     }
 
 
     public async Task LogoutAsync()
     {
-        await storage.RemoveItemAsync("jwt");
-        await storage.RemoveItemAsync("jwt_expires");
-        await storage.RemoveItemAsync("refresh");
-        await storage.RemoveItemAsync("user_email");
-        await storage.RemoveItemAsync("user_role");
+        await _storage.RemoveItemAsync("jwt");
+        await _storage.RemoveItemAsync("jwt_expires");
+        await _storage.RemoveItemAsync("refresh");
+        await _storage.RemoveItemAsync("user_email");
+        await _storage.RemoveItemAsync("user_role");
     }
     
     public IEnumerable<string> PasswordStrengthRequired(string pw)
@@ -130,7 +133,4 @@ public sealed class AuthService(
         if (string.IsNullOrWhiteSpace(role)) return false;
         return role.Contains("WarehouseWorker") || role.Contains("Administrator") || role.Contains("Manager");   
     }
-
-    private static string Truncate(string? s, int max)
-        => string.IsNullOrEmpty(s) ? string.Empty : (s.Length <= max ? s : s.Substring(0, max));
 }

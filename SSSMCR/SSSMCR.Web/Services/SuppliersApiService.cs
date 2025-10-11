@@ -141,7 +141,6 @@ public class SuppliersApiService(IHttpClientFactory httpFactory, ILocalStorageSe
         await EnsureSuccessOrThrowAsync(res, "DeleteSupplierAsync");
     }
 
-    // Oferta: lista produktów przypisanych do dostawcy
     public async Task<List<SupplierProductResponse>> GetSupplierProductsAsync(int supplierId)
     {
         var http = _httpFactory.CreateClient("api");
@@ -170,8 +169,7 @@ public class SuppliersApiService(IHttpClientFactory httpFactory, ILocalStorageSe
         var dto = await ReadJsonAsync<List<SupplierProductResponse>>(res.Content);
         return dto ?? new();
     }
-
-    // Oferta: ustaw produkty przypisane do dostawcy (z ceną)
+    
     public async Task SetSupplierProductsAsync(int supplierId, List<SupplierProductUpsertDto> items)
     {
         var http = _httpFactory.CreateClient("api");
@@ -195,7 +193,6 @@ public class SuppliersApiService(IHttpClientFactory httpFactory, ILocalStorageSe
         await EnsureSuccessOrThrowAsync(res, "SetSupplierProductsAsync");
     }
 
-    // Pomocnicze: dostawcy po produkcie (np. QuickSupplyDialog)
     public async Task<List<SupplierResponse>> GetSuppliersByProductAsync(int productId)
     {
         var http = _httpFactory.CreateClient("api");

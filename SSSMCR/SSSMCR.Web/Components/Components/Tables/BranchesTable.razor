@@ -58,7 +58,7 @@
                 branches.RemoveAll(u => u.Id == id);
                 Snackbar.Add("Branch deleted", Severity.Success);
             }
-            catch(Exception ex)
+            catch(Exception)
             {
                 Snackbar.Add("Cannot delete branch, as some users are assigned to it.", Severity.Error);
             }
@@ -72,10 +72,10 @@
             ["Branch"] = branch
         };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = DialogService.Show<BranchEditDialog>("Branch Editor", parameters, options);
+        var dialog = await DialogService.ShowAsync<BranchEditDialog>("Branch Editor", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is BranchResponse updated)
+        if (result != null && !result.Canceled && result.Data is BranchResponse updated)
         {
             var idx = branches.FindIndex(u => u.Id == updated.Id);
             if (idx >= 0) branches[idx] = updated;

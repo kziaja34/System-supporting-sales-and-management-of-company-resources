@@ -1,0 +1,132 @@
+﻿@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject ProductsApiService ProductsApi
+@inject SuppliersApiService SuppliersApi
+@inject SupplyApiService SupplyApi
+@inject BranchesApiService BranchesApi
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" Model="_model">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.subtitle1">Create supply order</MudText>
+
+                <MudSelect T="int?" Label="Branch" @bind-Value="_model.BranchId" Required="true">
+                    @if (_branches.Count == 0)
+                    {
+                        <MudSelectItem T="int?" Value="@null" Disabled="true">(no branches)</MudSelectItem>
+                    }
+                    else
+                    {
+                        @foreach (var b in _branches)
+                        {
+                            <MudSelectItem T="int?" Value="@b.Id">@b.Name</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+
+                <MudSelect T="int?" Label="Product" Value="_selectedProductId" Required="true" Immediate="true" ValueChanged="OnProductChanged">
+                    @if (_products.Count == 0)
+                    {
+                        <MudSelectItem T="int?" Value="@null" Disabled="true">(no products)</MudSelectItem>
+                    }
+                    else
+                    {
+                        @foreach (var p in _products)
+                        {
+                            <MudSelectItem T="int?" Value="@p.Id">@p.Name</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+
+                <MudSelect T="int?" Label="Supplier" @bind-Value="_model.SupplierId" Required="true" Disabled="@(_selectedProductId is null)">
+                    @if (_suppliers.Count == 0)
+                    {
+                        <MudSelectItem T="int?" Value="@null" Disabled="true">@( _selectedProductId is null ? "(select product first)" : "(no suppliers for this product)" )</MudSelectItem>
+                    }
+                    else
+                    {
+                        @foreach (var s in _suppliers)
+                        {
+                            <MudSelectItem T="int?" Value="@s.Id">@s.Name</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+
+                <MudNumericField T="int" Label="Quantity" @bind-Value="_model.Quantity" Min="1" Required="true" Adornment="Adornment.End" AdornmentText="pcs" />
+
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Save" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Default" Variant="Variant.Outlined">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private MudForm? _form;
+    private readonly CreateSupplyModel _model = new();
+
+    private List<ProductResponse> _products = new();
+    private List<SupplierResponse> _suppliers = new();
+    private List<BranchResponse> _branches = new();
+    private int? _selectedProductId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _branches = await BranchesApi.GetBranchesAsync();
+        _products = await ProductsApi.GetProductsAsync();
+    }
+
+    private async Task OnProductChanged(int? productId)
+    {
+        _selectedProductId = productId;
+        _model.SupplierId = null;
+        _suppliers = productId is null ? new() : await SuppliersApi.GetSuppliersByProductAsync(productId.Value);
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        await (_form?.Validate() ?? Task.CompletedTask);
+        if (!(_form?.IsValid ?? false) || _selectedProductId is null) return;
+
+        try
+        {
+            var dto = new SupplyOrderCreateDto
+            {
+                SupplierId = _model.SupplierId!.Value,
+                BranchId = _model.BranchId!.Value,
+                Items = new List<SupplyItemCreateDto>
+                {
+                    new SupplyItemCreateDto
+                    {
+                        ProductId = _selectedProductId.Value,
+                        Quantity = _model.Quantity
+                    }
+                }
+            };
+
+            var created = await SupplyApi.CreateOrderAsync(dto);
+            Snackbar.Add("Supply order created.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(created));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private sealed class CreateSupplyModel
+    {
+        public int? BranchId { get; set; }
+        public int? SupplierId { get; set; }
+        public int Quantity { get; set; } = 1;
+    }
+}

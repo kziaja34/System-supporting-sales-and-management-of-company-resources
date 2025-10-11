@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
 
@@ -21,7 +20,7 @@ public class BranchService(AppDbContext context) : GenericService<Branch>(contex
     {
         ArgumentNullException.ThrowIfNull(branch);
 
-        var name = branch?.Name?.Trim() ?? string.Empty;
+        var name = branch.Name.Trim() ?? string.Empty;
         
         var exists = await _dbSet.AsNoTracking()
             .AnyAsync(b => b.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase), ct);

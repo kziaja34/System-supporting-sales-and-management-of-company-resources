@@ -6,10 +6,7 @@ using PdfSharp.Fonts;
 using PdfSharp.Pdf;
 using PdfSharp.Snippets.Font;
 using SSSMCR.ApiService.Model;
-using System;
 using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
 using SSSMCR.ApiService.Database;
 
 namespace SSSMCR.ApiService.Services
@@ -19,16 +16,9 @@ namespace SSSMCR.ApiService.Services
         Task<PdfDocument> GetInvoice(int orderId);
     }
 
-    public class InvoiceService : IInvoiceService
+    public class InvoiceService(AppDbContext context, IOrderService orderService) : IInvoiceService
     {
-        public InvoiceService(AppDbContext context, IOrderService orderService)
-        {
-            this.orderService = orderService;
-            this.company = context.Companies.FirstOrDefault() ?? new();
-        }
-        
-        private readonly IOrderService orderService;
-        private readonly Company company = new();
+        private readonly Company _company = context.Companies.FirstOrDefault() ?? new();
         
         private static readonly CultureInfo Pl = new("pl-PL");
         private const decimal VatRate = 0.23m;
@@ -73,7 +63,7 @@ namespace SSSMCR.ApiService.Services
             var header = section.Headers.Primary.AddParagraph();
             header.AddFormattedText("SSSMCR", TextFormat.Bold);
             header.AddLineBreak();
-            header.AddText($"{company.Address}, {company.PostalCode} {company.City} | NIP: {company.TaxIdentificationNumber}");
+            header.AddText($"{_company.Address}, {_company.PostalCode} {_company.City} | NIP: {_company.TaxIdentificationNumber}");
             header.Format.Font.Size = 9;
             header.Format.Alignment = ParagraphAlignment.Left;
 
@@ -122,16 +112,16 @@ namespace SSSMCR.ApiService.Services
             var pSeller = r1.Cells[0].AddParagraph();
             pSeller.AddFormattedText("SSSMCR", TextFormat.Bold);
             pSeller.AddLineBreak();
-            pSeller.AddText($"{company.Address}");
+            pSeller.AddText($"{_company.Address}");
             pSeller.AddLineBreak();
-            pSeller.AddText($"{company.PostalCode} {company.City}");
+            pSeller.AddText($"{_company.PostalCode} {_company.City}");
             pSeller.AddLineBreak();
-            pSeller.AddText($"NIP: {company.TaxIdentificationNumber}");
+            pSeller.AddText($"NIP: {_company.TaxIdentificationNumber}");
 
             var pBuyer = r1.Cells[1].AddParagraph();
-            pBuyer.AddFormattedText(order.CustomerName ?? "N/A", TextFormat.Bold);
+            pBuyer.AddFormattedText(order.CustomerName, TextFormat.Bold);
             pBuyer.AddLineBreak();
-            pBuyer.AddText(order.ShippingAddress ?? "N/A");
+            pBuyer.AddText(order.ShippingAddress);
 
             section.AddParagraph().AddLineBreak();
 
@@ -185,7 +175,7 @@ namespace SSSMCR.ApiService.Services
                 var lineGross = Round(lineNet + vatAmount);
 
                 var row = items.AddRow();
-                row.Cells[0].AddParagraph(item.Product?.Name ?? "Position").Format.Alignment = ParagraphAlignment.Left;
+                row.Cells[0].AddParagraph(item.Product.Name ?? "Position").Format.Alignment = ParagraphAlignment.Left;
                 row.Cells[1].AddParagraph(qty.ToString()).Format.Alignment = ParagraphAlignment.Right;
                 row.Cells[2].AddParagraph(Money(unitNet)).Format.Alignment = ParagraphAlignment.Right;
                 row.Cells[3].AddParagraph(Money(lineNet)).Format.Alignment = ParagraphAlignment.Right;
@@ -239,12 +229,7 @@ namespace SSSMCR.ApiService.Services
             pay.Style = "Label";
             pay.AddText("Payment Method: bank transfer | Payment Terms: 14 days");
             pay.AddLineBreak();
-            pay.AddText($"Account: {company.BankAccountNumber}");
-        }
-
-        private decimal CalculateBrutto(decimal netto)
-        {
-            return Round(netto * (1 + VatRate));
+            pay.AddText($"Account: {_company.BankAccountNumber}");
         }
 
         private void DefineStyles(Document document)

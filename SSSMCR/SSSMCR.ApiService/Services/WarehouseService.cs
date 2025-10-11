@@ -151,7 +151,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 
         if (order.BranchId == null)
         {
-            var userBranchId = await context.Users
+            var userBranchId = await _context.Users
                 .Where(u => u.Id == currentUserId)
                 .Select(u => u.BranchId)
                 .FirstOrDefaultAsync(ct);
@@ -369,14 +369,14 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         var now = DateTime.UtcNow;
         var monthAgo = now.AddDays(-30);
 
-        var stocks = await context.ProductStock
+        var stocks = await _context.ProductStock
             .Include(s => s.Product)
             .Include(s => s.Branch)
             .ToListAsync(ct);
 
         foreach (var stock in stocks)
         {
-            var movements = await context.StockMovements
+            var movements = await _context.StockMovements
                 .Where(m => m.ProductStockId == stock.Id &&
                             m.Type == StockMovementType.Outbound &&
                             m.CreatedAt >= monthAgo)
@@ -394,7 +394,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             stock.LastUpdatedAt = now;
         }
 
-        await context.SaveChangesAsync(ct);
+        await _context.SaveChangesAsync(ct);
     }
 
     private static double DistanceKm(double lat1, double lon1, double lat2, double lon2)

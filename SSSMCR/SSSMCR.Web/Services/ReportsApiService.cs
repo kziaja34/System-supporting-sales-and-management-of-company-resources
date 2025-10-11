@@ -10,7 +10,7 @@ public class ReportsApiService(IHttpClientFactory httpFactory, ILocalStorageServ
     
     public async Task<List<SalesByBranchDto>> GetSalesByBranchAsync()
     {
-        var http = httpFactory.CreateClient("api");
+        var http = _httpFactory.CreateClient("api");
         await AttachBearerAsync(http);
 
         var res = await http.GetAsync("api/reports/sales-by-branch");
@@ -21,7 +21,7 @@ public class ReportsApiService(IHttpClientFactory httpFactory, ILocalStorageServ
 
     public async Task<List<SalesTrendDto>> GetSalesTrendAsync()
     {
-        var http = httpFactory.CreateClient("api");
+        var http = _httpFactory.CreateClient("api");
         await AttachBearerAsync(http);
 
         var res = await http.GetAsync("api/reports/sales-trend");

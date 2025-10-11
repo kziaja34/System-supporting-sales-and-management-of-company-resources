@@ -124,7 +124,7 @@ public class SupplyService(AppDbContext context)
         }
 
         order.Status = SupplyOrderStatus.Received;
-        order.CreatedAt = DateTime.UtcNow;
+        order.ReceivedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
     }

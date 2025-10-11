@@ -1,13 +1,13 @@
 ﻿@page "/login"
 @rendermode InteractiveServer
 @using SSSMCR.Shared.Model
-@using Components.Auth
 @inject IAuthService Auth
 @inject ISnackbar Snackbar
 @inject NavigationManager Nav
 @inject IUserService UserService
 @using Blazored.LocalStorage
 @using SSSMCR.Web.Components.Components.Auth
+@using SSSMCR.Web.Services
 @inject ILocalStorageService LocalStorage
 
 <LoginForm IsBusy="@_busy"

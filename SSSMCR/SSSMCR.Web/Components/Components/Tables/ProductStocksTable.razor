@@ -15,6 +15,9 @@
         <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RecalculateThresholds">
             Recalculate thresholds
         </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.AddShoppingCart" OnClick="OpenNewSupply">
+            New supply
+        </MudButton>
     </MudStack>
     
     <MudTable T="ProductStockDto" Items="_stocks" Dense="true" Bordered="true" Hover="true" Striped="true">
@@ -103,6 +106,19 @@
         };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        DialogService.Show<QuickSupplyDialog>("Quick supply", parameters, options);
+        DialogService.ShowAsync<QuickSupplyDialog>("Quick supply", parameters, options);
+    }
+    
+    private async Task OpenNewSupply()
+    {
+        var options = new DialogOptions { CloseButton = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<NewSupplyDialog>("Create supply order", options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            Snackbar.Add("Supply order created.", Severity.Success);
+            await RefreshStocks();
+        }
     }
 }

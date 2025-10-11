@@ -95,10 +95,10 @@
             ["Branches"] = branches
         };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = DialogService.Show<UserEditDialog>("User Editor", parameters, options);
+        var dialog = await DialogService.ShowAsync<UserEditDialog>("User Editor", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is UserResponse updated)
+        if (result != null && !result.Canceled && result.Data is UserResponse updated)
         {
             var idx = users.FindIndex(u => u.Id == updated.Id);
             if (idx >= 0) users[idx] = updated;

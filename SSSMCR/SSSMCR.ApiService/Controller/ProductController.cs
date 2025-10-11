@@ -9,11 +9,12 @@ namespace SSSMCR.ApiService.Controller;
 
 [ApiController]
 [Route("api/products")]
-[Authorize(Roles = "Administrator")]
+[Authorize]
 public class ProductController(
     IProductService productService) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = "Administrator, Manager, Seller, WarehouseWorker")]
     public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAll(CancellationToken ct)
     {
         var products = await productService.GetAllAsync(ct);
@@ -21,6 +22,7 @@ public class ProductController(
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Administrator, Manager, Seller, WarehouseWorker")]
     public async Task<ActionResult<ProductResponse>> GetById(int id, CancellationToken ct)
     {
         try
@@ -36,6 +38,7 @@ public class ProductController(
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<ProductResponse>> Create([FromBody] ProductCreateRequest req, CancellationToken ct)
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
@@ -56,6 +59,7 @@ public class ProductController(
     }
     
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<ProductResponse>> Update(int id, [FromBody] ProductCreateRequest req, CancellationToken ct)
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
@@ -79,6 +83,7 @@ public class ProductController(
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Delete(int id)
     {
         try

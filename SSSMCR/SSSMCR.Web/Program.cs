@@ -1,9 +1,8 @@
 using Blazored.LocalStorage;
 using MudBlazor;
-using SSSMCR.Web;
 using SSSMCR.Web.Components;
 using MudBlazor.Services;
-using SSSMCR.Web.Components.Components;
+using SSSMCR.ServiceDefaults;
 using SSSMCR.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);

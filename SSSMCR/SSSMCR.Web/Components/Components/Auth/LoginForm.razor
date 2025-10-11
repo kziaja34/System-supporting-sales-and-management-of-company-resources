@@ -38,11 +38,11 @@
                                            ["name"] = "password",
                                            ["autocomplete"] = "current-password"
                                        })">
-                <AdornmentEndContent>
+                
                     <MudIconButton Size="Size.Small"
                                    Icon="@(_show ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
                                    OnClick="@(()=> _show = !_show)" />
-                </AdornmentEndContent>
+                
             </MudTextField>
             <ValidationMessage For="() => _model.Password" />
 

@@ -55,7 +55,7 @@ public record OrderDetailsDto(
 
 public class PageResponse<T>
 {
-    public IEnumerable<T> Items { get; set; }
+    public IEnumerable<T>? Items { get; set; }
     public int Page { get; set; }
     public int Size { get; set; }
     public int TotalElements { get; set; }
@@ -75,8 +75,8 @@ public class ProductResponse
 
 public class ProductCreateRequest
 {
-    public string Name { get; set; } = null!;
-    public string Description { get; set; } = null!;
+    public string? Name { get; set; } = null!;
+    public string? Description { get; set; } = null!;
     public decimal UnitPrice { get; set; }
 }
 
@@ -158,7 +158,7 @@ public class RoleResponse
     [Required]
     public int Id { get; set; }
     [Required]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 }
 
 public class BranchResponse
@@ -166,9 +166,9 @@ public class BranchResponse
     [Required]
     public int Id { get; set; }
     [Required]
-    public string Name { get; set; }
+    public string? Name { get; set; }
     [Required]
-    public string Location { get; set; }
+    public string? Location { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
 }
@@ -176,9 +176,9 @@ public class BranchResponse
 public class BranchCreateRequest
 {
     [Required, MaxLength(255)]
-    public string Name { get; set; } = default!;
+    public string? Name { get; set; } = default!;
     [Required, MaxLength(500)]
-    public string Location { get; set; } = default!;
+    public string? Location { get; set; } = default!;
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
 }
