@@ -6,7 +6,6 @@ namespace SSSMCR.Web.Services;
 public class ProductsApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<ProductsApiService> logger) : GenericService<ProductsApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
-    private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<ProductsApiService> _logger = logger;
     
     public async Task<List<ProductResponse>> GetProductsAsync()

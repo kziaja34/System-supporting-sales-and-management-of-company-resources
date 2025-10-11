@@ -1,8 +1,6 @@
-﻿@using MudBlazor
-@using SSSMCR.Shared.Model
+﻿@using SSSMCR.Shared.Model
 @using SSSMCR.Web.Services
 @inject BranchesApiService BranchesApiService
-@inject IAuthService AuthService
 
 <MudDialog>
     <DialogContent>
@@ -30,22 +28,19 @@
     private bool valid;
     private MudForm form = default!;
     private BranchEditModel model = new();
-    private bool isNew => Branch == null;
+    private bool isNew => false;
     private string? error;
     
     protected override void OnInitialized()
     {
-        if (Branch is not null)
+        model = new BranchEditModel()
         {
-            model = new BranchEditModel()
-            {
-                Id = Branch.Id,
-                Name = Branch.Name,
-                Location = Branch.Location,
-                Latitude = Branch.Latitude,
-                Longitude = Branch.Longitude
-            };
-        }
+            Id = Branch.Id,
+            Name = Branch.Name,
+            Location = Branch.Location,
+            Latitude = Branch.Latitude,
+            Longitude = Branch.Longitude
+        };
     }
 
     private async Task Save()

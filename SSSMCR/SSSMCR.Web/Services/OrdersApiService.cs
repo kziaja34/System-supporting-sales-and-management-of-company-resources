@@ -7,7 +7,6 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
     : GenericService<OrdersApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
-    private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<OrdersApiService> _logger = logger;
 
     public async Task<PageResponse<OrderListItemDto>> GetOrdersPageAsync(int page = 0, int size = 20, string sort = "priority,desc", string? search = null)

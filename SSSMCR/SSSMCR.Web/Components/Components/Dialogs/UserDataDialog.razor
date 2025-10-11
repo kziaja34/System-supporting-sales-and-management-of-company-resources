@@ -2,50 +2,50 @@
 @using SSSMCR.Web.Services
 @inject IUserService Users
 @inject ISnackbar Snackbar
+<MudDialog>
+    <DialogContent>
+        @if (User is null)
+        {
+            <MudText>Missing data.</MudText>
+        }
+        else
+        {
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.subtitle1">Credentials</MudText>
+                <MudTextField Value="@User.Email" Label="Email" ReadOnly="true" />
+                <MudTextField Value="@User.RoleName"  Label="Role"  ReadOnly="true" />
 
-<MudDialogContent Class="pa-4">
-    @if (User is null)
-    {
-        <MudText>Missing data.</MudText>
-    }
-    else
-    {
-        <MudStack Spacing="2">
-            <MudText Typo="Typo.subtitle1">Credentials</MudText>
-            <MudTextField Value="@User.Email" Label="Email" ReadOnly="true" />
-            <MudTextField Value="@User.RoleName"  Label="Role"  ReadOnly="true" />
+                <MudDivider Class="my-2" />
+                <MudText Typo="Typo.subtitle1">Profile</MudText>
 
-            <MudDivider Class="my-2" />
-            <MudText Typo="Typo.subtitle1">Profile</MudText>
+                @if (!Editable)
+                {
+                    <MudTextField Value="@User.FirstName" Label="First name" ReadOnly="true" />
+                    <MudTextField Value="@User.LastName"  Label="Last name"  ReadOnly="true" />
+                }
+                else
+                {
+                    <EditForm Model="_edit" OnValidSubmit="Save">
+                        <DataAnnotationsValidator />
+                        <MudStack Spacing="1">
+                            <MudTextField @bind-Value="_edit.FirstName" Label="First name" Required="true" />
+                            <MudTextField @bind-Value="_edit.LastName"  Label="Last name"  Required="true" />
+                            <ValidationSummary />
+                        </MudStack>
+                    </EditForm>
+                }
+            </MudStack>
+        }
+    </DialogContent>
 
-            @if (!Editable)
-            {
-                <MudTextField Value="@User.FirstName" Label="First name" ReadOnly="true" />
-                <MudTextField Value="@User.LastName"  Label="Last name"  ReadOnly="true" />
-            }
-            else
-            {
-                <EditForm Model="_edit" OnValidSubmit="Save">
-                    <DataAnnotationsValidator />
-                    <MudStack Spacing="1">
-                        <MudTextField @bind-Value="_edit.FirstName" Label="First name" Required="true" />
-                        <MudTextField @bind-Value="_edit.LastName"  Label="Last name"  Required="true" />
-                        <ValidationSummary />
-                    </MudStack>
-                </EditForm>
-            }
-        </MudStack>
-    }
-</MudDialogContent>
-
-<MudDialogActions Class="px-4 pb-3">
-    @if (Editable)
-    {
-        <MudButton Color="Color.Primary" Disabled="_busy" OnClick="Save">Save</MudButton>
-    }
-    <MudButton Variant="Variant.Outlined" OnClick="MudDialog.Cancel">Close</MudButton>
-</MudDialogActions>
-
+    <DialogActions>
+        @if (Editable)
+        {
+            <MudButton Color="Color.Primary" Disabled="_busy" OnClick="Save">Save</MudButton>
+        }
+        <MudButton Variant="Variant.Outlined" OnClick="MudDialog.Cancel">Close</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
     [CascadingParameter] 

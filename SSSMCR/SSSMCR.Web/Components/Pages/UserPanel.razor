@@ -1,9 +1,7 @@
 ﻿@page "/userpanel"
 @rendermode InteractiveServer
 @using Blazored.LocalStorage
-@using Blazored.LocalStorage.StorageOptions
 @using SSSMCR.Shared.Model
-@using SSSMCR.Web.Components.Components
 @using SSSMCR.Web.Components.Components.Dialogs
 @using SSSMCR.Web.Services
 @inject IAuthService Auth
@@ -80,7 +78,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="6" md="4">
-                <MudCard Class="cursor-pointer hover:shadow-lg" Color="Color.Error" @onclick="Logout">
+                <MudCard Class="cursor-pointer hover:shadow-lg" color="Color.Error" @onclick="Logout">
                     <MudCardContent>
                         <MudStack AlignItems="AlignItems.Center" Spacing="1">
                             <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Large" />
@@ -118,7 +116,7 @@
         }
         catch
         {
-            
+            // ignored
         }
     }
 

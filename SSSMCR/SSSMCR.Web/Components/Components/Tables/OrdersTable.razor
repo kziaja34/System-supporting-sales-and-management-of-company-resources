@@ -1,5 +1,4 @@
 ﻿@using SSSMCR.Shared.Model
-@using MudBlazor
 @using SSSMCR.Web.Services
 @inject OrdersApiService OrdersService
 
@@ -119,7 +118,6 @@
         var dir = state.SortDirection switch
         {
             SortDirection.Ascending => "asc",
-            SortDirection.Descending => "desc",
             _ => "desc"
         };
 

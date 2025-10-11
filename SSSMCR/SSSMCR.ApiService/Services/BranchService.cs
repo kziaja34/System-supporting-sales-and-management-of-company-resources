@@ -20,7 +20,7 @@ public class BranchService(AppDbContext context) : GenericService<Branch>(contex
     {
         ArgumentNullException.ThrowIfNull(branch);
 
-        var name = branch.Name.Trim() ?? string.Empty;
+        var name = branch.Name.Trim();
         
         var exists = await _dbSet.AsNoTracking()
             .AnyAsync(b => b.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase), ct);

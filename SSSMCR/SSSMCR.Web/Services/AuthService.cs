@@ -30,7 +30,7 @@ public sealed class AuthService(
     {
         var http = httpFactory.CreateClient("api");
         var url = "/api/auth/login";
-        _logger.LogInformation("LoginAsync -> POST {Url} (email={Email})", url, req?.Email);
+        _logger.LogInformation("LoginAsync -> POST {Url} (email={Email})", url, req.Email);
 
         HttpResponseMessage res;
         try
@@ -56,7 +56,12 @@ public sealed class AuthService(
         if (token is null || string.IsNullOrWhiteSpace(token.AccessToken))
         {
             string raw = string.Empty;
-            try { raw = await res.Content.ReadAsStringAsync(); } catch { }
+            try { raw = await res.Content.ReadAsStringAsync(); }
+            catch
+            {
+                // ignored
+            }
+
             _logger.LogWarning("LoginAsync: token is null or AccessToken empty. Response body: {Body}", Truncate(raw, 1000));
             return false;
         }
@@ -65,7 +70,7 @@ public sealed class AuthService(
         if (token.ExpiresAtUtc is not null) await _storage.SetItemAsync("jwt_expires", token.ExpiresAtUtc);
         if (!string.IsNullOrWhiteSpace(token.RefreshToken)) await _storage.SetItemAsync("refresh", token.RefreshToken);
         
-        if (!string.IsNullOrWhiteSpace(req?.Email))
+        if (!string.IsNullOrWhiteSpace(req.Email))
             await _storage.SetItemAsStringAsync("user_email", req.Email);
 
         _logger.LogInformation("LoginAsync succeeded, token stored");

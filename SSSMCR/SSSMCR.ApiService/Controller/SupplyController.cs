@@ -56,7 +56,7 @@ public class SupplyController(ISupplyService supplyService) : ControllerBase
         {
             await supplyService.ReceiveOrderAsync(orderId, ct);
             var order = await supplyService.GetOrderByIdAsync(orderId, ct);
-            return Ok(ToResponse(order!));
+            return Ok(ToResponse(order));
         }
         catch (InvalidOperationException ex)
         {
@@ -81,26 +81,26 @@ public class SupplyController(ISupplyService supplyService) : ControllerBase
         }).ToList()
     };
 
-    private static SupplyOrder ToEntity(SupplyOrderCreateDto dto)
-    {
-        var order = new SupplyOrder
-        {
-            SupplierId = dto.SupplierId,
-            BranchId = dto.BranchId,
-            Status = SupplyOrderStatus.Pending,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        foreach (var item in dto.Items)
-        {
-            order.Items.Add(new SupplyItem
-            {
-                ProductId = item.ProductId,
-                Quantity = item.Quantity
-            });
-        }
-
-        return order;
-    }
+    // private static SupplyOrder ToEntity(SupplyOrderCreateDto dto)
+    // {
+    //     var order = new SupplyOrder
+    //     {
+    //         SupplierId = dto.SupplierId,
+    //         BranchId = dto.BranchId,
+    //         Status = SupplyOrderStatus.Pending,
+    //         CreatedAt = DateTime.UtcNow
+    //     };
+    //
+    //     foreach (var item in dto.Items)
+    //     {
+    //         order.Items.Add(new SupplyItem
+    //         {
+    //             ProductId = item.ProductId,
+    //             Quantity = item.Quantity
+    //         });
+    //     }
+    //
+    //     return order;
+    // }
 
 }

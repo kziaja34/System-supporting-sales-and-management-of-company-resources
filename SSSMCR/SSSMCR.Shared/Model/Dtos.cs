@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace SSSMCR.Shared.Model;
-
 
 public enum OrderStatus
 {
@@ -12,6 +10,7 @@ public enum OrderStatus
     Completed,
     Cancelled
 }
+
 public enum SupplyOrderStatus
 {
     Pending,
@@ -22,37 +21,42 @@ public enum SupplyOrderStatus
 public enum ReservationStatus { Active, Released, Fulfilled }
 public enum StockMovementType { Inbound, Outbound, Adjustment }
 
-public record OrderListItemDto(
-    int Id,
-    string CustomerEmail,
-    string CustomerName,
-    DateTime CreatedAt,
-    string Status,
-    int Priority,
-    int ItemsCount,
-    decimal TotalPrice
-);
+// Read models as record class with init; properties
+public record OrderListItemDto
+{
+    public int Id { get; init; }
+    public string CustomerEmail { get; init; } = string.Empty;
+    public string CustomerName { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; init; }
+    public string Status { get; init; } = string.Empty;
+    public int Priority { get; init; }
+    public int ItemsCount { get; init; }
+    public decimal TotalPrice { get; init; }
+}
 
-public record OrderItemDto(
-    int ProductId,
-    string ProductName,
-    int Quantity,
-    decimal UnitPrice,
-    decimal LineTotal
-);
+public record OrderItemDto
+{
+    public int ProductId { get; init; }
+    public string ProductName { get; init; } = string.Empty;
+    public int Quantity { get; init; }
+    public decimal UnitPrice { get; init; }
+    public decimal LineTotal { get; init; }
+}
 
-public record OrderDetailsDto(
-    int Id,
-    string CustomerEmail,
-    string CustomerName,
-    DateTime CreatedAt,
-    string Status,
-    int Priority,
-    IEnumerable<OrderItemDto> Items,
-    decimal TotalPrice,
-    string ShippingAddress
-);
+public record OrderDetailsDto
+{
+    public int Id { get; init; }
+    public string CustomerEmail { get; init; } = string.Empty;
+    public string CustomerName { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; init; }
+    public string Status { get; init; } = string.Empty;
+    public int Priority { get; init; }
+    public IEnumerable<OrderItemDto> Items { get; init; } = Array.Empty<OrderItemDto>();
+    public decimal TotalPrice { get; init; }
+    public string ShippingAddress { get; init; } = string.Empty;
+}
 
+// Paged wrapper kept as class for mutable paging fields + computed properties
 public class PageResponse<T>
 {
     public IEnumerable<T>? Items { get; set; }
@@ -64,40 +68,42 @@ public class PageResponse<T>
     public bool HasPrevious => Page > 0;
 }
 
+// Responses can stay as class; keeping shape unchanged
 public class ProductResponse
 {
     public int Id { get; set; }
-    public string Name { get; set; } = null!;
-    public string Description { get; set; } = null!;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
     public decimal UnitPrice { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
+// Requests kept as class for binding + DataAnnotations
 public class ProductCreateRequest
 {
-    public string? Name { get; set; } = null!;
-    public string? Description { get; set; } = null!;
+    public string? Name { get; set; }
+    public string? Description { get; set; }
     public decimal UnitPrice { get; set; }
 }
 
 public sealed class LoginRequest
 {
-    public string Email { get; set; } = "";
-    public string Password { get; set; } = "";
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
     public bool RememberMe { get; set; } = false;
 }
 
 public sealed class TokenResponse
 {
-    public string AccessToken { get; set; } = "";
+    public string AccessToken { get; set; } = string.Empty;
     public string? RefreshToken { get; set; }
     public DateTime? ExpiresAtUtc { get; set; }
 }
 
 public class ChangePasswordRequest
 {
-    [Required] public string CurrentPassword { get; set; } = "";
-    [Required] public string NewPassword { get; set; } = "";
+    [Required] public string CurrentPassword { get; set; } = string.Empty;
+    [Required] public string NewPassword { get; set; } = string.Empty;
 }
 
 public sealed class UpdateMeRequest
@@ -135,7 +141,7 @@ public sealed class UserUpdateRequest
     public int RoleId { get; set; }
     [Required]
     public int BranchId { get; set; }
-        
+
     [MinLength(6), MaxLength(255)]
     public string? NewPassword { get; set; }
 }
@@ -143,14 +149,14 @@ public sealed class UserUpdateRequest
 public sealed class UserResponse
 {
     public int Id { get; set; }
-    public string FullName => $"{FirstName} {LastName}".Trim();
     public string FirstName { get; set; } = default!;
-    public string LastName  { get; set; } = default!;
-    public string Email     { get; set; } = default!;
-    public int RoleId       { get; set; }
-    public int BranchId     { get; set; }
-    public string BranchName { get; set; } = default!;
-    public string RoleName   { get; set; } = default!;
+    public string LastName { get; set; } = default!;
+    public string Email { get; set; } = default!;
+    public int RoleId { get; set; }
+    public int BranchId { get; set; }
+    public string? BranchName { get; set; }
+    public string? RoleName { get; set; }
+    public string FullName => $"{FirstName} {LastName}".Trim();
 }
 
 public class RoleResponse
@@ -176,9 +182,9 @@ public class BranchResponse
 public class BranchCreateRequest
 {
     [Required, MaxLength(255)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get; set; }
     [Required, MaxLength(500)]
-    public string? Location { get; set; } = default!;
+    public string? Location { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
 }
@@ -188,14 +194,14 @@ public class ReservationDto
     public int Id { get; set; }
     public int OrderId { get; set; }
     public int BranchId { get; set; }
-    public string OrderStatus { get; set; } = "";
-    public string Priority { get; set; } = "";
-    public string CustomerName { get; set; } = "";
-    public string ShippingAddress { get; set; } = "";
-    public string? ProductName { get; set; } = "";
-    public string? BranchName { get; set; } = "";
+    public string OrderStatus { get; set; } = string.Empty;
+    public string Priority { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string ShippingAddress { get; set; } = string.Empty;
+    public string? ProductName { get; set; } = string.Empty;
+    public string? BranchName { get; set; } = string.Empty;
     public int Quantity { get; set; }
-    public string Status { get; set; } = "";
+    public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }
 
@@ -209,20 +215,23 @@ public class ProductStockDto
     public int ReservedQuantity { get; set; }
     public int Available => Quantity - ReservedQuantity;
     public int CriticalThreshold { get; set; }
-
     public DateTime LastUpdatedAt { get; set; }
 }
 
-public record ReserveResult(IReadOnlyList<ReserveLineResult> Lines, bool IsPartial);
+// Results as record class with init; properties
+public record  ReserveResult(List<ReserveLineResult> PerItemReport, bool IsPartial)
+{
+    public IReadOnlyList<ReserveLineResult> Lines { get; init; } = Array.Empty<ReserveLineResult>();
+}
 
-public record ReserveLineResult(
-    int OrderItemId,
-    string ProductName,
-    string BranchName,
-    int ReservedQuantity,
-    int MissingQuantity
-);
+public record  ReserveLineResult(int ItemId, string ProductName, string BranchName, int Take, int Need)
+{
+    public int OrderItemId { get; init; }
+    public int ReservedQuantity { get; init; }
+    public int MissingQuantity { get; init; }
+}
 
+// Supply order DTOs kept with existing names to avoid breaking changes
 public class SupplyOrderCreateDto
 {
     public int SupplierId { get; set; }
@@ -302,6 +311,19 @@ public class SupplierProductResponse
     [Required]
     public string ProductName { get; set; } = string.Empty;
     public decimal? Price { get; set; }
+}
+
+// Reports DTOs as record class with properties
+public record SalesByBranchDto
+{
+    public string Branch { get; init; } = string.Empty;
+    public decimal Total { get; init; }
+}
+
+public record SalesTrendDto
+{
+    public DateTime Date { get; init; }
+    public decimal Total { get; init; }
 }
 
 public class SupplierProductUpsertDto

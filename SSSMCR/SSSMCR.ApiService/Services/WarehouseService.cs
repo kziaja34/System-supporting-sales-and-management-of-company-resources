@@ -72,7 +72,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
                     s,
                     Available = s.Quantity - s.ReservedQuantity,
                     Priority = (preferredBranchId.HasValue && s.BranchId == preferredBranchId.Value) ? 0 : 1,
-                    Lat = s.Branch.Latitude,
+                    Lat = s.Branch!.Latitude,
                     Lon = s.Branch.Longitude
                 })
                 .Where(x => x.Available > 0)
@@ -126,7 +126,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
                 perItemReport.Add(new ReserveLineResult(
                     item.Id,
                     item.Product.Name,
-                    x.s.Branch.Name ?? "Unknown",
+                    x.s.Branch?.Name ?? "Unknown",
                     take,
                     need - take
                 ));
@@ -353,9 +353,9 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             .Select(ps => new ProductStockDto
             {
                 ProductId = ps.ProductId,
-                ProductName = ps.Product.Name,
+                ProductName = ps.Product!.Name,
                 BranchId = ps.BranchId,
-                BranchName = ps.Branch.Name,
+                BranchName = ps.Branch!.Name,
                 Quantity = ps.Quantity,
                 ReservedQuantity = ps.ReservedQuantity,
                 CriticalThreshold = ps.CriticalThreshold,
@@ -390,7 +390,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 
             var dynamicPart = (int)Math.Ceiling(avgDailyOrders * 2);
 
-            stock.CriticalThreshold = stock.Product.BaseCriticalThreshold + dynamicPart;
+            if (stock.Product != null) stock.CriticalThreshold = stock.Product.BaseCriticalThreshold + dynamicPart;
             stock.LastUpdatedAt = now;
         }
 

@@ -1,7 +1,5 @@
 ﻿using System.Net;
-using System.Net.Http.Json;
 using Blazored.LocalStorage;
-using Microsoft.Extensions.Logging;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.Web.Services;
@@ -133,7 +131,7 @@ public class SuppliersApiService(IHttpClientFactory httpFactory, ILocalStorageSe
 
         if (res.StatusCode == HttpStatusCode.Conflict)
         {
-            var error = await ReadApiErrorAsync(res) ?? "Cannot delete supplier. It is used in other records.";
+            var error = await ReadApiErrorAsync(res);
             _logger.LogWarning("DeleteSupplierAsync conflict: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
             throw new HttpRequestException(error);
         }

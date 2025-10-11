@@ -1,10 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Model;
-using BCrypt.Net;
-using Microsoft.AspNetCore.Identity;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model.Exceptions;
-using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services;
 
@@ -73,7 +70,7 @@ public class UserService(
     
     public new async Task<User> CreateAsync(User user, CancellationToken ct = default)
     {
-        var email = user.Email?.Trim() ?? string.Empty;
+        var email = user.Email.Trim();
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email is required", nameof(user.Email));
 
@@ -113,7 +110,7 @@ public class UserService(
         if (userId.Equals(currentUserId))
             throw new CurrentUserException(currentUserId, "To edit your profile, use the profile page.");
 
-        var email = user.Email?.Trim() ?? string.Empty;
+        var email = user.Email.Trim();
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email is required", nameof(user.Email));
         
@@ -153,7 +150,7 @@ public class UserService(
         var user = await _dbSet.FirstOrDefaultAsync(u => u.Id == userId, ct)
                    ?? throw new KeyNotFoundException("User not found");
         
-        var verify = hasher.Verify(user.PasswordHash, currentPassword);
+        var verify = user.PasswordHash != null && hasher.Verify(user.PasswordHash, currentPassword);
         if (!verify)
             throw new InvalidOperationException("Current password is invalid.");
         

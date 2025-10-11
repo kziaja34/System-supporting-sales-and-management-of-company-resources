@@ -1,11 +1,9 @@
-﻿@using MudBlazor
-@using SSSMCR.Shared.Model
+﻿@using SSSMCR.Shared.Model
 @using SSSMCR.Web.Components.Components.Dialogs
 @using SSSMCR.Web.Services
 @inject ProductsApiService ProductsApiService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
-@inject NavigationManager Nav
 
 <MudPaper Class="pa-4">
     <MudTable Items="products" Dense="true" Hover="true">

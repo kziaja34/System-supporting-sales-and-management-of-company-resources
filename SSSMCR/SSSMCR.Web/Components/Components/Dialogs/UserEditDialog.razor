@@ -1,11 +1,6 @@
-﻿@using System.ComponentModel.DataAnnotations
-@using System.Text.RegularExpressions
-@using MudBlazor
-@using SSSMCR.Shared.Model
+﻿@using SSSMCR.Shared.Model
 @using SSSMCR.Web.Services
 @inject UsersApiService UsersApi
-@inject RolesApiService RolesApiService
-@inject BranchesApiService BranchesApiService
 @inject IAuthService AuthService
 @inject ISnackbar Snackbar
 
@@ -19,7 +14,7 @@
                           Validation="@(new Func<string, IEnumerable<string>>(AuthService.EmailValidation))"
                           Error="@(!string.IsNullOrEmpty(emailError))"
                           ErrorText="@emailError" />
-            @if (Roles?.Count > 0 && Branches?.Count > 0)
+            @if (Roles.Count > 0 && Branches.Count > 0)
             {
                 <MudSelect T="int" @bind-Value="model.RoleId" Label="Role" Required="true">
                     @foreach (var r in Roles) { <MudSelectItem Value="@(r.Id)">@r.Name</MudSelectItem> }

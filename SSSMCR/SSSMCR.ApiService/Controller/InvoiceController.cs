@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SSSMCR.ApiService.Services;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 
 namespace SSSMCR.ApiService.Controller

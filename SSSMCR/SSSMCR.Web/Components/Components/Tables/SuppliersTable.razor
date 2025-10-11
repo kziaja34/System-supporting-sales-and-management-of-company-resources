@@ -2,7 +2,6 @@
 @using SSSMCR.Web.Services
 @using SSSMCR.Web.Components.Components.Dialogs
 @inject SuppliersApiService SuppliersApi
-@inject ProductsApiService ProductsApi
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -24,7 +23,7 @@
             <MudTd DataLabel="Address">@context.Address</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>OpenEditDialog(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Inventory" Color="Color.Secondary" Title="Edit offer"
+                <MudIconButton Icon="@Icons.Material.Filled.Inventory" Color="Color.Secondary" title="Edit offer"
                                OnClick="@(()=>OpenOfferDialog(context))" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>Delete(context.Id))" />
             </MudTd>

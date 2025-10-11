@@ -1,15 +1,12 @@
 ﻿using Blazored.LocalStorage;
-using Microsoft.JSInterop;
 
 namespace SSSMCR.Web.Services;
 
-public class InvoiceApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<InvoiceApiService> logger, IJSRuntime jsRuntime) 
+public class InvoiceApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<InvoiceApiService> logger) 
     : GenericService<InvoiceApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
-    private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<InvoiceApiService> _logger = logger;
-    private readonly IJSRuntime _jsRuntime = jsRuntime;
     
     public async Task<string?> GetInvoiceDataUrlAsync(int orderId)
     {

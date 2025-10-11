@@ -9,7 +9,6 @@ public static class DbSeeder
     public static Task Seed(AppDbContext context, IServiceProvider services)
     {
         using var scope = services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         
         // Company

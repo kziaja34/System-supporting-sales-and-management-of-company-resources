@@ -12,12 +12,12 @@ public class Order
 
     [Required]
     [MaxLength(255)]
-    public string CustomerName { get; set; }
+    public required string CustomerName { get; set; }
 
     [Required]
     [MaxLength(255)]
     [EmailAddress]
-    public string CustomerEmail { get; set; }
+    public required string CustomerEmail { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -29,5 +29,6 @@ public class Order
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     
     public Branch? Branch { get; set; }
-    public string ShippingAddress { get; set; }
+    [MaxLength(100)]
+    public required string ShippingAddress { get; set; }
 }

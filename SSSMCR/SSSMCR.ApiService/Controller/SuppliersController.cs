@@ -122,15 +122,14 @@ public class SuppliersController(AppDbContext context) : ControllerBase
             .Select(sp => new SupplierProductResponse
             {
                 ProductId = sp.ProductId,
-                ProductName = sp.Product.Name,
+                ProductName = sp.Product!.Name,
                 Price = sp.Price
             })
             .ToListAsync(ct);
 
         return Ok(items);
     }
-
-    // Ustawienie (nadpisanie) oferty dostawcy
+    
     [HttpPut("{id:int}/products")]
     [Authorize(Roles = "Administrator, Manager")]
     public async Task<IActionResult> SetSupplierProducts(int id, [FromBody] SupplierProductsUpdateRequest req, CancellationToken ct)
@@ -140,8 +139,7 @@ public class SuppliersController(AppDbContext context) : ControllerBase
         var supplier = await context.Suppliers.FirstOrDefaultAsync(s => s.Id == id, ct);
         if (supplier is null)
             return NotFound(new { error = $"Supplier {id} not found." });
-
-        // Zweryfikuj istniejące produkty (ignoruj nieistniejące id)
+        
         var reqProductIds = req.Items.Select(i => i.ProductId).Distinct().ToList();
         var validProductIds = await context.Products
             .AsNoTracking()
@@ -152,7 +150,7 @@ public class SuppliersController(AppDbContext context) : ControllerBase
         var target = req.Items
             .Where(i => validProductIds.Contains(i.ProductId))
             .GroupBy(i => i.ProductId)
-            .Select(g => new { ProductId = g.Key, Price = g.Last().Price })
+            .Select(g => new { ProductId = g.Key, g.Last().Price })
             .ToDictionary(x => x.ProductId, x => x.Price);
 
         var currentLinks = await context.SupplierProducts
@@ -160,12 +158,10 @@ public class SuppliersController(AppDbContext context) : ControllerBase
             .ToListAsync(ct);
 
         var currentSet = currentLinks.ToDictionary(sp => sp.ProductId, sp => sp);
-
-        // Usuń nieobecne
+        
         var toRemove = currentLinks.Where(sp => !target.ContainsKey(sp.ProductId)).ToList();
         if (toRemove.Count > 0) context.SupplierProducts.RemoveRange(toRemove);
-
-        // Dodaj/aktualizuj obecne
+        
         foreach (var kv in target)
         {
             if (currentSet.TryGetValue(kv.Key, out var existing))

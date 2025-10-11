@@ -154,17 +154,12 @@
     private int? selectedBranchId;
     private ReserveResult? reserveResult;
     private bool _loading = true;
-    private OrderStatus _newStatus;
     private string? user_role;
 
     protected override async Task OnInitializedAsync()
     {
         _order = await OrdersService.GetOrderByIdAsync(OrderId);
         branches = await BranchesService.GetBranchesAsync();
-        if (_order != null && Enum.TryParse<OrderStatus>(_order.Status, out var parsed))
-        {
-            _newStatus = parsed;
-        }
         _loading = false;
     }
     
@@ -257,20 +252,20 @@
         Nav.NavigateTo("/invoices");
     }
     
-    private async Task UpdateStatus()
-    {
-        if (_order == null) return;
-
-        var success = await OrdersService.UpdateOrderStatusAsync(_order.Id, _newStatus.ToString());
-        if (success)
-        {
-            _order = _order with { Status = _newStatus.ToString() };
-            Snackbar.Add("Status updated successfully", Severity.Success);
-        }
-        else
-        {
-            Snackbar.Add("Failed to update status", Severity.Error);
-        }
-    }
+    // private async Task UpdateStatus()
+    // {
+    //     if (_order == null) return;
+    //
+    //     var success = await OrdersService.UpdateOrderStatusAsync(_order.Id, _newStatus.ToString());
+    //     if (success)
+    //     {
+    //         _order = _order with { Status = _newStatus.ToString() };
+    //         Snackbar.Add("Status updated successfully", Severity.Success);
+    //     }
+    //     else
+    //     {
+    //         Snackbar.Add("Failed to update status", Severity.Error);
+    //     }
+    // }
 
 }

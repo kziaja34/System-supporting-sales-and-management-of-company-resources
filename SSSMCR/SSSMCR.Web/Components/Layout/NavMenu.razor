@@ -118,7 +118,7 @@
     }
 
     
-    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         try
         {
@@ -127,8 +127,9 @@
         }
         catch (Exception)
         {
-        
+            // ignored
         }
+
         StateHasChanged();
     }
 

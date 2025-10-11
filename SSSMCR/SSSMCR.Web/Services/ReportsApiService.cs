@@ -1,12 +1,11 @@
 ﻿using Blazored.LocalStorage;
+using SSSMCR.Shared.Model;
 
 namespace SSSMCR.Web.Services;
 
 public class ReportsApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<ReportsApiService> logger) : GenericService<ReportsApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
-    private readonly ILocalStorageService _storage = storage;
-    private readonly ILogger<ReportsApiService> _logger = logger;
     
     public async Task<List<SalesByBranchDto>> GetSalesByBranchAsync()
     {
@@ -30,6 +29,3 @@ public class ReportsApiService(IHttpClientFactory httpFactory, ILocalStorageServ
         return await res.Content.ReadFromJsonAsync<List<SalesTrendDto>>() ?? new();
     }
 }
-
-public record SalesByBranchDto(string Branch, decimal Total);
-public record SalesTrendDto(DateTime Date, decimal Total);

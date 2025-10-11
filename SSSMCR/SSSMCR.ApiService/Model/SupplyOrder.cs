@@ -19,7 +19,7 @@ public class SupplyOrder
     public SupplyOrderStatus Status { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? ReceivedAt { get; set; } = null;
+    public DateTime? ReceivedAt { get; set; }
     
     public Supplier? Supplier { get; set; }
     public Branch? Branch { get; set; }

@@ -175,7 +175,7 @@ namespace SSSMCR.ApiService.Services
                 var lineGross = Round(lineNet + vatAmount);
 
                 var row = items.AddRow();
-                row.Cells[0].AddParagraph(item.Product.Name ?? "Position").Format.Alignment = ParagraphAlignment.Left;
+                row.Cells[0].AddParagraph(item.Product.Name).Format.Alignment = ParagraphAlignment.Left;
                 row.Cells[1].AddParagraph(qty.ToString()).Format.Alignment = ParagraphAlignment.Right;
                 row.Cells[2].AddParagraph(Money(unitNet)).Format.Alignment = ParagraphAlignment.Right;
                 row.Cells[3].AddParagraph(Money(lineNet)).Format.Alignment = ParagraphAlignment.Right;

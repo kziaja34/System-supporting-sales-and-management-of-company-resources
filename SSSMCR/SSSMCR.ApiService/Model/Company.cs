@@ -1,14 +1,24 @@
-﻿namespace SSSMCR.ApiService.Model;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SSSMCR.ApiService.Model;
 
 public class Company
 {
     public int Id { get; set; }
-    public string CompanyName { get; set; }
-    public string Address { get; set; }
-    public string City { get; set; }
-    public string PostalCode { get; set; }
-    public string TaxIdentificationNumber { get; set; }
-    public string BankAccountNumber { get; set; }
-    public string ContactEmail { get; set; }
-    public string ContactPhone { get; set; }
+    [MaxLength(100)]
+    public string? CompanyName { get; set; }
+    [MaxLength(100)]
+    public string? Address { get; set; }
+    [MaxLength(100)]
+    public string? City { get; set; }
+    [MaxLength(100)]
+    public string? PostalCode { get; set; }
+    [MaxLength(100)]
+    public string? TaxIdentificationNumber { get; set; }
+    [MaxLength(100)]
+    public string? BankAccountNumber { get; set; }
+    [MaxLength(100)]
+    public string? ContactEmail { get; set; }
+    [MaxLength(100)]
+    public string? ContactPhone { get; set; }
 }

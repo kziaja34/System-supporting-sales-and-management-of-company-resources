@@ -20,10 +20,10 @@ public class SupplyService(AppDbContext context)
 
     public async Task<SupplyOrder> CreateOrderAsync(int supplierId, int branchId, List<(int productId, int quantity)> items, CancellationToken ct)
     {
-        var supplier = await _context.Suppliers.FindAsync(new object[] { supplierId }, ct)
+        _ = await _context.Suppliers.FindAsync(new object[] { supplierId }, ct)
             ?? throw new InvalidOperationException("Supplier not found");
 
-        var branch = await _context.Branches.FindAsync(new object[] { branchId }, ct)
+        _ = await _context.Branches.FindAsync(new object[] { branchId }, ct)
             ?? throw new InvalidOperationException("Branch not found");
 
         var allowedProductIds = await _context.SupplierProducts

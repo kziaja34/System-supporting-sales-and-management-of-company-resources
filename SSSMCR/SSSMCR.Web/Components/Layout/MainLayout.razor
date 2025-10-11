@@ -1,11 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @using Blazored.LocalStorage
-@inject IUserService UserService
-@inject ISnackbar Snackbar
 @inject ILocalStorageService LocalStorage
 @inject IAuthService AuthService
-@using MudBlazor
-@using SSSMCR.Web.Components.Components
 @using SSSMCR.Web.Services
 @inject NavigationManager Nav
 
@@ -49,7 +45,7 @@
 
 @code {
     bool _drawerOpen = true;
-    bool _dark = false;
+    bool _dark;
 
     readonly MudTheme _theme = new()
     {
@@ -128,7 +124,7 @@
         StateHasChanged();
     }
 
-    private bool _checked = false;
+    private bool _checked;
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

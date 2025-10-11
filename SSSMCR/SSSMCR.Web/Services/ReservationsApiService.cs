@@ -6,7 +6,6 @@ namespace SSSMCR.Web.Services;
 public class ReservationsApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<ReservationsApiService> logger) : GenericService<ReservationsApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
-    private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<ReservationsApiService> _logger = logger;
     
     public async Task<List<ReservationDto>> GetReservationsAsync(int? branchId = null)

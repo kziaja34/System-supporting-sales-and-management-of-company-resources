@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SSSMCR.ApiService.Model;
@@ -128,17 +127,17 @@ public class UsersController(IUserService userService, IPasswordHasher hasher) :
     
     private static User ToEntity(UserUpdateRequest req) => new()
     {
-        FirstName = req.FirstName?.Trim() ?? string.Empty,
-        LastName  = req.LastName?.Trim() ?? string.Empty,
-        Email     = req.Email?.Trim() ?? string.Empty,
+        FirstName = req.FirstName.Trim(),
+        LastName  = req.LastName.Trim(),
+        Email     = req.Email.Trim(),
         RoleId    = req.RoleId,
         BranchId  = req.BranchId
     };
     private static User ToEntity(UserCreateRequest req) => new()
     {
-        FirstName    = req.FirstName?.Trim() ?? string.Empty,
-        LastName     = req.LastName?.Trim() ?? string.Empty,
-        Email        = req.Email?.Trim() ?? string.Empty,
+        FirstName    = req.FirstName.Trim(),
+        LastName     = req.LastName.Trim(),
+        Email        = req.Email.Trim(),
         PasswordHash = req.Password,
         RoleId       = req.RoleId,
         BranchId     = req.BranchId

@@ -31,12 +31,12 @@
             <MudTd>@order.OrderedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
             <MudTd>@(order.ReceivedAt is null ? "-" : order.ReceivedAt?.ToString("yyyy-MM-dd HH:mm"))</MudTd>
             <MudTd>
-                <MudChip T="string" Color="@(order.Status?.Equals("Received", StringComparison.OrdinalIgnoreCase) == true ? Color.Success : Color.Info)">
+                <MudChip T="string" Color="@(order.Status.Equals("Received", StringComparison.OrdinalIgnoreCase) ? Color.Success : Color.Info)">
                     @order.Status
                 </MudChip>
             </MudTd>
             <MudTd>
-                <MudButton Size="Size.Small" Disabled="@((order.Status?.Equals("Received", StringComparison.OrdinalIgnoreCase) ?? false))"
+                <MudButton Size="Size.Small" Disabled="@((order.Status.Equals("Received", StringComparison.OrdinalIgnoreCase)))"
                            OnClick="() => Receive(order.Id)">
                     Receive
                 </MudButton>

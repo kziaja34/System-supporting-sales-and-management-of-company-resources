@@ -128,15 +128,16 @@ public class OrderService : GenericService<Order>, IOrderService
     
     private static OrderListItemDto ToListItemDto(Order order)
     {
-        return new OrderListItemDto(
-            Id: order.Id,
-            CustomerEmail: order.CustomerEmail,
-            CustomerName: order.CustomerName,
-            CreatedAt: order.CreatedAt,
-            Status: order.Status.ToString(),
-            Priority: order.Priority,
-            ItemsCount: order.Items.Count,
-            TotalPrice: order.Items.Sum(i => i.TotalPrice)
-        );
+        return new OrderListItemDto()
+        {
+            Id = order.Id,
+            CustomerEmail = order.CustomerEmail,
+            CustomerName = order.CustomerName,
+            CreatedAt = order.CreatedAt,
+            Status = order.Status.ToString(),
+            Priority = order.Priority,
+            ItemsCount = order.Items.Count,
+            TotalPrice = order.Items.Sum(i => i.TotalPrice)
+        };
     }
 }

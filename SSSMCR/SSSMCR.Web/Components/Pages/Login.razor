@@ -58,7 +58,7 @@
             try
             {
                 var user = await UserService.GetMeAsync();
-                await LocalStorage.SetItemAsync<string>("user_role", user.RoleName);
+                if (user.RoleName != null) await LocalStorage.SetItemAsync("user_role", user.RoleName);
                 StateHasChanged();
             }
             catch (Exception ex)

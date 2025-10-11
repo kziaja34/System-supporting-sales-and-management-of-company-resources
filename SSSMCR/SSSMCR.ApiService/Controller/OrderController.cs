@@ -56,22 +56,25 @@ public class OrderController(IOrderService orderService) : ControllerBase
 
     private static OrderDetailsDto ToDetailsDto(Order order)
     {
-        return new OrderDetailsDto(
-            Id: order.Id,
-            CustomerEmail: order.CustomerEmail,
-            CustomerName: order.CustomerName,
-            CreatedAt: order.CreatedAt,
-            Status: order.Status.ToString(),
-            Priority: order.Priority,
-            Items: order.Items.Select(i => new OrderItemDto(
-                ProductId: i.ProductId,
-                ProductName: i.Product.Name,
-                Quantity: i.Quantity,
-                UnitPrice: i.UnitPrice,
-                LineTotal: i.TotalPrice
-            )),
-            TotalPrice: order.Items.Sum(i => i.TotalPrice),
-            ShippingAddress: order.ShippingAddress
-        );
+        return new OrderDetailsDto()
+        {
+            Id = order.Id,
+            CustomerEmail = order.CustomerEmail,
+            CustomerName = order.CustomerName,
+            CreatedAt = order.CreatedAt,
+            Status = order.Status.ToString(),
+            Priority = order.Priority,
+            Items = order.Items.Select(i => new OrderItemDto()
+                {
+                ProductId = i.ProductId,
+                ProductName = i.Product.Name,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                LineTotal = i.TotalPrice
+                }
+            ),
+            TotalPrice = order.Items.Sum(i => i.TotalPrice),
+            ShippingAddress = order.ShippingAddress
+        };
     }
 }

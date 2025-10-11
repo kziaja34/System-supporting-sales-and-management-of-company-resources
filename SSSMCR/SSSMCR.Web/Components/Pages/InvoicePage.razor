@@ -1,8 +1,5 @@
 ﻿@page "/invoices"
-@using MudBlazor
 @using SSSMCR.Web.Services
-@inject NavigationManager Nav
-@inject IAuthService AuthService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject IJSRuntime Js
 @inject InvoiceApiService InvoiceService
@@ -48,7 +45,7 @@
             <MudButton Variant="Variant.Text"
                        Color="Color.Secondary"
                        Href="@PdfDataUrl"
-                       Download="invoice.pdf"
+                       download="invoice.pdf"
                        StartIcon="@Icons.Material.Filled.Download">
                 Download PDF
             </MudButton>
@@ -72,7 +69,7 @@
     private int? OrderId { get; set; }
     private string? ErrorMessage { get; set; }
     private string? PdfDataUrl { get; set; }
-    private bool IsLoading { get; set; } = false;
+    private bool IsLoading { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

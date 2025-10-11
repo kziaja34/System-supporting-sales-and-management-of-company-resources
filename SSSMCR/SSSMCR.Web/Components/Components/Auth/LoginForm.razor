@@ -1,7 +1,5 @@
 ﻿@using SSSMCR.Shared.Model
 @using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Components.Forms
-@using MudBlazor
 
 <MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-12">
     <MudPaper Class="pa-6">
@@ -33,17 +31,15 @@
                           InputType="@(_show ? InputType.Text : InputType.Password)"
                           Variant="Variant.Outlined"
                           Disabled="@IsBusy"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(_show ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                          OnAdornmentClick="@(()=> _show = !_show)"
+                          AdornmentAriaLabel="Toggle password visibility"
                           @attributes="@(new Dictionary<string, object>
                                        {
                                            ["name"] = "password",
                                            ["autocomplete"] = "current-password"
-                                       })">
-                
-                    <MudIconButton Size="Size.Small"
-                                   Icon="@(_show ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
-                                   OnClick="@(()=> _show = !_show)" />
-                
-            </MudTextField>
+                                       })" />
             <ValidationMessage For="() => _model.Password" />
 
             @if (!string.IsNullOrWhiteSpace(ErrorMessage))
@@ -80,7 +76,7 @@
         _messages = new ValidationMessageStore(_editContext);
 
         _editContext.OnFieldChanged += (_, e) => ValidateField(e.FieldIdentifier);
-        _editContext.OnValidationRequested += (_, __) => ValidateAll();
+        _editContext.OnValidationRequested += (_, _) => ValidateAll();
     }
 
     private async Task HandleValidSubmit()
@@ -97,7 +93,7 @@
 
         if (field.FieldName == nameof(_model.Email))
         {
-            var email = _model.Email?.Trim();
+            var email = _model.Email.Trim();
             if (string.IsNullOrWhiteSpace(email))
                 _messages.Add(field, "Email is necessary");
             else if (!new EmailAddressAttribute().IsValid(email))

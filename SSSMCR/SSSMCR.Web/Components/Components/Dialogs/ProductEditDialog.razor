@@ -1,5 +1,4 @@
-﻿@using MudBlazor
-@using SSSMCR.Shared.Model
+﻿@using SSSMCR.Shared.Model
 @using SSSMCR.Web.Services
 @inject ProductsApiService ProductsApiService
 
@@ -25,21 +24,18 @@
     private bool valid;
     private MudForm form = default!;
     private ProductEditModel model = new();
-    private bool isNew => Product == null;
+    private bool isNew => false;
     private string? error;
     
     protected override void OnInitialized()
     {
-        if (Product is not null)
+        model = new ProductEditModel()
         {
-            model = new ProductEditModel()
-            {
-                Id = Product.Id,
-                Name = Product.Name,
-                Description = Product.Description,
-                UnitPrice = Product.UnitPrice
-            };
-        }
+            Id = Product.Id,
+            Name = Product.Name,
+            Description = Product.Description,
+            UnitPrice = Product.UnitPrice
+        };
     }
     
     private async Task Save()

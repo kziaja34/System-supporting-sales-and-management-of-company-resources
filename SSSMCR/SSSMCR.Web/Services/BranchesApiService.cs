@@ -6,7 +6,6 @@ namespace SSSMCR.Web.Services;
 public class BranchesApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<BranchesApiService> logger) : GenericService<BranchesApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
-    private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<BranchesApiService> _logger = logger;
     
     public async Task<List<BranchResponse>> GetBranchesAsync()

@@ -6,7 +6,6 @@ namespace SSSMCR.Web.Services;
 public class RolesApiService(IHttpClientFactory httpFactory, ILocalStorageService storage, ILogger<RolesApiService> logger) : GenericService<RolesApiService>(logger, storage)
 {
     private readonly IHttpClientFactory _httpFactory = httpFactory;
-    private readonly ILocalStorageService _storage = storage;
     private readonly ILogger<RolesApiService> _logger = logger;
     
     public async Task<List<RoleResponse>> GetRolesAsync()

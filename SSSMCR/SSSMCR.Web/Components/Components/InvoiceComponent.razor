@@ -1,5 +1,4 @@
 ﻿@inject InvoiceApiService InvoiceService
-@using MudBlazor
 @using SSSMCR.Web.Services
 @inject IJSRuntime Js
 
@@ -66,7 +65,7 @@
     [Parameter] public int OrderId { get; set; }
     private string? ErrorMessage { get; set; }
     private string? PdfDataUrl { get; set; }
-    private bool IsLoading { get; set; } = false;
+    private bool IsLoading { get; set; }
 
     private async Task GenerateInvoice()
     {
