@@ -9,7 +9,7 @@ public class Role
 
     [Required]
     [MaxLength(255)]
-    public string Name { get; set; }
+    public required string Name { get; set; }
     
     public ICollection<User> Users { get; set; } = new List<User>();
 }

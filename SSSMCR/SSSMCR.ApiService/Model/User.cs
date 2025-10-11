@@ -10,19 +10,19 @@ public class User
 
     [Required]
     [MaxLength(255)]
-    public string FirstName { get; set; }
+    public required string FirstName { get; set; }
 
     [Required]
     [MaxLength(255)]
-    public string LastName { get; set; }
+    public required string LastName { get; set; }
 
     [Required]
     [MaxLength(255)]
-    public string PasswordHash { get; set; }
+    public string? PasswordHash { get; set; }
 
     [Required]
     [MaxLength(255)]
-    public string Email { get; set; }
+    public required string Email { get; set; }
 
     [ForeignKey("Role")]
     public int RoleId { get; set; }
@@ -31,6 +31,6 @@ public class User
     public int? BranchId { get; set; }
     
     
-    public Role Role { get; set; }
-    public Branch Branch { get; set; }
+    public Role? Role { get; set; }
+    public Branch? Branch { get; set; }
 }

@@ -177,9 +177,9 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
         {
             Id = r.Id,
             OrderId = r.OrderItem.OrderId,
-            ProductName = r.ProductStock.Product.Name,
+            ProductName = r.ProductStock.Product?.Name,
             BranchId = r.ProductStock.BranchId,
-            BranchName = r.ProductStock.Branch.Name,
+            BranchName = r.ProductStock.Branch?.Name,
             Quantity = r.Quantity,
             Status = r.Status.ToString(),
             CreatedAt = r.CreatedAt,

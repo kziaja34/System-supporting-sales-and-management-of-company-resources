@@ -22,8 +22,8 @@ public class ProductStock
 
     public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
     
-    public Product Product { get; set; }
-    public Branch Branch { get; set; }
+    public Product? Product { get; set; }
+    public Branch? Branch { get; set; }
     
     [Timestamp] public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 }

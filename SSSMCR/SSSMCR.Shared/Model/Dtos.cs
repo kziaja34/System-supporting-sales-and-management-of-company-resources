@@ -192,8 +192,8 @@ public class ReservationDto
     public string Priority { get; set; } = "";
     public string CustomerName { get; set; } = "";
     public string ShippingAddress { get; set; } = "";
-    public string ProductName { get; set; } = "";
-    public string BranchName { get; set; } = "";
+    public string? ProductName { get; set; } = "";
+    public string? BranchName { get; set; } = "";
     public int Quantity { get; set; }
     public string Status { get; set; } = "";
     public DateTime CreatedAt { get; set; }

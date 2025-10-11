@@ -111,8 +111,8 @@ public class BranchesController(IBranchService branchService) : ControllerBase
     
     private static Branch ToEntity(BranchCreateRequest b) => new()
     {
-        Name = b.Name,
-        Location = b.Location,
+        Name = b.Name ?? string.Empty,
+        Location = b.Location ?? string.Empty,
         Latitude = b.Latitude,
         Longitude = b.Longitude
     };

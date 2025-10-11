@@ -21,7 +21,7 @@ public class SupplyOrder
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ReceivedAt { get; set; } = null;
     
-    public Supplier Supplier { get; set; }
-    public Branch Branch { get; set; }
+    public Supplier? Supplier { get; set; }
+    public Branch? Branch { get; set; }
     public ICollection<SupplyItem> Items { get; set; } = new List<SupplyItem>();
 }

@@ -30,9 +30,9 @@ public sealed class MeController(IUserService users) : ControllerBase
                 FirstName = u.FirstName,
                 LastName = u.LastName,
                 RoleId = u.RoleId,
-                RoleName = u.Role.Name,
+                RoleName = u.Role?.Name,
                 BranchId = u.BranchId ?? 0,
-                BranchName = u.Branch.Name
+                BranchName = u.Branch?.Name
             });
         }
         catch (KeyNotFoundException ex)

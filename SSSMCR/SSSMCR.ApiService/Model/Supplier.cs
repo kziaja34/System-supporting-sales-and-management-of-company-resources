@@ -9,19 +9,19 @@ public class Supplier
 
     [Required]
     [MaxLength(255)]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     [Required]
     [MaxLength(255)]
-    public string ContactEmail { get; set; }
+    public required string ContactEmail { get; set; }
 
     [Required]
     [MaxLength(50)]
-    public string Phone { get; set; }
+    public required string Phone { get; set; }
 
     [Required]
     [MaxLength(500)]
-    public string Address { get; set; }
+    public required string Address { get; set; }
     
     public ICollection<SupplierProduct> Products { get; set; } = new List<SupplierProduct>();
 }

@@ -18,6 +18,6 @@ public class SupplyItem
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
-    public SupplyOrder SupplyOrder { get; set; }
-    public Product Product { get; set; }
+    public SupplyOrder? SupplyOrder { get; set; }
+    public Product? Product { get; set; }
 }
