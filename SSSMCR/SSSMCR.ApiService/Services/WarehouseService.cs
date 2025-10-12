@@ -269,6 +269,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         if (allReservations.All(r => r.Status == ReservationStatus.Fulfilled))
         {
             order.Status = OrderStatus.Completed;
+            await UpdateDynamicCriticalThresholdsAsync(ct);
         }
         else if (allReservations.Any(r => r.Status == ReservationStatus.Fulfilled))
         {
@@ -397,7 +398,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
 
     private static double DistanceKm(double lat1, double lon1, double lat2, double lon2)
     {
-        const double R = 6371.0; // km
+        const double r = 6371.0; // km
         double dLat = (lat2 - lat1) * Math.PI / 180.0;
         double dLon = (lon2 - lon1) * Math.PI / 180.0;
         double a =
@@ -405,7 +406,7 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             Math.Cos(lat1 * Math.PI / 180.0) * Math.Cos(lat2 * Math.PI / 180.0) *
             Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
         double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-        return R * c;
+        return r * c;
     }
 
     private int GetAlreadyReservedQty(int orderItemId) =>
