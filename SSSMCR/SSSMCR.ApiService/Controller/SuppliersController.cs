@@ -122,7 +122,6 @@ public class SuppliersController(AppDbContext context) : ControllerBase
             .Select(sp => new SupplierProductResponse
             {
                 ProductId = sp.ProductId,
-                ProductName = sp.Product!.Name,
                 Price = sp.Price
             })
             .ToListAsync(ct);

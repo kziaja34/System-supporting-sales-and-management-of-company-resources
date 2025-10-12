@@ -61,7 +61,6 @@ public class PageResponse<T>
 {
     public IEnumerable<T>? Items { get; set; }
     public int Page { get; set; }
-    public int Size { get; set; }
     public int TotalElements { get; set; }
     public int TotalPages { get; set; }
     public bool HasNext => Page < TotalPages - 1;
@@ -96,7 +95,7 @@ public sealed class LoginRequest
 public sealed class TokenResponse
 {
     public string AccessToken { get; set; } = string.Empty;
-    public string? RefreshToken { get; set; }
+    public string? RefreshToken => null;
     public DateTime? ExpiresAtUtc { get; set; }
 }
 
@@ -159,12 +158,13 @@ public sealed class UserResponse
     public string FullName => $"{FirstName} {LastName}".Trim();
 }
 
-public class RoleResponse
+public class RoleResponse(string? name, int id)
 {
     [Required]
-    public int Id { get; set; }
+    public int Id { get; set; } = id;
+
     [Required]
-    public string? Name { get; set; }
+    public string? Name { get; set; } = name;
 }
 
 public class BranchResponse
@@ -191,7 +191,6 @@ public class BranchCreateRequest
 
 public class ReservationDto
 {
-    public int Id { get; set; }
     public int OrderId { get; set; }
     public int BranchId { get; set; }
     public string OrderStatus { get; set; } = string.Empty;
@@ -221,14 +220,12 @@ public class ProductStockDto
 // Results as record class with init; properties
 public record  ReserveResult(List<ReserveLineResult> PerItemReport, bool IsPartial)
 {
-    public IReadOnlyList<ReserveLineResult> Lines { get; init; } = Array.Empty<ReserveLineResult>();
+    
 }
 
-public record  ReserveLineResult(int ItemId, string ProductName, string BranchName, int Take, int Need)
+public record  ReserveLineResult(string ProductName, string BranchName, int ReservedQuantity, int MissingQuantity)
 {
-    public int OrderItemId { get; init; }
-    public int ReservedQuantity { get; init; }
-    public int MissingQuantity { get; init; }
+    
 }
 
 // Supply order DTOs kept with existing names to avoid breaking changes
@@ -260,7 +257,6 @@ public class SupplyOrderResponseDto
 
 public class SupplyItemResponseDto
 {
-    public int ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
     public int Quantity { get; set; }
 }
@@ -308,23 +304,14 @@ public class SupplierProductResponse
 {
     [Required]
     public int ProductId { get; set; }
-    [Required]
-    public string ProductName { get; set; } = string.Empty;
+
     public decimal? Price { get; set; }
 }
 
 // Reports DTOs as record class with properties
-public record SalesByBranchDto
-{
-    public string Branch { get; init; } = string.Empty;
-    public decimal Total { get; init; }
-}
+public record SalesByBranchDto(decimal Total, string Branch);
 
-public record SalesTrendDto
-{
-    public DateTime Date { get; init; }
-    public decimal Total { get; init; }
-}
+public record SalesTrendDto(DateTime Date, decimal Total);
 
 public class SupplierProductUpsertDto
 {

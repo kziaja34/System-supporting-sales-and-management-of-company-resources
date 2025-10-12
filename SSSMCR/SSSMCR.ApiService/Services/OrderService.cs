@@ -96,7 +96,6 @@ public class OrderService : GenericService<Order>, IOrderService
         {
             Items = items.Select(ToListItemDto),
             Page = page,
-            Size = size,
             TotalElements = total,
             TotalPages = (int)Math.Ceiling(total / (double)size)
         };

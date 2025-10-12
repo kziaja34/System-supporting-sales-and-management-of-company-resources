@@ -75,7 +75,6 @@ public class SupplyController(ISupplyService supplyService) : ControllerBase
         Status = order.Status.ToString(),
         Items = order.Items.Select(i => new SupplyItemResponseDto
         {
-            ProductId = i.ProductId,
             ProductName = i.Product?.Name ?? "Unknown",
             Quantity = i.Quantity
         }).ToList()

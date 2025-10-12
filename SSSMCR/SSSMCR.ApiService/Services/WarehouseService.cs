@@ -124,7 +124,6 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
                 }
 
                 perItemReport.Add(new ReserveLineResult(
-                    item.Id,
                     item.Product.Name,
                     x.s.Branch?.Name ?? "Unknown",
                     take,
@@ -137,7 +136,6 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
             if (need > 0)
             {
                 perItemReport.Add(new ReserveLineResult(
-                    item.Id,
                     item.Product.Name,
                     "—",
                     0,

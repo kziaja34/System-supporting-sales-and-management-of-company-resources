@@ -29,7 +29,6 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
                 {
                     Items = [],
                     Page = page,
-                    Size = size,
                     TotalElements = 0,
                     TotalPages = 0
                 };
@@ -41,7 +40,6 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
             {
                 Items = [],
                 Page = page,
-                Size = size,
                 TotalElements = 0,
                 TotalPages = 0
             };
@@ -53,7 +51,6 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
             {
                 Items = [],
                 Page = page,
-                Size = size,
                 TotalElements = 0,
                 TotalPages = 0
             };

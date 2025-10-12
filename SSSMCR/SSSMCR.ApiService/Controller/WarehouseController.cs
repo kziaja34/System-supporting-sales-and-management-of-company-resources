@@ -175,7 +175,6 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
 
         return new ReservationDto()
         {
-            Id = r.Id,
             OrderId = r.OrderItem.OrderId,
             ProductName = r.ProductStock.Product?.Name,
             BranchId = r.ProductStock.BranchId,
