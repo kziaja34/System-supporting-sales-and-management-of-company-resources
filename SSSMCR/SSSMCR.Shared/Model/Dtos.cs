@@ -2,6 +2,46 @@
 
 namespace SSSMCR.Shared.Model;
 
+// Company DTO
+
+public class CompanyRequest
+{
+    [Required(ErrorMessage = "Company name is required.")]
+    public string CompanyName { get; set; } = string.Empty;
+
+    [MaxLength(100)]
+    public string? Address { get; set; }
+
+    [MaxLength(100)]
+    public string? City { get; set; }
+
+    [MaxLength(20)]
+    public string? PostalCode { get; set; }
+
+    [MaxLength(20)]
+    public string? TaxIdentificationNumber { get; set; }
+
+    [MaxLength(34)]
+    public string? BankAccountNumber { get; set; }
+    public string? ContactEmail { get; set; }
+    public string? ContactPhone { get; set; }
+}
+
+public class CompanyResponse
+{
+    public int Id { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? PostalCode { get; set; }
+    public string? TaxIdentificationNumber { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? ContactEmail { get; set; }
+    public string? ContactPhone { get; set; }
+}
+
+// Enums
+
 public enum OrderStatus
 {
     Pending,

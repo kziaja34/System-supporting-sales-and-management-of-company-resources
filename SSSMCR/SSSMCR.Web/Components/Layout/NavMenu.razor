@@ -39,11 +39,14 @@
                 <MudNavLink Href="/users" Icon="@Icons.Material.Filled.Badge">
                     Users
                 </MudNavLink>
-                <MudNavLink Href="/branches" Icon="@Icons.Material.Filled.Warehouse">
+                <MudNavLink Href="/branches" Icon="@Icons.Material.Filled.Apartment">
                     Branches
                 </MudNavLink>
                 <MudNavLink Href="/products" Icon="@Icons.Material.Filled.Inventory2">
                     Products
+                </MudNavLink>
+                <MudNavLink Href="/admin/company" Icon="@Icons.Material.Filled.Dataset">
+                    Company
                 </MudNavLink>
             </MudNavGroup>
         }
@@ -52,15 +55,15 @@
             <MudNavGroup Title="Sales" Icon="@Icons.Material.Filled.PointOfSale" Expanded="false">
                 <MudNavLink Href="orders" Icon="@Icons.Material.Filled.Receipt" Match="NavLinkMatch.Prefix">Orders</MudNavLink>
                 <MudNavLink Href="invoices" Icon="@Icons.Material.Filled.ReceiptLong">Invoices</MudNavLink>
-                <MudNavLink Href="reports" Icon="@Icons.Material.Filled.ReceiptLong">Dashboard</MudNavLink>
+                <MudNavLink Href="reports" Icon="@Icons.Material.Filled.DataThresholding">Dashboard</MudNavLink>
             </MudNavGroup>
-        }
+        } 
         @if (Auth.PermittedForWarehouse(user_role))
         {
-            <MudNavGroup Title="Warehouse" Icon="@Icons.Material.Filled.Inventory2">
-                <MudNavLink Href="stocks" Disabled="false">Stock</MudNavLink>
-                <MudNavLink Href="reservations">Reservations</MudNavLink>
-                <MudNavLink Href="supplies" Disabled="false">Supplies</MudNavLink>
+            <MudNavGroup Title="Warehouse" Icon="@Icons.Material.Filled.Warehouse">
+                <MudNavLink Href="stocks" Disabled="false" Icon="@Icons.Material.Filled.AllInbox">Stock</MudNavLink>
+                <MudNavLink Href="reservations" Icon="@Icons.Material.Filled.ShoppingCartCheckout">Reservations</MudNavLink>
+                <MudNavLink Href="supplies" Disabled="false" Icon="@Icons.Material.Filled.ForwardToInbox">Supplies</MudNavLink>
             </MudNavGroup>
         }
 </MudNavMenu>

@@ -1,0 +1,136 @@
+﻿@page "/admin/company"
+@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject CompanyApiService CompanyService
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+@inject IAuthService AuthService
+
+<MudPaper Class="pa-6 mx-auto" MaxWidth="800px" Elevation="2">
+    @if (company == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h5">Company Information</MudText>
+            <MudDivider Class="my-2" />
+            <EditForm Model="_edit" OnValidSubmit="Save">
+                <DataAnnotationsValidator />
+                <MudStack Spacing="1">
+                    <MudTextField @bind-Value="_edit.CompanyName" Label="Company Name" Required="true" />
+                    <MudTextField @bind-Value="_edit.TaxIdentificationNumber" Label="Tax Identification Number" />
+                    <MudTextField @bind-Value="_edit.Address" Label="Address" />
+                    <MudTextField @bind-Value="_edit.City" Label="City" />
+                    <MudTextField @bind-Value="_edit.PostalCode" Label="Postal Code" />
+                    <MudTextField @bind-Value="_edit.BankAccountNumber" Label="Bank Account" />
+                    <MudTextField @bind-Value="_edit.ContactEmail" Label="Contact Email" />
+                    <MudTextField @bind-Value="_edit.ContactPhone" Label="Contact Phone" />
+                    <ValidationSummary />
+                </MudStack>
+            </EditForm>
+                
+            <MudDivider Class="my-2" />
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton Color="Color.Primary" Disabled="_busy" OnClick="Save">Save</MudButton>
+                <MudButton Variant="Variant.Outlined" Disabled="_busy">Cancel</MudButton>
+            </MudStack>
+        </MudStack>
+    }
+</MudPaper>
+
+@code {
+    [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
+    private CompanyResponse? company;
+    private CompanyRequest _edit = new();
+    private bool _busy;
+    private string? user_role;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            company = await CompanyService.GetCompanyAsync();
+            if (company == null)
+            {
+                Snackbar.Add("Failed to load company data", Severity.Error);
+                return;
+            }
+
+            _edit = new CompanyRequest
+            {
+                CompanyName = company.CompanyName,
+                Address = company.Address,
+                City = company.City,
+                PostalCode = company.PostalCode,
+                TaxIdentificationNumber = company.TaxIdentificationNumber,
+                BankAccountNumber = company.BankAccountNumber,
+                ContactEmail = company.ContactEmail,
+                ContactPhone = company.ContactPhone
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading company data: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            user_role = await LocalStorage.GetItemAsync<string>("user_role");
+            if (!AuthService.PermittedForManagement(user_role))
+            {
+                Nav.NavigateTo("/");
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            
+        }
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            _busy = true;
+            var ok = await CompanyService.UpdateCompanyAsync(1, _edit);
+
+            if (ok)
+            {
+                Snackbar.Add("Company information updated successfully", Severity.Success);
+                
+                company = new CompanyResponse
+                {
+                    CompanyName = _edit.CompanyName,
+                    Address = _edit.Address,
+                    City = _edit.City,
+                    PostalCode = _edit.PostalCode,
+                    TaxIdentificationNumber = _edit.TaxIdentificationNumber,
+                    BankAccountNumber = _edit.BankAccountNumber,
+                    ContactEmail = _edit.ContactEmail,
+                    ContactPhone = _edit.ContactPhone
+                };
+            }
+            else
+            {
+                Snackbar.Add("Failed to update company information", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}
