@@ -7,32 +7,61 @@ using PdfSharp.Pdf;
 using PdfSharp.Snippets.Font;
 using SSSMCR.ApiService.Model;
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
+using PdfSharp.Pdf.IO;
 using SSSMCR.ApiService.Database;
 
 namespace SSSMCR.ApiService.Services
 {
     public interface IInvoiceService
     {
-        Task<PdfDocument> GetInvoice(int orderId);
+        Task<byte[]> GetInvoiceBytesAsync(int orderId);
+        Task<Invoice> SaveInvoiceAsync(int orderId, byte[] pdfBytes);
     }
 
     public class InvoiceService(AppDbContext context, IOrderService orderService) : IInvoiceService
     {
         private readonly Company _company = context.Companies.FirstOrDefault() ?? new();
-        
         private static readonly CultureInfo Pl = new("pl-PL");
         private const decimal VatRate = 0.23m;
 
-        public async Task<PdfDocument> GetInvoice(int orderId)
+        public async Task<byte[]> GetInvoiceBytesAsync(int orderId)
         {
+            var existing = await context.Invoices.FirstOrDefaultAsync(i => i.OrderId == orderId);
+            if (existing != null)
+                return existing.FileData;
+
             var document = new Document();
             await BuildDocument(document, orderId);
-
             var pdfRenderer = new PdfDocumentRenderer();
             pdfRenderer.Document = document;
             pdfRenderer.RenderDocument();
 
-            return pdfRenderer.PdfDocument;
+            using var stream = new MemoryStream();
+            pdfRenderer.PdfDocument.Save(stream);
+            var pdfBytes = stream.ToArray();
+
+            await SaveInvoiceAsync(orderId, pdfBytes);
+            return pdfBytes;
+        }
+        
+        public async Task<Invoice> SaveInvoiceAsync(int orderId, byte[] pdfBytes)
+        {
+            var existing = await context.Invoices.FirstOrDefaultAsync(i => i.OrderId == orderId);
+            if (existing != null)
+                return existing;
+
+            var invoice = new Invoice
+            {
+                OrderId = orderId,
+                FileName = $"Invoice_{orderId}_{DateTime.Now:yyyyMMddHHmmss}.pdf",
+                FileData = pdfBytes,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            context.Invoices.Add(invoice);
+            await context.SaveChangesAsync();
+            return invoice;
         }
 
         private async Task BuildDocument(Document document, int orderId)
@@ -58,16 +87,14 @@ namespace SSSMCR.ApiService.Services
             section.PageSetup.RightMargin = Unit.FromCentimeter(2.0);
             section.PageSetup.TopMargin = Unit.FromCentimeter(2.0);
             section.PageSetup.BottomMargin = Unit.FromCentimeter(2.0);
-
-            // Nagłówek
+            
             var header = section.Headers.Primary.AddParagraph();
             header.AddFormattedText("SSSMCR", TextFormat.Bold);
             header.AddLineBreak();
             header.AddText($"{_company.Address}, {_company.PostalCode} {_company.City} | NIP: {_company.TaxIdentificationNumber}");
             header.Format.Font.Size = 9;
             header.Format.Alignment = ParagraphAlignment.Left;
-
-            // Stopka
+            
             var footer = section.Footers.Primary.AddParagraph();
             footer.AddText("Page ");
             footer.AddPageField();
@@ -75,8 +102,7 @@ namespace SSSMCR.ApiService.Services
             footer.AddNumPagesField();
             footer.Format.Alignment = ParagraphAlignment.Center;
             footer.Format.Font.Size = 9;
-
-            // Tytuł i meta
+            
             section.AddParagraph("VAT Invoice", "Heading1");
 
             var meta = section.AddParagraph();
@@ -88,18 +114,16 @@ namespace SSSMCR.ApiService.Services
             meta.AddText($"Date of sale: {order.CreatedAt:yyyy-MM-dd}");
 
             section.AddParagraph().AddLineBreak();
-
-            // Szerokość zadruku (A4: 21 cm - 2 cm - 2 cm = ok. 17 cm)
+            
             var printableWidth = section.PageSetup.PageWidth - section.PageSetup.LeftMargin - section.PageSetup.RightMargin;
-
-            // Sprzedawca / Nabywca – bezpieczne, stałe kolumny (po ok. 8.3 cm)
+            
             var parties = section.AddTable();
             parties.Borders.Width = 0.5;
             parties.LeftPadding = 4;
             parties.RightPadding = 4;
             parties.Rows.LeftIndent = 0;
 
-            var partyColWidth = Unit.FromCentimeter(8.3); // 8.3 + 8.3 = 16.6 cm < ~17 cm
+            var partyColWidth = Unit.FromCentimeter(8.3);
             parties.AddColumn(partyColWidth);
             parties.AddColumn(partyColWidth);
 
@@ -124,9 +148,7 @@ namespace SSSMCR.ApiService.Services
             pBuyer.AddText(order.ShippingAddress);
 
             section.AddParagraph().AddLineBreak();
-
-            // Tabela pozycji – stałe, sprawdzone szerokości (suma 16.8 cm <= ~17 cm)
-            // [Nazwa, Ilość, Cena netto, Wartość netto, VAT %, Kwota VAT, Brutto]
+            
             var items = section.AddTable();
             items.Borders.Width = 0.5;
             items.LeftPadding = 4;
@@ -134,13 +156,13 @@ namespace SSSMCR.ApiService.Services
             items.Rows.LeftIndent = 0;
             items.Format.Font.Size = 9;
 
-            items.AddColumn(Unit.FromCentimeter(6.2)); // Nazwa
-            items.AddColumn(Unit.FromCentimeter(2.0)); // Ilość
-            items.AddColumn(Unit.FromCentimeter(2.0)); // Cena netto
-            items.AddColumn(Unit.FromCentimeter(2.4)); // Wartość netto
-            items.AddColumn(Unit.FromCentimeter(1.2)); // VAT %
-            items.AddColumn(Unit.FromCentimeter(1.6)); // Kwota VAT
-            items.AddColumn(Unit.FromCentimeter(2.4)); // Brutto
+            items.AddColumn(Unit.FromCentimeter(6.2));
+            items.AddColumn(Unit.FromCentimeter(2.0));
+            items.AddColumn(Unit.FromCentimeter(2.0));
+            items.AddColumn(Unit.FromCentimeter(2.4));
+            items.AddColumn(Unit.FromCentimeter(1.2));
+            items.AddColumn(Unit.FromCentimeter(1.6));
+            items.AddColumn(Unit.FromCentimeter(2.4));
 
             var headerRow = items.AddRow();
             headerRow.Shading.Color = Colors.LightGray;
@@ -189,8 +211,7 @@ namespace SSSMCR.ApiService.Services
             }
 
             section.AddParagraph().AddLineBreak();
-
-            // Podsumowanie – stała szerokość, wyrównane do prawej
+            
             var totals = section.AddTable();
             totals.Borders.Width = 0.5;
             totals.LeftPadding = 4;
@@ -199,8 +220,7 @@ namespace SSSMCR.ApiService.Services
             Unit totalsCol1 = Unit.FromCentimeter(5.5);
             Unit totalsCol2 = Unit.FromCentimeter(4.0);
             Unit totalsWidth = totalsCol1 + totalsCol2;
-
-            // Dosuń do prawej, ale nie przekraczaj szerokości zadruku
+            
             totals.Rows.LeftIndent = (printableWidth - totalsWidth) > 0 ? (printableWidth - totalsWidth) : 0;
 
             totals.AddColumn(totalsCol1);
@@ -223,8 +243,7 @@ namespace SSSMCR.ApiService.Services
 
 
             section.AddParagraph().AddLineBreak();
-
-            // Informacje o płatności
+            
             var pay = section.AddParagraph();
             pay.Style = "Label";
             pay.AddText("Payment Method: bank transfer | Payment Terms: 14 days");

@@ -15,17 +15,8 @@ namespace SSSMCR.ApiService.Controller
         {
             try
             {
-                var pdfDocument = await invoiceService.GetInvoice(orderId);
-                
-                var stream = new MemoryStream();
-                pdfDocument.Save(stream);
-                
-                Response.ContentType = "application/pdf";
-                Response.Headers.Append("content-length", stream.Length.ToString());
-                byte[] bytes = stream.ToArray();
-                stream.Close();
-                
-                return File(bytes, "application/pdf", "Invoice.pdf");
+                var pdfBytes = await invoiceService.GetInvoiceBytesAsync(orderId);
+                return File(pdfBytes, "application/pdf", $"Invoice_{orderId}.pdf");
             }
             catch (Exception ex)
             {

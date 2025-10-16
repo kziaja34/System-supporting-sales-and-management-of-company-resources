@@ -19,6 +19,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<StockReservation> StockReservations => Set<StockReservation>();
+    public DbSet<Invoice> Invoices { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

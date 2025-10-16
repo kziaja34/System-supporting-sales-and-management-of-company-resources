@@ -55,17 +55,13 @@ public class OrderService : GenericService<Order>, IOrderService
         return order;
     }
     
-    public async Task<PageResponse<OrderListItemDto>> GetPagedAsync(int page, int size, string sort, string? search = null, CancellationToken ct = default)
+    public async Task<PageResponse<OrderListItemDto>> GetPagedAsync(
+        int page, int size, string sort, string? search = null, CancellationToken ct = default)
     {
         var query = _dbSet
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
             .AsQueryable();
-        
-        foreach (var order in query)
-        {
-            order.Priority = CalculatePriority(order);
-        }
         
         if (!string.IsNullOrEmpty(search))
         {
@@ -76,8 +72,6 @@ public class OrderService : GenericService<Order>, IOrderService
         
         query = sort switch
         {
-            "priority,asc" => query.OrderBy(o => o.Priority),
-            "priority,desc" => query.OrderByDescending(o => o.Priority),
             "createdAt,asc" => query.OrderBy(o => o.CreatedAt),
             "createdAt,desc" => query.OrderByDescending(o => o.CreatedAt),
             "id,asc" => query.OrderBy(o => o.Id),
@@ -86,11 +80,25 @@ public class OrderService : GenericService<Order>, IOrderService
             "customerEmail,desc" => query.OrderByDescending(o => o.CustomerEmail),
             "customerName,asc" => query.OrderBy(o => o.CustomerName),
             "customerName,desc" => query.OrderByDescending(o => o.CustomerName),
-            _ => query.OrderByDescending(o => o.Priority)
+            _ => query.OrderByDescending(o => o.CreatedAt)
         };
         
-        var total = await query.CountAsync();
-        var items = await query.Skip(page * size).Take(size).ToListAsync();
+        var orders = await query.ToListAsync(ct);
+        
+        foreach (var order in orders)
+        {
+            order.Priority = CalculatePriority(order);
+        }
+        
+        if (sort.StartsWith("priority"))
+        {
+            orders = sort.EndsWith("asc")
+                ? orders.OrderBy(o => o.Priority).ToList()
+                : orders.OrderByDescending(o => o.Priority).ToList();
+        }
+        
+        var total = orders.Count;
+        var items = orders.Skip(page * size).Take(size).ToList();
 
         return new PageResponse<OrderListItemDto>
         {
@@ -100,6 +108,7 @@ public class OrderService : GenericService<Order>, IOrderService
             TotalPages = (int)Math.Ceiling(total / (double)size)
         };
     }
+
     
     public async Task<bool> UpdateStatusAsync(int id, string newStatus)
     {
