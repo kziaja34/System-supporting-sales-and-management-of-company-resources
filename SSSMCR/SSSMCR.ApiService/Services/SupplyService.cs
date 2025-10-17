@@ -121,6 +121,14 @@ public class SupplyService(AppDbContext context)
                 stock.Quantity += item.Quantity;
                 stock.LastUpdatedAt = DateTime.UtcNow;
             }
+
+            _context.StockMovements.Add(new StockMovement
+            {
+                ProductStockId = stock.Id,
+                QuantityDelta = item.Quantity,
+                Type = StockMovementType.Inbound,
+                Reference = $"SUPPLY ORDER#{order.Id}/BRANCH#{order.BranchId}"
+            });
         }
 
         order.Status = SupplyOrderStatus.Received;

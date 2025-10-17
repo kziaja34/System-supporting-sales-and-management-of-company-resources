@@ -99,13 +99,13 @@ public static class DbSeeder
         // ProductStock
         context.ProductStock.AddRange(
             new ProductStock { Product = product1, Branch = branch1, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product1.BaseCriticalThreshold },
-            new ProductStock { Product = product2, Branch = branch1, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product2.BaseCriticalThreshold },
-            new ProductStock { Product = product3, Branch = branch1, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product3.BaseCriticalThreshold },
-            new ProductStock { Product = product1, Branch = branch2, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product1.BaseCriticalThreshold },
+            new ProductStock { Product = product2, Branch = branch1, Quantity = 0, ReservedQuantity = 0, CriticalThreshold = product2.BaseCriticalThreshold },
+            new ProductStock { Product = product3, Branch = branch1, Quantity = 0, ReservedQuantity = 0, CriticalThreshold = product3.BaseCriticalThreshold },
+            new ProductStock { Product = product1, Branch = branch2, Quantity = 0, ReservedQuantity = 0, CriticalThreshold = product1.BaseCriticalThreshold },
             new ProductStock { Product = product2, Branch = branch2, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product2.BaseCriticalThreshold },
-            new ProductStock { Product = product3, Branch = branch2, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product3.BaseCriticalThreshold },
-            new ProductStock { Product = product1, Branch = branch3, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product1.BaseCriticalThreshold },
-            new ProductStock { Product = product2, Branch = branch3, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product2.BaseCriticalThreshold },
+            new ProductStock { Product = product3, Branch = branch2, Quantity = 0, ReservedQuantity = 0, CriticalThreshold = product3.BaseCriticalThreshold },
+            new ProductStock { Product = product1, Branch = branch3, Quantity = 0, ReservedQuantity = 0, CriticalThreshold = product1.BaseCriticalThreshold },
+            new ProductStock { Product = product2, Branch = branch3, Quantity = 0, ReservedQuantity = 0, CriticalThreshold = product2.BaseCriticalThreshold },
             new ProductStock { Product = product3, Branch = branch3, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product3.BaseCriticalThreshold }
         );
 

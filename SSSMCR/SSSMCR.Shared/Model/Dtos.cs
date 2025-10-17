@@ -239,6 +239,7 @@ public class BranchCreateRequest
 
 public class ReservationDto
 {
+    public int ReservationId { get; set; }
     public int OrderId { get; set; }
     public int BranchId { get; set; }
     public string OrderStatus { get; set; } = string.Empty;

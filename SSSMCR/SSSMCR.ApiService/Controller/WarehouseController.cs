@@ -39,13 +39,13 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
         }
     }
 
-    [HttpPost("orders/{orderId}/fulfill")]
-    [Authorize(Roles = "Manager, Administrator")]
-    public async Task<IActionResult> Fulfill(int orderId)
+    [HttpPost("orders/{orderId}/fulfill/reservations/{reservationId}")]
+    [Authorize(Roles = "Manager,WarehouseWorker, Administrator")]
+    public async Task<IActionResult> FulfillReservation(int orderId, int reservationId)
     {
         try
         {
-            await svc.FulfillReservationsAsync(orderId);
+            await svc.FulfillSingleReservationAsync(orderId, reservationId, HttpContext.RequestAborted);
             return NoContent();
         }
         catch (ReservationNotFoundException ex)
@@ -175,6 +175,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
 
         return new ReservationDto()
         {
+            ReservationId = r.Id,
             OrderId = r.OrderItem.OrderId,
             ProductName = r.ProductStock.Product?.Name,
             BranchId = r.ProductStock.BranchId,

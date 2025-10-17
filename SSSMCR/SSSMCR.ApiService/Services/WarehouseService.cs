@@ -9,7 +9,7 @@ namespace SSSMCR.ApiService.Services;
 public interface IWarehouseService : IGenericService<ProductStock>
 {
     Task<ReserveResult> ReserveForOrderAsync(int orderId, int currentUserId, int? preferredBranchId = null, CancellationToken ct = default);
-    Task FulfillReservationsAsync(int orderId, CancellationToken ct = default);
+    Task FulfillSingleReservationAsync(int orderId, int reservationId, CancellationToken ct = default);
     Task FulfillReservationForBranchAsync(int orderId, int branchId, CancellationToken ct = default);
     Task ReleaseReservationsForOrderAsync(int orderId, bool confirm, CancellationToken ct = default);
     Task<List<ProductStockDto>> GetStocksAsync(int? branchId, CancellationToken ct);
@@ -20,154 +20,199 @@ public interface IWarehouseService : IGenericService<ProductStock>
 public class WarehouseService(AppDbContext context) : GenericService<ProductStock>(context), IWarehouseService
 {
     public async Task<ReserveResult> ReserveForOrderAsync(int orderId, int currentUserId, int? preferredBranchId, CancellationToken ct)
+{
+    await using var tx = await _context.Database.BeginTransactionAsync(ct);
+
+    var order = await _context.Orders
+        .Include(o => o.Items)
+        .ThenInclude(i => i.Product)
+        .FirstOrDefaultAsync(o => o.Id == orderId, ct)
+        ?? throw new InvalidOperationException("Order not found.");
+
+    if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled)
+        throw new InvalidOperationException($"Cannot reserve order in status {order.Status}.");
+
+    if (order.Status == OrderStatus.PartiallyFulfilled)
     {
-        await using var tx = await _context.Database.BeginTransactionAsync(ct);
+        var releasedReservations = await _context.StockReservations
+            .Where(r => r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Released)
+            .ToListAsync(ct);
 
-        var order = await _context.Orders
-            .Include(o => o.Items)
-            .ThenInclude(i => i.Product)
-            .FirstOrDefaultAsync(o => o.Id == orderId, ct)
-            ?? throw new InvalidOperationException("Order not found.");
-
-        if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled)
-            throw new InvalidOperationException($"Cannot reserve order in status {order.Status}.");
-        
-        if (order.Status == OrderStatus.PartiallyFulfilled)
+        foreach (var r in releasedReservations)
         {
-            var releasedReservations = await _context.StockReservations
-                .Where(r => r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Released)
-                .ToListAsync(ct);
-
-            foreach (var r in releasedReservations)
-            {
-                r.Status = ReservationStatus.Active;
-                r.CreatedAt = DateTime.UtcNow;
-            }
+            r.Status = ReservationStatus.Active;
+            r.CreatedAt = DateTime.UtcNow;
         }
-        
-        double? originLat = null, originLon = null;
-        if (preferredBranchId.HasValue)
-        {
-            var origin = await _context.Branches
-                .Where(b => b.Id == preferredBranchId.Value)
-                .Select(b => new { b.Latitude, b.Longitude })
-                .FirstOrDefaultAsync(ct);
-            originLat = origin?.Latitude;
-            originLon = origin?.Longitude;
-        }
-
-        var perItemReport = new List<ReserveLineResult>();
-
-        foreach (var item in order.Items)
-        {
-            var need = item.Quantity - GetAlreadyReservedQty(item.Id);
-            if (need <= 0)
-                continue;
-
-            var stocks = await _dbSet
-                .Include(s => s.Branch)
-                .Where(s => s.ProductId == item.ProductId)
-                .Select(s => new
-                {
-                    s,
-                    Available = s.Quantity - s.ReservedQuantity,
-                    Priority = (preferredBranchId.HasValue && s.BranchId == preferredBranchId.Value) ? 0 : 1,
-                    Lat = s.Branch!.Latitude,
-                    Lon = s.Branch.Longitude
-                })
-                .Where(x => x.Available > 0)
-                .ToListAsync(ct);
-
-            var sortedStocks = (originLat.HasValue && originLon.HasValue)
-                ? stocks
-                    .OrderBy(x => x.Priority)
-                    .ThenBy(x => (x.Lat.HasValue && x.Lon.HasValue)
-                        ? DistanceKm(originLat.Value, originLon.Value, x.Lat.Value, x.Lon.Value)
-                        : double.MaxValue)
-                    .ThenByDescending(x => x.Available)
-                    .ToList()
-                : stocks
-                    .OrderBy(x => x.Priority)
-                    .ThenByDescending(x => x.Available)
-                    .ToList();
-            
-            foreach (var x in sortedStocks)
-            {
-                if (need <= 0) break;
-                var take = Math.Min(need, x.Available);
-
-                x.s.ReservedQuantity += take;
-                x.s.LastUpdatedAt = DateTime.UtcNow;
-
-                var existingReservation = await _context.StockReservations
-                    .FirstOrDefaultAsync(r =>
-                        r.OrderItemId == item.Id &&
-                        r.ProductStockId == x.s.Id &&
-                        (r.Status == ReservationStatus.Released || r.Status == ReservationStatus.Active), ct);
-
-                if (existingReservation != null)
-                {
-                    existingReservation.Status = ReservationStatus.Active;
-                    existingReservation.Quantity = take;
-                    existingReservation.CreatedAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    _context.StockReservations.Add(new StockReservation
-                    {
-                        OrderItemId = item.Id,
-                        ProductStockId = x.s.Id,
-                        Quantity = take,
-                        Status = ReservationStatus.Active,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
-
-                perItemReport.Add(new ReserveLineResult(
-                    item.Product.Name,
-                    x.s.Branch?.Name ?? "Unknown",
-                    take,
-                    need - take
-                ));
-
-                need -= take;
-            }
-            
-            if (need > 0)
-            {
-                perItemReport.Add(new ReserveLineResult(
-                    item.Product.Name,
-                    "—",
-                    0,
-                    need
-                ));
-            }
-        }
-
-        var isPartial = perItemReport.Any(r => r.MissingQuantity > 0);
-        order.Status = OrderStatus.Processing;
-
-        if (order.BranchId == null)
-        {
-            var userBranchId = await _context.Users
-                .Where(u => u.Id == currentUserId)
-                .Select(u => u.BranchId)
-                .FirstOrDefaultAsync(ct);
-
-            if (userBranchId != 0)
-                order.BranchId = userBranchId;
-            else if (preferredBranchId.HasValue)
-                order.BranchId = preferredBranchId;
-        }
-        
-        await _context.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
-
-        return new ReserveResult(perItemReport, isPartial);
     }
 
+    var needs = order.Items
+        .Select(i => new { Item = i, Need = i.Quantity - GetAlreadyReservedQty(i.Id) })
+        .Where(x => x.Need > 0)
+        .ToList();
 
-    public async Task FulfillReservationsAsync(int orderId, CancellationToken ct)
+    if (needs.Count == 0)
+    {
+        await _context.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return new ReserveResult(new List<ReserveLineResult>(), false);
+    }
+
+    double? originLat = null, originLon = null;
+    if (preferredBranchId.HasValue)
+    {
+        var origin = await _context.Branches
+            .Where(b => b.Id == preferredBranchId.Value)
+            .Select(b => new { b.Latitude, b.Longitude })
+            .FirstOrDefaultAsync(ct);
+        originLat = origin?.Latitude;
+        originLon = origin?.Longitude;
+    }
+
+    var productIds = needs.Select(n => n.Item.ProductId).Distinct().ToList();
+
+    var stocks = await _context.ProductStock
+        .Include(ps => ps.Branch)
+        .Where(ps => productIds.Contains(ps.ProductId))
+        .Select(ps => new
+        {
+            ps.BranchId,
+            ps.Branch,
+            ps.ProductId,
+            Available = ps.Quantity - ps.ReservedQuantity,
+            Lat = ps.Branch!.Latitude,
+            Lon = ps.Branch.Longitude
+        })
+        .ToListAsync(ct);
+
+    var candidates = stocks
+        .GroupBy(s => s.BranchId)
+        .Select(g => new
+        {
+            BranchId = g.Key,
+            Branch = g.First().Branch,
+            Availability = g.ToDictionary(x => x.ProductId, x => x.Available),
+            Lat = g.First().Lat,
+            Lon = g.First().Lon
+        })
+        .ToList();
+
+    bool CoversAll(Dictionary<int, int> availability)
+    {
+        foreach (var n in needs)
+        {
+            if (!availability.TryGetValue(n.Item.ProductId, out int avail) || avail < n.Need)
+                return false;
+        }
+        return true;
+    }
+
+    int CoverageScore(Dictionary<int, int> availability)
+    {
+        var sum = 0;
+        foreach (var n in needs)
+        {
+            availability.TryGetValue(n.Item.ProductId, out int a);
+            sum += Math.Min(a, n.Need);
+        }
+        return sum;
+    }
+
+    var chosen = preferredBranchId.HasValue
+        ? candidates.FirstOrDefault(c => c.BranchId == preferredBranchId.Value && CoversAll(c.Availability))
+        : null;
+
+    chosen ??= candidates
+        .Where(c => CoversAll(c.Availability))
+        .OrderBy(c => (originLat.HasValue && originLon.HasValue && c.Lat.HasValue && c.Lon.HasValue)
+            ? DistanceKm(originLat.Value, originLon.Value, c.Lat.Value, c.Lon.Value)
+            : double.MaxValue)
+        .ThenByDescending(c => CoverageScore(c.Availability))
+        .FirstOrDefault();
+
+    if (chosen == null)
+    {
+        var report = needs.Select(n => new ReserveLineResult(n.Item.Product.Name, "—", 0, n.Need)).ToList();
+        await tx.RollbackAsync(ct);
+        return new ReserveResult(report, true);
+    }
+
+    var perItemReport = new List<ReserveLineResult>();
+    var now = DateTime.UtcNow;
+
+    foreach (var n in needs)
+    {
+        var stock = await _context.ProductStock
+            .FirstOrDefaultAsync(ps => ps.BranchId == chosen.BranchId && ps.ProductId == n.Item.ProductId, ct);
+
+        if (stock == null)
+        {
+            stock = new ProductStock
+            {
+                ProductId = n.Item.ProductId,
+                BranchId = chosen.BranchId,
+                Quantity = 0,
+                ReservedQuantity = 0,
+                LastUpdatedAt = now
+            };
+            _context.ProductStock.Add(stock);
+            await _context.SaveChangesAsync(ct);
+        }
+
+        stock.ReservedQuantity += n.Need;
+        stock.LastUpdatedAt = now;
+
+        var existingReservation = await _context.StockReservations
+            .FirstOrDefaultAsync(r =>
+                r.OrderItemId == n.Item.Id &&
+                r.ProductStockId == stock.Id &&
+                (r.Status == ReservationStatus.Released || r.Status == ReservationStatus.Active), ct);
+
+        if (existingReservation != null)
+        {
+            existingReservation.Status = ReservationStatus.Active;
+            existingReservation.Quantity = n.Need;
+            existingReservation.CreatedAt = now;
+        }
+        else
+        {
+            _context.StockReservations.Add(new StockReservation
+            {
+                OrderItemId = n.Item.Id,
+                ProductStockId = stock.Id,
+                Quantity = n.Need,
+                Status = ReservationStatus.Active,
+                CreatedAt = now
+            });
+        }
+
+        perItemReport.Add(new ReserveLineResult(n.Item.Product.Name, chosen.Branch?.Name ?? "Unknown", n.Need, 0));
+    }
+
+    order.Status = OrderStatus.Processing;
+
+    if (order.BranchId == null)
+    {
+        var userBranchId = await _context.Users
+            .Where(u => u.Id == currentUserId)
+            .Select(u => u.BranchId)
+            .FirstOrDefaultAsync(ct);
+
+        if (userBranchId != 0)
+            order.BranchId = userBranchId;
+        else if (preferredBranchId.HasValue)
+            order.BranchId = preferredBranchId;
+        else
+            order.BranchId = chosen.BranchId;
+    }
+
+    await _context.SaveChangesAsync(ct);
+    await tx.CommitAsync(ct);
+
+    return new ReserveResult(perItemReport, false);
+}
+
+
+    public async Task FulfillSingleReservationAsync(int orderId, int reservationId, CancellationToken ct = default)
     {
         await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
@@ -176,47 +221,44 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Pending)
             throw new InvalidOperationException("You can only fulfill processing orders.");
 
-        var reservations = await _context.StockReservations
+        var reservation = await _context.StockReservations
             .Include(r => r.ProductStock)
             .Include(r => r.OrderItem)
-            .Where(r => r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Active)
-            .ToListAsync(ct);
+            .FirstOrDefaultAsync(r => r.Id == reservationId && r.OrderItem.OrderId == orderId && r.Status == ReservationStatus.Active, ct);
 
-        if (!reservations.Any())
+        if (reservation == null)
             throw new ReservationNotFoundException(orderId);
 
+        var stock = reservation.ProductStock;
 
-        foreach (var r in reservations)
+        stock.Quantity         -= reservation.Quantity;
+        stock.ReservedQuantity -= reservation.Quantity;
+        stock.LastUpdatedAt     = DateTime.UtcNow;
+
+        _context.StockMovements.Add(new StockMovement
         {
-            var stock = r.ProductStock;
-            
-            stock.Quantity        -= r.Quantity;
-            stock.ReservedQuantity -= r.Quantity;
-            stock.LastUpdatedAt    = DateTime.UtcNow;
+            ProductStockId = stock.Id,
+            QuantityDelta  = -reservation.Quantity,
+            Type           = StockMovementType.Outbound,
+            OrderItemId    = reservation.OrderItemId,
+            Reference      = $"ORDER#{orderId}/RES#{reservation.Id}"
+        });
 
-            _context.StockMovements.Add(new StockMovement {
-                ProductStockId = stock.Id,
-                QuantityDelta  = -r.Quantity,
-                Type           = StockMovementType.Outbound,
-                OrderItemId    = r.OrderItemId,
-                Reference      = $"ORDER#{orderId}"
-            });
+        reservation.Status      = ReservationStatus.Fulfilled;
+        reservation.FulfilledAt = DateTime.UtcNow;
 
-            r.Status      = ReservationStatus.Fulfilled;
-            r.FulfilledAt = DateTime.UtcNow;
-        }
-        
-        var allReservations = await _context.StockReservations
-            .Where(r => r.OrderItem.OrderId == orderId)
+        var remaining = await _context.StockReservations
+            .Where(r => r.OrderItem.OrderId == orderId && r.Status != ReservationStatus.Released)
             .ToListAsync(ct);
 
-        if (allReservations.All(r => r.Status == ReservationStatus.Fulfilled))
-        {
+        if (remaining.All(r => r.Status == ReservationStatus.Fulfilled))
             order.Status = OrderStatus.Completed;
-        }
+        else if (remaining.Any(r => r.Status == ReservationStatus.Fulfilled))
+            order.Status = OrderStatus.PartiallyFulfilled;
+        else
+            order.Status = OrderStatus.Processing;
 
         await _context.SaveChangesAsync(ct);
-        
         await tx.CommitAsync(ct);
     }
     

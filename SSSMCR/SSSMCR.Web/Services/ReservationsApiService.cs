@@ -38,6 +38,24 @@ public class ReservationsApiService(IHttpClientFactory httpFactory, ILocalStorag
         }
     }
     
+    public async Task<bool> FulfillReservationAsync(int orderId, int reservationId)
+    {
+        var http = _httpFactory.CreateClient("api");
+        await AttachBearerAsync(http);
+
+        try
+        {
+            var res = await http.PostAsync($"/api/warehouse/orders/{orderId}/fulfill/reservations/{reservationId}", null);
+            await EnsureSuccessOrThrowAsync(res, "FulfillReservationAsync");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "FulfillReservationAsync failed (orderId={OrderId}, reservationId={ReservationId})", orderId, reservationId);
+            return false;
+        }
+    }
+    
     public async Task<bool> FulfillBranchReservationsAsync(int orderId, int branchId)
     {
         var http = _httpFactory.CreateClient("api");
