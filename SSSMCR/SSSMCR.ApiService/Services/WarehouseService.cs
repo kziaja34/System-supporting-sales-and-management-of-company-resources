@@ -269,7 +269,6 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         if (allReservations.All(r => r.Status == ReservationStatus.Fulfilled))
         {
             order.Status = OrderStatus.Completed;
-            await UpdateDynamicCriticalThresholdsAsync(ct);
         }
         else if (allReservations.Any(r => r.Status == ReservationStatus.Fulfilled))
         {
