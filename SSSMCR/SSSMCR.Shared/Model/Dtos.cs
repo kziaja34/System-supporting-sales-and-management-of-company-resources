@@ -96,6 +96,14 @@ public record OrderDetailsDto
     public string ShippingAddress { get; init; } = string.Empty;
 }
 
+public class OrderSimulationResult
+{
+    public int OrderId { get; set; }
+    public decimal Total { get; set; }
+    public int ItemsCount { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
 // Paged wrapper kept as class for mutable paging fields + computed properties
 public class PageResponse<T>
 {

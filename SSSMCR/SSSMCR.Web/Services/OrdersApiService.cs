@@ -141,5 +141,23 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
 
         return (res.IsSuccessStatusCode, false);
     }
+    
+    public async Task<OrderSimulationResult?> SimulateOrderAsync()
+    {
+        var http = _httpFactory.CreateClient("api");
+        await AttachBearerAsync(http);
+
+        var url = $"/api/orders/simulate";
+        var res = await http.PostAsync(url, null);
+
+        if (res.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            var error = await ReadApiErrorAsync(res);
+            _logger.LogWarning("ReleaseOrderAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
+        }
+
+        var dto = await res.Content.ReadFromJsonAsync<OrderSimulationResult>();
+        return dto;
+    }
 
 }

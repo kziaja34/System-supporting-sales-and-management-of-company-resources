@@ -38,8 +38,8 @@ public static class DbSeeder
 
         // Branches
         var branch1 = new Branch { Name = "Oddział Katowice", Location = "Katowice, ul. Rozdzienskiego 1", Latitude = 50.264301, Longitude = 19.025333};
-        var branch3 = new Branch { Name = "Oddział Katowice", Location = "Katowice, ul. Rozdzienskiego 2", Latitude = 50.264399, Longitude = 19.025336};
         var branch2 = new Branch { Name = "Oddział Gliwice", Location = "Gliwice, ul. Słoneczna 2", Latitude = 50.286375, Longitude = 18.616104 };
+        var branch3 = new Branch { Name = "Oddział Katowice 2", Location = "Katowice, ul. Rozdzienskiego 2", Latitude = 50.264399, Longitude = 19.025336};
         context.Branches.AddRange(branch1, branch2, branch3);
 
         // Users
@@ -98,10 +98,15 @@ public static class DbSeeder
 
         // ProductStock
         context.ProductStock.AddRange(
-            new ProductStock { Product = product1, Branch = branch1, Quantity = 10, ReservedQuantity = 0, CriticalThreshold = 3 },
-            new ProductStock { Product = product2, Branch = branch1, Quantity = 5, ReservedQuantity = 0, CriticalThreshold = 2 },
-            new ProductStock { Product = product3, Branch = branch2, Quantity = 20, ReservedQuantity = 0, CriticalThreshold = 5 },
-            new ProductStock { Product = product1, Branch = branch3, Quantity = 1, ReservedQuantity = 0, CriticalThreshold = 3 }
+            new ProductStock { Product = product1, Branch = branch1, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product1.BaseCriticalThreshold },
+            new ProductStock { Product = product2, Branch = branch1, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product2.BaseCriticalThreshold },
+            new ProductStock { Product = product3, Branch = branch1, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product3.BaseCriticalThreshold },
+            new ProductStock { Product = product1, Branch = branch2, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product1.BaseCriticalThreshold },
+            new ProductStock { Product = product2, Branch = branch2, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product2.BaseCriticalThreshold },
+            new ProductStock { Product = product3, Branch = branch2, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product3.BaseCriticalThreshold },
+            new ProductStock { Product = product1, Branch = branch3, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product1.BaseCriticalThreshold },
+            new ProductStock { Product = product2, Branch = branch3, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product2.BaseCriticalThreshold },
+            new ProductStock { Product = product3, Branch = branch3, Quantity = 100, ReservedQuantity = 0, CriticalThreshold = product3.BaseCriticalThreshold }
         );
 
         // Supplier
@@ -122,68 +127,68 @@ public static class DbSeeder
         };
         context.SupplierProducts.AddRange(supplierProducts);
         
-        // Order + OrderItem
-        var order1 = new Order
-        {
-            CustomerName = "Jan Kowalski",
-            CustomerEmail = "jan.kowalski@example.com",
-            Status = OrderStatus.Pending,
-            Priority = 1,
-            ShippingAddress = "Warszawa, ul. Nowa 3",
-        };
-        context.Orders.Add(order1);
-
-        context.OrderItems.AddRange(
-            new OrderItem { Order = order1, Product = product1, Quantity = 1, UnitPrice = product1.UnitPrice }
-        );
+        // // Order + OrderItem
+        // var order1 = new Order
+        // {
+        //     CustomerName = "Jan Kowalski",
+        //     CustomerEmail = "jan.kowalski@example.com",
+        //     Status = OrderStatus.Pending,
+        //     Priority = 1,
+        //     ShippingAddress = "Warszawa, ul. Nowa 3",
+        // };
+        // context.Orders.Add(order1);
+        //
+        // context.OrderItems.AddRange(
+        //     new OrderItem { Order = order1, Product = product1, Quantity = 1, UnitPrice = product1.UnitPrice }
+        // );
+        //
+        // var order2 = new Order
+        // {
+        //     CustomerName = "Anna Nowak",
+        //     CustomerEmail = "anna.nowak@example.com",
+        //     Status = OrderStatus.Pending,
+        //     Priority = 2,
+        //     CreatedAt = DateTime.UtcNow.AddDays(-2),
+        //     ShippingAddress = "Będzin, ul. Norwida 17"
+        // };
+        // context.Orders.Add(order2);
+        //
+        // context.OrderItems.AddRange(
+        //     new OrderItem { Order = order2, Product = product2, Quantity = 1, UnitPrice = product2.UnitPrice },
+        //     new OrderItem { Order = order2, Product = product3, Quantity = 2, UnitPrice = product3.UnitPrice }
+        // );
         
-        var order2 = new Order
-        {
-            CustomerName = "Anna Nowak",
-            CustomerEmail = "anna.nowak@example.com",
-            Status = OrderStatus.Pending,
-            Priority = 2,
-            CreatedAt = DateTime.UtcNow.AddDays(-2),
-            ShippingAddress = "Będzin, ul. Norwida 17"
-        };
-        context.Orders.Add(order2);
-
-        context.OrderItems.AddRange(
-            new OrderItem { Order = order2, Product = product2, Quantity = 1, UnitPrice = product2.UnitPrice },
-            new OrderItem { Order = order2, Product = product3, Quantity = 2, UnitPrice = product3.UnitPrice }
-        );
-        
-        var random = new Random();
-        var allProducts = new[] { product1, product2, product3 };
-        var allBranches = new[] { branch1, branch2 };
-        
-        for (int i = 0; i < 40; i++)
-        {
-            var branch = allBranches[random.Next(allBranches.Length)];
-            var product = allProducts[random.Next(allProducts.Length)];
-            var quantity = random.Next(1, 4);
-            var price = product.UnitPrice;
-
-            var order = new Order
-            {
-                CustomerName = $"Klient {i + 1}",
-                CustomerEmail = $"klient{i + 1}@example.com",
-                Status = OrderStatus.Completed,
-                Priority = random.Next(1, 3),
-                ShippingAddress = $"Adres klienta {i + 1}",
-                CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30)),
-                Branch = branch,
-            };
-
-            context.Orders.Add(order);
-            context.OrderItems.Add(new OrderItem
-            {
-                Order = order,
-                Product = product,
-                Quantity = quantity,
-                UnitPrice = price
-            });
-        }
+        // var random = new Random();
+        // var allProducts = new[] { product1, product2, product3 };
+        // var allBranches = new[] { branch1, branch2 };
+        //
+        // for (int i = 0; i < 40; i++)
+        // {
+        //     var branch = allBranches[random.Next(allBranches.Length)];
+        //     var product = allProducts[random.Next(allProducts.Length)];
+        //     var quantity = random.Next(1, 4);
+        //     var price = product.UnitPrice;
+        //
+        //     var order = new Order
+        //     {
+        //         CustomerName = $"Klient {i + 1}",
+        //         CustomerEmail = $"klient{i + 1}@example.com",
+        //         Status = OrderStatus.Completed,
+        //         Priority = random.Next(1, 3),
+        //         ShippingAddress = $"Adres klienta {i + 1}",
+        //         CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30)),
+        //         Branch = branch,
+        //     };
+        //
+        //     context.Orders.Add(order);
+        //     context.OrderItems.Add(new OrderItem
+        //     {
+        //         Order = order,
+        //         Product = product,
+        //         Quantity = quantity,
+        //         UnitPrice = price
+        //     });
+        // }
 
 
         context.SaveChanges();

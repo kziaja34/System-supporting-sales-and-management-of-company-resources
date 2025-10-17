@@ -1,21 +1,50 @@
 ﻿@page "/orders"
+@using SSSMCR.Shared.Model
 @using SSSMCR.Web.Services
 @using SSSMCR.Web.Components.Components.Tables
 @rendermode InteractiveServer
 @inject NavigationManager Nav
 @inject IAuthService AuthService
+@inject OrdersApiService OrdersApiService
 
 <PageTitle>Orders</PageTitle>
 
 <MudPaper Class="pa-4">
     <MudText Typo="Typo.h5" Class="mb-4">Orders</MudText>
 
+    <div class="mb-3">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnSimulateClick" Disabled="@IsBusy">
+            @if (IsBusy)
+            {
+                <span>Generowanie...</span>
+            }
+            else
+            {
+                <span>Symuluj zamówienie</span>
+            }
+        </MudButton>
+    </div>
+
     <OrdersTable />
+
+    @if (LastSimulation != null)
+    {
+        <div class="mt-3">
+            <MudPaper Class="pa-3" Elevation="1">
+                <div><strong>Utworzone zamówienie:</strong></div>
+                <div>ID: @LastSimulation.OrderId</div>
+                <div>Liczba pozycji: @LastSimulation.ItemsCount</div>
+                <div>Utworzone: @LastSimulation.CreatedAt</div>
+            </MudPaper>
+        </div>
+    }
 </MudPaper>
 
 @code{
     [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
     private string? user_role;
+    private bool IsBusy = false;
+    private OrderSimulationResult? LastSimulation;
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -36,6 +65,33 @@
         }
         
         StateHasChanged();
+    }
+    
+    private async Task OnSimulateClick()
+    {
+        IsBusy = true;
+        try
+        {
+            var result = await OrdersApiService.SimulateOrderAsync();
+            if (result != null)
+            {
+                LastSimulation = result;
+            }
+            else
+            {
+                LastSimulation = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            LastSimulation = null;
+        }
+        finally
+        {
+            IsBusy = false;
+            StateHasChanged();
+        }
     }
 
 }

@@ -9,7 +9,7 @@ namespace SSSMCR.ApiService.Controller;
 [ApiController]
 [Route("api/orders")]
 [Authorize (Roles = "Administrator, Seller, Manager")]
-public class OrderController(IOrderService orderService) : ControllerBase
+public class OrderController(IOrderService orderService, IOrderSimulationService orderSimulationService) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<PageResponse<OrderListItemDto>>> GetOrders(
@@ -50,6 +50,34 @@ public class OrderController(IOrderService orderService) : ControllerBase
         catch (ArgumentException ex)
         {
             return BadRequest(ex.Message);
+        }
+    }
+    
+    [HttpPost("simulate")]
+    [Authorize(Roles = "Manager,Administrator")]
+    public async Task<IActionResult> Simulate()
+    {
+        try
+        {
+            var result = await orderSimulationService.SimulateOrderAsync(minProducts: 1, maxProducts: 3, minQty: 1, maxQty: 5);
+            return Ok(new
+            {
+                orderId = result.OrderId,
+                itemsCount = result.ItemsCount,
+                createdAt = result.CreatedAt
+            });
+        }
+        catch (NoProductsAvailableException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (OrderSimulationException ex)
+        {
+            return StatusCode(500, new { message = "Błąd podczas tworzenia symulowanego zamówienia." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Wystąpił nieoczekiwany błąd." });
         }
     }
 
