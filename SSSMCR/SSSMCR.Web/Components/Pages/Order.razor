@@ -116,14 +116,14 @@
             <MudPaper Class="pa-3">
                 @if (reserveResult.IsPartial)
                 {
-                    <MudAlert Severity="Severity.Warning" Elevation="0" Dense="true">
-                        Reservation was only partially successful – some items are missing.
+                    <MudAlert Severity="Severity.Error" Elevation="0" Dense="true">
+                        Failed to create reservation — insufficient stock in a single branch. No reservations were made.
                     </MudAlert>
                 }
                 else
                 {
                     <MudAlert Severity="Severity.Success" Elevation="0" Dense="true">
-                        Reservation completed successfully.
+                        Reservation created successfully.
                     </MudAlert>
                 }
 
