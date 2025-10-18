@@ -24,7 +24,11 @@ public class Order
     [Required]
     public OrderStatus Status { get; set; }
 
-    public int Priority { get; set; }
+    public double Priority { get; set; }
+    
+    public double MembershipLow { get; set; }
+    public double MembershipMedium { get; set; }
+    public double MembershipHigh { get; set; }
     
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     

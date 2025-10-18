@@ -171,7 +171,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
 
     private ReservationDto ToResponse(StockReservation r)
     {
-        var prio = _orderSvc.CalculatePriority(r.OrderItem.Order);
+        var prio = _orderSvc.CalculatePriority(r.OrderItem.Order, _orderSvc.GetAllAsync().Result);
 
         return new ReservationDto()
         {

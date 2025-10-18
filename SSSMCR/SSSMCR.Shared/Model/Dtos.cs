@@ -69,7 +69,7 @@ public record OrderListItemDto
     public string CustomerName { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
     public string Status { get; init; } = string.Empty;
-    public int Priority { get; init; }
+    public string Importance { get; init; } = string.Empty;
     public int ItemsCount { get; init; }
     public decimal TotalPrice { get; init; }
 }
@@ -90,7 +90,7 @@ public record OrderDetailsDto
     public string CustomerName { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
     public string Status { get; init; } = string.Empty;
-    public int Priority { get; init; }
+    public double Priority { get; init; }
     public IEnumerable<OrderItemDto> Items { get; init; } = Array.Empty<OrderItemDto>();
     public decimal TotalPrice { get; init; }
     public string ShippingAddress { get; init; } = string.Empty;

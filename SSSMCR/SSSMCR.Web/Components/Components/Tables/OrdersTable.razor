@@ -11,9 +11,18 @@
               OnDebounceIntervalElapsed="OnSearchChanged"
               Class="mb-3" />
 
-<MudTable ServerData="LoadOrders"
+<!-- 🔹 FILTR IMPORTANCE -->
+<MudRadioGroup T="string" Value="@ImportanceFilter" ValueChanged="OnPriorityChanged">
+    <MudRadio T="string" Value="@("all")" Label="All" />
+    <MudRadio T="string" Value="@("low")" Label="Low" />
+    <MudRadio T="string" Value="@("medium")" Label="Medium" />
+    <MudRadio T="string" Value="@("high")" Label="High" />
+</MudRadioGroup>
+
+<MudTable T="OrderListItemDto"
+          ServerData="LoadOrders"
           RowsPerPage="10"
-          rowsPerPageOptions="new int[]{10,25,50}"
+          rowsperpageoptions="new int[]{10,25,50}"
           Bordered="true"
           Hover="true"
           Striped="true"
@@ -22,52 +31,31 @@
 
     <HeaderContent>
         <MudTh>
-            <MudTableSortLabel T="OrderListItemDto"
-                               SortLabel="id"
-                               InitialDirection="SortDirection.Ascending"
-                               icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+            <MudTableSortLabel T="OrderListItemDto" SortLabel="id"
+                               InitialDirection="SortDirection.Ascending">
                 Id
             </MudTableSortLabel>
         </MudTh>
         <MudTh>
-            <MudTableSortLabel T="OrderListItemDto"
-                               SortLabel="customerEmail"
-                               InitialDirection="SortDirection.Ascending"
-                               icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+            <MudTableSortLabel T="OrderListItemDto" SortLabel="customerEmail"
+                               InitialDirection="SortDirection.Ascending">
                 Email
             </MudTableSortLabel>
         </MudTh>
         <MudTh>
-            <MudTableSortLabel T="OrderListItemDto"
-                               SortLabel="customerName"
-                               InitialDirection="SortDirection.Ascending"
-                               icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+            <MudTableSortLabel T="OrderListItemDto" SortLabel="customerName"
+                               InitialDirection="SortDirection.Ascending">
                 Customer name
             </MudTableSortLabel>
         </MudTh>
         <MudTh>
-            <MudTableSortLabel T="OrderListItemDto"
-                               SortLabel="createdAt"
-                               InitialDirection="SortDirection.Descending"
-                               icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
+            <MudTableSortLabel T="OrderListItemDto" SortLabel="createdAt"
+                               InitialDirection="SortDirection.Descending">
                 Created at
             </MudTableSortLabel>
         </MudTh>
         <MudTh>Status</MudTh>
-        <MudTh>
-            <MudTableSortLabel T="OrderListItemDto"
-                               SortLabel="priority"
-                               sortActive="true"
-                               InitialDirection="SortDirection.Descending"
-                               icon="@Icons.Material.Filled.KeyboardArrowUp"
-                               iconDesc="@Icons.Material.Filled.KeyboardArrowDown">
-                Priority
-            </MudTableSortLabel>
-        </MudTh>
+        <MudTh>Importance</MudTh>
         <MudTh>Items</MudTh>
         <MudTh>Total price</MudTh>
     </HeaderContent>
@@ -77,6 +65,7 @@
         <MudTd DataLabel="Email">@context.CustomerEmail</MudTd>
         <MudTd DataLabel="Customer name">@context.CustomerName</MudTd>
         <MudTd DataLabel="Created at">@context.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+
         <MudTd>
             <MudChip T="string"
                      Color="@GetStatusColor(context.Status)"
@@ -87,18 +76,26 @@
             </MudChip>
         </MudTd>
 
-        <MudTd DataLabel="Priority">@context.Priority</MudTd>
+        <MudTd DataLabel="Importance">
+            <MudChip T="string"
+                     Color="@GetImportanceColor(context.Importance)"
+                     Variant="Variant.Filled"
+                     Size="Size.Small"
+                     Class="px-2 fw-bold">
+                @context.Importance
+            </MudChip>
+        </MudTd>
+
         <MudTd DataLabel="Items">@context.ItemsCount</MudTd>
         <MudTd DataLabel="Total price">@context.TotalPrice.ToString("C")</MudTd>
         <MudTd>
             <MudIconButton Icon="@Icons.Material.Filled.Search"
                            Color="Color.Primary"
                            Size="Size.Small"
-                           Href="@($"/orders/{context.Id}")"
-                           />
+                           Href="@($"/orders/{context.Id}")" />
         </MudTd>
     </RowTemplate>
-    
+
     <NoRecordsContent>
         <MudText Typo="Typo.body1" Class="pa-4">No records</MudText>
     </NoRecordsContent>
@@ -110,19 +107,21 @@
 
 @code {
     private string? _search;
+    private string ImportanceFilter { get; set; } = "all";
     private MudTable<OrderListItemDto>? _table;
 
     private async Task<TableData<OrderListItemDto>> LoadOrders(TableState state, CancellationToken ct)
     {
-        var label = string.IsNullOrWhiteSpace(state.SortLabel) ? "priority" : state.SortLabel;
-        var dir = state.SortDirection switch
-        {
-            SortDirection.Ascending => "asc",
-            _ => "desc"
-        };
-
+        var label = string.IsNullOrWhiteSpace(state.SortLabel) ? "id" : state.SortLabel;
+        var dir = state.SortDirection == SortDirection.Ascending ? "asc" : "desc";
         var sort = $"{label},{dir}";
-        var result = await OrdersService.GetOrdersPageAsync(state.Page, state.PageSize, sort, _search);
+        
+        string? importance = ImportanceFilter;
+        if (string.Equals(importance, "all", StringComparison.OrdinalIgnoreCase))
+            importance = null;
+
+        var result = await OrdersService.GetOrdersPageAsync(
+            state.Page, state.PageSize, sort, _search, importance);
 
         return new TableData<OrderListItemDto>
         {
@@ -139,7 +138,14 @@
         else
             await InvokeAsync(StateHasChanged);
     }
-    
+
+    private async Task OnPriorityChanged(string filter)
+    {
+        ImportanceFilter = filter;
+        if (_table is not null)
+            await _table.ReloadServerData();
+    }
+
     private static Color GetStatusColor(string status) => status switch
     {
         "Pending" => Color.Warning,
@@ -149,4 +155,10 @@
         _ => Color.Default
     };
 
+    private static Color GetImportanceColor(string importance) => importance switch
+    {
+        "High" => Color.Error,
+        "Medium" => Color.Warning,
+        _ => Color.Success
+    };
 }

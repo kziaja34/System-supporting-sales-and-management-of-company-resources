@@ -9,12 +9,21 @@ public class OrdersApiService(IHttpClientFactory httpFactory, ILocalStorageServi
     private readonly IHttpClientFactory _httpFactory = httpFactory;
     private readonly ILogger<OrdersApiService> _logger = logger;
 
-    public async Task<PageResponse<OrderListItemDto>> GetOrdersPageAsync(int page = 0, int size = 20, string sort = "priority,desc", string? search = null)
+    public async Task<PageResponse<OrderListItemDto>> GetOrdersPageAsync(
+        int page = 0,
+        int size = 20,
+        string sort = "id,asc",
+        string? search = null,
+        string? importance = null)
     {
         var http = _httpFactory.CreateClient("api");
         var url = $"/api/orders?page={page}&size={size}&sort={sort}";
+
         if (!string.IsNullOrWhiteSpace(search))
             url += $"&search={Uri.EscapeDataString(search)}";
+
+        if (!string.IsNullOrWhiteSpace(importance) && importance != "all")
+            url += $"&importance={Uri.EscapeDataString(importance)}";
 
         await AttachBearerAsync(http);
 
