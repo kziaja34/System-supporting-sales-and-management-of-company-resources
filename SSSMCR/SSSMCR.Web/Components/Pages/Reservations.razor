@@ -41,8 +41,8 @@
         <RowTemplate>
             <MudTd>#@context.OrderId</MudTd>
             <MudTd>
-                <MudChip T="string" Color="@GetPriorityColor(context.Priority)" Variant="Variant.Filled">
-                    @context.Priority
+                <MudChip T="string" Color="@GetPriorityColor(context.Importance)" Variant="Variant.Filled">
+                    @context.Importance
                 </MudChip>
             </MudTd>
             <MudTd>@context.CustomerName</MudTd>

@@ -243,7 +243,7 @@ public class ReservationDto
     public int OrderId { get; set; }
     public int BranchId { get; set; }
     public string OrderStatus { get; set; } = string.Empty;
-    public string Priority { get; set; } = string.Empty;
+    public string Importance { get; init; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public string ShippingAddress { get; set; } = string.Empty;
     public string? ProductName { get; set; } = string.Empty;
