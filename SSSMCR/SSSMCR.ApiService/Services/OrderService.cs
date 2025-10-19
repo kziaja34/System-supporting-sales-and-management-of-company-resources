@@ -9,16 +9,15 @@ public interface IOrderService : IGenericService<Order>
 {
     Task<IEnumerable<Order>> GetAllAsync(string? status = null, string? email = null, CancellationToken ct = default);
 
-    Task<PageResponse<OrderListItemDto>> GetPagedAsync(int page, int size, string sort, string? search = null, CancellationToken ct = default);
+    Task<PageResponse<OrderListItemDto>> GetPagedAsync(
+        int page, int size, string sort, string? search = null, string? importance = null, CancellationToken ct = default);
     
     Task<bool> UpdateStatusAsync(int id, string newStatus);
-    int CalculatePriority(Order order);
+    double CalculatePriority(Order order, IEnumerable<Order> allOrders);
 }
 
-public class OrderService : GenericService<Order>, IOrderService
+public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fuzzyService) : GenericService<Order>(context), IOrderService
 {
-    public OrderService(AppDbContext context) : base(context) { }
-
     public async Task<IEnumerable<Order>> GetAllAsync(string? status = null, string? email = null, CancellationToken ct = default)
     {
         var query = _dbSet
@@ -50,13 +49,13 @@ public class OrderService : GenericService<Order>, IOrderService
         
         if (order == null) throw new KeyNotFoundException("Order not found.");
         
-        order.Priority = CalculatePriority(order);
+        order.Priority = CalculatePriority(order, await GetAllAsync(ct));
         
         return order;
     }
     
     public async Task<PageResponse<OrderListItemDto>> GetPagedAsync(
-        int page, int size, string sort, string? search = null, CancellationToken ct = default)
+        int page, int size, string sort, string? search = null, string? importance = null, CancellationToken ct = default)
     {
         var query = _dbSet
             .Include(o => o.Items)
@@ -85,16 +84,26 @@ public class OrderService : GenericService<Order>, IOrderService
         
         var orders = await query.ToListAsync(ct);
         
+        var allOrders = await GetAllAsync(ct);
         foreach (var order in orders)
         {
-            order.Priority = CalculatePriority(order);
+            order.Priority = CalculatePriority(order, allOrders);
+
+            var fuzzy = fuzzyService.Evaluate(order.Priority);
+            order.MembershipLow = fuzzy.Low;
+            order.MembershipMedium = fuzzy.Medium;
+            order.MembershipHigh = fuzzy.High;
         }
         
-        if (sort.StartsWith("priority"))
+        if (!string.IsNullOrEmpty(importance))
         {
-            orders = sort.EndsWith("asc")
-                ? orders.OrderBy(o => o.Priority).ToList()
-                : orders.OrderByDescending(o => o.Priority).ToList();
+            orders = importance.ToLower() switch
+            {
+                "low" => orders.Where(o => o.MembershipLow > 0.5).ToList(),
+                "medium" => orders.Where(o => o.MembershipMedium > 0.5).ToList(),
+                "high" => orders.Where(o => o.MembershipHigh > 0.5).ToList(),
+                _ => orders
+            };
         }
         
         var total = orders.Count;
@@ -125,17 +134,31 @@ public class OrderService : GenericService<Order>, IOrderService
         return true;
     }
     
-    public int CalculatePriority(Order order)
+    public double CalculatePriority(Order order, IEnumerable<Order> allOrders)
     {
-        var ageFactor = (DateTime.UtcNow - order.CreatedAt).Days;
-        var valueFactor = (int)order.Items.Sum(i => i.TotalPrice) / 100;
-        var itemFactor = order.Items.Count;
+        var maxAge = allOrders.Max(o => (DateTime.Now - o.CreatedAt).TotalDays);
+        var maxValue = allOrders.Max(o => o.Items.Sum(i => i.TotalPrice));
+        var maxItems = allOrders.Max(o => o.Items.Count);
+        
+        var ageFactor = (DateTime.UtcNow - order.CreatedAt).TotalDays / maxAge;
+        var valueFactor = (double)order.Items.Sum(i => i.TotalPrice) / (double)maxValue;
+        var itemFactor = (double)order.Items.Count / maxItems;
 
-        return ageFactor + valueFactor + itemFactor;
+        const double wAge = 0.5;
+        const double wValue = 0.4;
+        const double wItem = 0.1;
+        
+        var priority = wAge * ageFactor + wValue * valueFactor + wItem * itemFactor;
+        
+        return priority * 100.0;
     }
     
     private static OrderListItemDto ToListItemDto(Order order)
     {
+        string importance = order.MembershipHigh > 0.5 ? "High"
+            : order.MembershipMedium > 0.5 ? "Medium"
+            : "Low";
+
         return new OrderListItemDto()
         {
             Id = order.Id,
@@ -143,9 +166,10 @@ public class OrderService : GenericService<Order>, IOrderService
             CustomerName = order.CustomerName,
             CreatedAt = order.CreatedAt,
             Status = order.Status.ToString(),
-            Priority = order.Priority,
+            Importance = importance,
             ItemsCount = order.Items.Count,
             TotalPrice = order.Items.Sum(i => i.TotalPrice)
         };
     }
+
 }

@@ -15,10 +15,11 @@ public class OrderController(IOrderService orderService, IOrderSimulationService
     public async Task<ActionResult<PageResponse<OrderListItemDto>>> GetOrders(
         [FromQuery] int page = 0,
         [FromQuery] int size = 20,
-        [FromQuery] string sort = "priority,desc",
-        [FromQuery] string? search = null)
+        [FromQuery] string sort = "id,asc",
+        [FromQuery] string? search = null,
+        [FromQuery] string? importance = null)
     {
-        var result = await orderService.GetPagedAsync(page, size, sort, search);
+        var result = await orderService.GetPagedAsync(page, size, sort, search, importance);
         return Ok(result);
     }
 

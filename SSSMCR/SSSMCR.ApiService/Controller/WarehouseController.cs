@@ -11,12 +11,9 @@ namespace SSSMCR.ApiService.Controller;
 [ApiController]
 [Route("api/warehouse")]
 [Authorize]
-public class WarehouseController(IWarehouseService svc, IReservationService reservationSvc, IOrderService orderSvc)
+public class WarehouseController(IWarehouseService svc, IReservationService reservationSvc, IOrderService orderSvc, FuzzyPriorityEvaluatorService fuzzyService)
     : ControllerBase
 {
-    private readonly IReservationService _reservationSvc = reservationSvc;
-    private readonly IOrderService _orderSvc = orderSvc;
-    
     private int CurrentUserId =>
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -119,7 +116,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
     {
         try
         {
-            var query = await _reservationSvc.GetReservations(branchId);
+            var query = await reservationSvc.GetReservations(branchId);
 
             var reservations = query.Select(ToResponse);
 
@@ -171,8 +168,18 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
 
     private ReservationDto ToResponse(StockReservation r)
     {
-        var prio = _orderSvc.CalculatePriority(r.OrderItem.Order);
-
+        var priority = orderSvc.CalculatePriority(r.OrderItem.Order, orderSvc.GetAllAsync().Result);
+        
+        var fuzzy = fuzzyService.Evaluate(priority);
+        var importance = "";
+        
+        if (fuzzy.Low > 0.5)
+            importance = "Low";
+        else if (fuzzy.Medium > 0.5)
+            importance = "Medium";
+        else if (fuzzy.High > 0.5)
+            importance = "High";
+        
         return new ReservationDto()
         {
             ReservationId = r.Id,
@@ -184,7 +191,7 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
             Status = r.Status.ToString(),
             CreatedAt = r.CreatedAt,
             OrderStatus = r.OrderItem.Order.Status.ToString(),
-            Priority = prio.ToString(),
+            Importance = importance,
             CustomerName = r.OrderItem.Order.CustomerName,
             ShippingAddress = r.OrderItem.Order.ShippingAddress
         };

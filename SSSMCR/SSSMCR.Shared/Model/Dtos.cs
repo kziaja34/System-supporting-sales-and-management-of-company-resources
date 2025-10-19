@@ -69,7 +69,7 @@ public record OrderListItemDto
     public string CustomerName { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
     public string Status { get; init; } = string.Empty;
-    public int Priority { get; init; }
+    public string Importance { get; init; } = string.Empty;
     public int ItemsCount { get; init; }
     public decimal TotalPrice { get; init; }
 }
@@ -90,7 +90,7 @@ public record OrderDetailsDto
     public string CustomerName { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
     public string Status { get; init; } = string.Empty;
-    public int Priority { get; init; }
+    public double Priority { get; init; }
     public IEnumerable<OrderItemDto> Items { get; init; } = Array.Empty<OrderItemDto>();
     public decimal TotalPrice { get; init; }
     public string ShippingAddress { get; init; } = string.Empty;
@@ -243,7 +243,7 @@ public class ReservationDto
     public int OrderId { get; set; }
     public int BranchId { get; set; }
     public string OrderStatus { get; set; } = string.Empty;
-    public string Priority { get; set; } = string.Empty;
+    public string Importance { get; init; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public string ShippingAddress { get; set; } = string.Empty;
     public string? ProductName { get; set; } = string.Empty;
