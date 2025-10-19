@@ -1,37 +1,54 @@
 ﻿@page "/"
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="pa-4">
+    <MudCard Class="main-card mx-auto" Elevation="8">
+        <!-- Akcentowy pasek -->
+        <div class="accent-strip"></div>
 
-    <!-- Banner -->
-    <MudPaper Class="d-flex justify-center align-center mb-4" Elevation="4">
-        <MudText Typo="Typo.h3" Align="Align.Center" Class="text-primary">System for Supporting Sales and Resource Management</MudText>
-    </MudPaper>
+        <MudCardContent Class="pa-6">
+            <!-- Nagłówek -->
+            <MudText Typo="Typo.h4" Align="Align.Center" Class="text-primary mb-1">
+                System for Supporting Sales and Resource Management
+            </MudText>
+            <MudText Typo="Typo.subtitle2" Align="Align.Center" Class="mb-4">
+                Modern platform for sales, inventory, order processing, invoicing and role-based access.
+            </MudText>
 
-    <!-- Project Description -->
-    <MudPaper Class="p-4 mb-4" Elevation="2">
-        <MudText Typo="Typo.h6" Align="Align.Justify" Class="mb-3">
-            Our system supports sales processes and resource management within companies. It consists of several modules,
-            such as inventory management, order processing, invoicing, and user role control.
-        </MudText>
+            <!-- Treść: 2 sekcje w jednej karcie -->
+            <MudGrid GutterSize="3">
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.h6" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" Class="mr-2" />
+                        Project Description
+                    </MudText>
+                    <MudText Typo="Typo.body1" Align="Align.Justify">
+                        Our system supports sales processes and resource management within companies. It consists of several modules,
+                        such as inventory management, order processing, invoicing, and user role control.
+                    </MudText>
+                    <MudText Typo="Typo.body1" Align="Align.Justify" Class="mt-2">
+                        The system enables efficient management of company processes, giving employees easy access to key functions
+                        based on their roles. With built-in notification mechanisms and process automation, users can manage inventories
+                        and orders quickly and accurately.
+                    </MudText>
+                </MudItem>
 
-        <MudText Typo="Typo.body1" Align="Align.Justify">
-            The system enables efficient management of company processes, giving employees easy access to key functions
-            based on their roles. With built-in notification mechanisms and process automation, users can manage inventories
-            and orders quickly and accurately.
-        </MudText>
-    </MudPaper>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.h6" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Flag" Color="Color.Primary" Class="mr-2" />
+                        Project Goal
+                    </MudText>
+                    <MudText Typo="Typo.body1" Align="Align.Justify">
+                        The goal of the project is to create a modern system that supports companies in daily management of
+                        sales processes, inventories, and sales documents. With our solution, companies will be able to improve
+                        efficiency and manage all aspects of their operations from one place.
+                    </MudText>
+                </MudItem>
+            </MudGrid>
 
-    <!-- Project Goal -->
-    <MudPaper Class="p-4" Elevation="2">
-        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-3">Project Goal</MudText>
-        <MudText Typo="Typo.body1" Align="Align.Justify">
-            The goal of the project is to create a modern system that supports companies in daily management of
-            sales processes, inventories, and sales documents. With our solution, companies will be able to improve
-            efficiency and manage all aspects of their operations from one place.
-        </MudText>
-    </MudPaper>
+            <MudDivider Class="my-6" />
 
-    <!-- Footer -->
-    <MudDivider Class="my-4"/>
-    <MudText Align="Align.Center" Class="text-muted">© 2025 Sales and Resource Management System</MudText>
+            <!-- Stopka -->
+            <MudText Align="Align.Center">© 2025 Sales and Resource Management System</MudText>
+        </MudCardContent>
+    </MudCard>
 </MudContainer>

@@ -16,6 +16,7 @@
                           RequiredError="Email is necessary"
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AlternateEmail"
                           Variant="Variant.Outlined"
+                          Color="Color.Default"
                           Disabled="@IsBusy" 
                           @attributes="@(new Dictionary<string, object>
               {
@@ -30,6 +31,7 @@
                           RequiredError="Password is necessary"
                           InputType="@(_show ? InputType.Text : InputType.Password)"
                           Variant="Variant.Outlined"
+                          Color="Color.Default"
                           Disabled="@IsBusy"
                           Adornment="Adornment.End"
                           AdornmentIcon="@(_show ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"

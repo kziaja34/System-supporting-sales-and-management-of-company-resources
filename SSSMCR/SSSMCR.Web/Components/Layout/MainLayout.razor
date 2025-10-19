@@ -22,7 +22,7 @@
                    Style="background-color:transparent; box-shadow:none; transition:background-color 0.2s;"
                    onmouseover="this.style.backgroundColor='rgba(255,255,255,0.05)'"
                    onmouseout="this.style.backgroundColor='transparent'">
-            <MudText Class="ml-1" Typo="Typo.h6" Color="Color.Info">
+            <MudText Class="ml-1" Typo="Typo.h6" Color="Color.Primary">
                 SSSMCR
             </MudText>
         </MudButton>
@@ -48,47 +48,89 @@
     bool _dark;
 
     readonly MudTheme _theme = new()
+{
+    PaletteDark = new PaletteDark
     {
-        PaletteDark = new PaletteDark
-        {
-            // background
-            Black = "#0F1020",
-            Background = "#111224",
-            Surface = "#17182C",
-            // violet & magenta
-            Primary = "#7C4DFF",          // Indigo A200 vibe
-            Secondary = "#E64EC3",        // Magenta/Pink neon
-            Tertiary = "#9B6BFF",
-            AppbarBackground = "#14152A",
-            DrawerBackground = "#14152A",
-            // texts
-            TextPrimary = "#E6E6F0",
-            TextSecondary = "#B8B8D2",
-            Success = "#4ADE80",
-            Info = "#8AB4FF",
-            Warning = "#F59E0B",
-            Error = "#F87171",
-            // UI
-            ActionDefault = "#B8B8D2",
-            ActionDisabled = "#6B6E8C",
-            ActionDisabledBackground = "#232442",
-            Divider = "#262948",
-            TableLines = "#262948"
-        },
-        PaletteLight = new PaletteLight
-        {
-            Primary = "#673AB7",
-            Secondary = "#D81B60",
-            Tertiary = "#8E7CFF",
-            Background = "#FAFAFF",
-            Surface = "#FFFFFF",
-            AppbarBackground = "#5E35B1",
-            DrawerBackground = "#FFFFFF",
-            TextPrimary = "#1C1B29",
-            TextSecondary = "#4A4A68",
-            Divider = "#E7E7F3"
-        }
-    };
+        Black = "#000000",
+        Background = "#121212",           // --clr-surface-a0
+        Surface = "#282828",              // --clr-surface-a10 (karty/papers)
+        AppbarBackground = "#1A1A1A",     // ciemniejszy pasek, neutralny
+        DrawerBackground = "#1B1B1B",     // nieco jaśniejszy od Appbar
+
+        // Akcenty
+        Primary = "#F88D05",              // --clr-primary-a0
+        Secondary = "#717171",            // neutralny szary (surface-a40)
+        Tertiary = "#FFC081",             // --clr-primary-a40/50 (ciepły highlight)
+
+        // Tekst
+        TextPrimary = "#F2F2F2",
+        TextSecondary = "#BDBDBD",
+
+        // Stany (Semantic)
+        Success = "#22946E",              // --clr-success-a0
+        Info = "#21498A",                 // --clr-info-a0
+        Warning = "#A87A2A",              // --clr-warning-a0
+        Error = "#9C2121",                // --clr-danger-a0
+
+        // UI
+        ActionDefault = "#D8D8D8",
+        ActionDisabled = "#717171",
+        ActionDisabledBackground = "#3F3F3F",
+        Divider = "#3F3F3F",              // --clr-surface-a20 (widoczny, nienachalny)
+        TableLines = "#2A2A2A",
+
+        // Kontrasty na przyciskach/akcentach
+        PrimaryContrastText = "#121212",  // ciemny tekst na jasnym akcencie
+        SecondaryContrastText = "#121212",
+        TertiaryContrastText = "#121212",
+
+        // Czytelność w Appbar/Drawer
+        AppbarText = "#F2F2F2",
+        DrawerText = "#F2F2F2",
+        DrawerIcon = "#BDBDBD",
+    },
+
+    PaletteLight = new PaletteLight
+    {
+        Black = "#000000",
+        Background = "#121212",
+        Surface = "#282828",
+        AppbarBackground = "#271D15",     // --clr-surface-tonal-a0
+        DrawerBackground = "#3C322A",     // --clr-surface-tonal-a10
+
+        Primary = "#F88D05",
+        Secondary = "#717171",
+        Tertiary = "#FFC081",
+
+        TextPrimary = "#F2F2F2",
+        TextSecondary = "#BDBDBD",
+
+        Success = "#22946E",
+        Info = "#21498A",
+        Warning = "#A87A2A",
+        Error = "#9C2121",
+
+        ActionDefault = "#D8D8D8",
+        ActionDisabled = "#717171",
+        ActionDisabledBackground = "#3F3F3F",
+        Divider = "#3F3F3F",
+        TableLines = "#2A2A2A",
+
+        PrimaryContrastText = "#121212",
+        SecondaryContrastText = "#121212",
+        TertiaryContrastText = "#121212",
+
+        AppbarText = "#F2F2F2",
+        DrawerText = "#F2F2F2",
+        DrawerIcon = "#BDBDBD",
+    },
+
+    // Delikatna stylistyka komponentów
+    LayoutProperties = new LayoutProperties
+    {
+        DefaultBorderRadius = "8px"
+    }
+};
 
 
 
