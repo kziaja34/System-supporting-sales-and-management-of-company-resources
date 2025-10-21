@@ -25,7 +25,7 @@
         </MudButton>
     </div>
 
-    <OrdersTable />
+    <OrdersTable @ref="_ordersTable"/>
 
     @if (LastSimulation != null)
     {
@@ -42,6 +42,7 @@
 
 @code{
     [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
+    private OrdersTable _ordersTable;
     private string? user_role;
     private bool IsBusy = false;
     private OrderSimulationResult? LastSimulation;
@@ -90,6 +91,7 @@
         finally
         {
             IsBusy = false;
+            await _ordersTable?._table?.ReloadServerData();
             StateHasChanged();
         }
     }

@@ -108,9 +108,9 @@
 @code {
     private string? _search;
     private string ImportanceFilter { get; set; } = "all";
-    private MudTable<OrderListItemDto>? _table;
+    public MudTable<OrderListItemDto>? _table;
 
-    private async Task<TableData<OrderListItemDto>> LoadOrders(TableState state, CancellationToken ct)
+    public async Task<TableData<OrderListItemDto>> LoadOrders(TableState state, CancellationToken ct)
     {
         var label = string.IsNullOrWhiteSpace(state.SortLabel) ? "id" : state.SortLabel;
         var dir = state.SortDirection == SortDirection.Ascending ? "asc" : "desc";
