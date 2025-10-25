@@ -12,16 +12,16 @@
 
     <MudStack Row="true" Spacing="2" Class="mb-3">
         <MudSelect T="int?" ToStringFunc="@(id => GetBranchName(id))"
-                   Label="Filter by branch" @bind-Value="_selectedBranchId" Style="min-width:250px">
+                   Label="Filter by branch"
+                   Value="@_selectedBranchId"
+                   ValueChanged="OnBranchChanged"
+                   Style="min-width:250px">
             <MudSelectItem T="int?" Value="@null">All branches</MudSelectItem>
             @foreach (var b in _branches)
             {
                 <MudSelectItem T="int?" Value="@b.Id">@b.Name</MudSelectItem>
             }
         </MudSelect>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReservations">
-            Refresh
-        </MudButton>
     </MudStack>
 
     <MudTable T="ReservationDto" Items="_reservations" Dense="true" Bordered="true" Hover="true" Striped="true">
@@ -69,6 +69,19 @@
                 </MudButton>
             </MudTd>
         </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.subtitle1" Class="pa-4 text-center" Color="Color.Secondary">
+                @if (_selectedBranchId is null)
+                {
+                    <text>No reservations found.</text>
+                }
+                else
+                {
+                    var branch = _branches.FirstOrDefault(b => b.Id == _selectedBranchId);
+                    <text>No reservations for branch: <b>@(branch?.Name ?? "Unknown")</b>.</text>
+                }
+            </MudText>
+        </NoRecordsContent>
     </MudTable>
 </MudPaper>
 
@@ -107,6 +120,13 @@
 
             StateHasChanged();
         }
+    }
+    
+    private async Task OnBranchChanged(int? newBranchId)
+    {
+        _selectedBranchId = newBranchId;
+        await LoadReservations();
+        StateHasChanged();
     }
 
     private async Task LoadReservations()

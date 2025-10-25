@@ -52,77 +52,76 @@
     PaletteDark = new PaletteDark
     {
         Black = "#000000",
-        Background = "#121212",           // --clr-surface-a0
-        Surface = "#282828",              // --clr-surface-a10 (karty/papers)
-        AppbarBackground = "#1A1A1A",     // ciemniejszy pasek, neutralny
-        DrawerBackground = "#1B1B1B",     // nieco jaśniejszy od Appbar
+        Background = "#121212",           // mocno ciemne tło
+        Surface = "#282828",              // karty/papers
+        AppbarBackground = "#8f5c2e",
+        DrawerBackground = "#121720",
 
-        // Akcenty
-        Primary = "#F88D05",              // --clr-primary-a0
-        Secondary = "#717171",            // neutralny szary (surface-a40)
-        Tertiary = "#FFC081",             // --clr-primary-a40/50 (ciepły highlight)
-
-        // Tekst
-        TextPrimary = "#F2F2F2",
-        TextSecondary = "#BDBDBD",
-
-        // Stany (Semantic)
-        Success = "#22946E",              // --clr-success-a0
-        Info = "#21498A",                 // --clr-info-a0
-        Warning = "#A87A2A",              // --clr-warning-a0
-        Error = "#9C2121",                // --clr-danger-a0
-
-        // UI
-        ActionDefault = "#D8D8D8",
-        ActionDisabled = "#717171",
-        ActionDisabledBackground = "#3F3F3F",
-        Divider = "#3F3F3F",              // --clr-surface-a20 (widoczny, nienachalny)
-        TableLines = "#2A2A2A",
-
-        // Kontrasty na przyciskach/akcentach
-        PrimaryContrastText = "#121212",  // ciemny tekst na jasnym akcencie
-        SecondaryContrastText = "#121212",
-        TertiaryContrastText = "#121212",
-
-        // Czytelność w Appbar/Drawer
-        AppbarText = "#F2F2F2",
-        DrawerText = "#F2F2F2",
-        DrawerIcon = "#BDBDBD",
-    },
-
-    PaletteLight = new PaletteLight
-    {
-        Black = "#000000",
-        Background = "#121212",
-        Surface = "#282828",
-        AppbarBackground = "#271D15",     // --clr-surface-tonal-a0
-        DrawerBackground = "#3C322A",     // --clr-surface-tonal-a10
-
-        Primary = "#F88D05",
+        Primary = "#F88D05",              // ten sam pomarańcz można użyć też w dark (spójność)
         Secondary = "#717171",
         Tertiary = "#FFC081",
 
-        TextPrimary = "#F2F2F2",
-        TextSecondary = "#BDBDBD",
+        TextPrimary = "#E6EAF1",
+        TextSecondary = "#A7B0BF",
 
-        Success = "#22946E",
+        Success = "#22C55E",
         Info = "#21498A",
         Warning = "#A87A2A",
         Error = "#9C2121",
 
-        ActionDefault = "#D8D8D8",
-        ActionDisabled = "#717171",
-        ActionDisabledBackground = "#3F3F3F",
-        Divider = "#3F3F3F",
-        TableLines = "#2A2A2A",
+        ActionDefault = "#C7D0DD",
+        ActionDisabled = "#6B7280",
+        ActionDisabledBackground = "#1C2430",
+        Divider = "#2E3438",
+        TableLines = "#1A2330",
 
-        PrimaryContrastText = "#121212",
-        SecondaryContrastText = "#121212",
-        TertiaryContrastText = "#121212",
+        PrimaryContrastText = "#FFFFFF",
+        SecondaryContrastText = "#FFFFFF",
+        TertiaryContrastText = "#0E1116",
 
-        AppbarText = "#F2F2F2",
-        DrawerText = "#F2F2F2",
-        DrawerIcon = "#BDBDBD",
+        AppbarText = "#E6EAF1",
+        DrawerText = "#E6EAF1",
+        DrawerIcon = "#B7C2D1",
+    },
+
+    PaletteLight = new PaletteLight
+    {
+        // Tła i powierzchnie - jasno
+        Background = "#F7F9FC",        // bardzo jasne tło aplikacji
+        Surface = "#FFFFFF",           // karty/panels - biały
+        AppbarBackground = "#8f5c2e",  // delikatny, ciepły pasek (lekko kremowy)
+        DrawerBackground = "#FFFFFF",
+
+        // Akcenty (pomarańczowe)
+        Primary = "#F88D05",           // główny akcent pomarańczowy
+        Secondary = "#64748B",         // neutralny szary/bluish dla ikon i mniejszych elementów
+        Tertiary = "#FFC081",          // jasny pomarańczowy do highlightów / badge
+
+        // Tekst
+        TextPrimary = "#0F172A",       // ciemny, czytelny tekst
+        TextSecondary = "#475569",     // subtelny tekst dodatkowy
+
+        // Stany
+        Success = "#16A34A",
+        Info = "#2563EB",
+        Warning = "#B45309",
+        Error = "#DC2626",
+
+        // UI
+        ActionDefault = "#0F172A",
+        ActionDisabled = "#94A3B8",
+        ActionDisabledBackground = "#F1F5F9",
+        Divider = "#E6E9EE",
+
+        // Kontrasty na przyciskach
+        PrimaryContrastText = "#FFFFFF",
+        SecondaryContrastText = "#FFFFFF",
+        TertiaryContrastText = "#111827",
+
+        // Appbar / Drawer
+        AppbarText = "#0F172A",
+        DrawerText = "#0F172A",
+        DrawerIcon = "#64748B",
     },
 
     // Delikatna stylistyka komponentów
