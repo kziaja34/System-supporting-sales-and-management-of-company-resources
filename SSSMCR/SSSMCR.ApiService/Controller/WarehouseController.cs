@@ -131,6 +131,34 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
             return StatusCode(500, new { message = "Unexpected error", details = ex.Message });
         }
     }
+    
+    [HttpGet("reservations/paged")]
+    [Authorize(Roles = "WarehouseWorker, Manager, Administrator")]
+    public async Task<IActionResult> GetReservationsPaged(
+        [FromQuery] int page = 0,
+        [FromQuery] int size = 20,
+        [FromQuery] string sort = "createdAt,desc",
+        [FromQuery] string? search = null,
+        [FromQuery] int? branchId = null,
+        [FromQuery] string? importance = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var result = await reservationSvc.GetPagedAsync(
+                page, size, sort, search, branchId, importance, ct);
+
+            return Ok(result);
+        }
+        catch (ReservationNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Unexpected error", details = ex.Message });
+        }
+    }
 
     [HttpGet("stocks")]
     [Authorize(Roles = "Manager, WarehouseWorker, Administrator")]

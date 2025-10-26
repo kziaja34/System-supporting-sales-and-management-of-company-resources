@@ -1,0 +1,247 @@
+﻿@using SSSMCR.Shared.Model
+@using SSSMCR.Web.Services
+@inject ReservationsApiService ReservationsApi
+@inject BranchesApiService BranchesApi
+
+<MudStack Row="true" Spacing="2" Class="mb-3 flex-wrap">
+    <MudTextField @bind-Value="_search"
+                  Placeholder="Search by customer, email, product, address, branch"
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Immediate="true"
+                  DebounceInterval="300"
+                  OnDebounceIntervalElapsed="OnSearchChanged"
+                  Style="min-width: 380px" />
+    
+    <MudSelect T="int?" ToStringFunc="@(id => GetBranchName(id))"
+               Label="Filter by branch"
+               Value="@_selectedBranchId"
+               ValueChanged="OnBranchChanged"
+               Style="min-width:250px">
+        <MudSelectItem T="int?" Value="@null">All branches</MudSelectItem>
+        @foreach (var b in _branches)
+        {
+            <MudSelectItem T="int?" Value="@b.Id">@b.Name</MudSelectItem>
+        }
+    </MudSelect>
+    
+    <!--  FILTR IMPORTANCE -->
+    <MudRadioGroup T="string" Value="@ImportanceFilter" ValueChanged="OnPriorityChanged">
+        <MudRadio T="string" Value="@("all")" Label="All" />
+        <MudRadio T="string" Value="@("low")" Label="Low" />
+        <MudRadio T="string" Value="@("medium")" Label="Medium" />
+        <MudRadio T="string" Value="@("high")" Label="High" />
+    </MudRadioGroup>
+</MudStack>
+
+
+<MudTable T="ReservationDto"
+          ServerData="LoadReservations"
+          RowsPerPage="10"
+          RowsPerPageOptions="new int[]{10,25,50}"
+          Dense="true" Hover="true" Striped="true" Bordered="true"
+          Breakpoint="Breakpoint.Sm"
+          @ref="_table">
+
+    <HeaderContent>
+        <MudTh>
+            <MudTableSortLabel T="ReservationDto" SortLabel="orderId"
+                               InitialDirection="SortDirection.Descending">
+                Order
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh>Priority</MudTh>
+        <MudTh>
+            <MudTableSortLabel T="ReservationDto" SortLabel="customerName"
+                               InitialDirection="SortDirection.Ascending">
+                Customer
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh>Address</MudTh>
+        <MudTh>
+            <MudTableSortLabel T="ReservationDto" SortLabel="productName"
+                               InitialDirection="SortDirection.Ascending">
+                Product
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel T="ReservationDto" SortLabel="branchName"
+                               InitialDirection="SortDirection.Ascending">
+                Branch
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh style="text-align:right">
+            <MudTableSortLabel T="ReservationDto" SortLabel="quantity"
+                               InitialDirection="SortDirection.Descending">
+                Quantity
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh>Reservation Status</MudTh>
+        <MudTh>Order Status</MudTh>
+        <MudTh>
+            <MudTableSortLabel T="ReservationDto" SortLabel="createdAt"
+                               InitialDirection="SortDirection.Descending">
+                Reserved At
+            </MudTableSortLabel>
+        </MudTh>
+        <MudTh Style="width: 1%"></MudTh>
+    </HeaderContent>
+
+    <RowTemplate>
+        <MudTd>#@context.OrderId</MudTd>
+
+        <MudTd>
+            <MudChip T="string" Color="@GetPriorityColor(context.Importance)" Variant="Variant.Filled">
+                @context.Importance
+            </MudChip>
+        </MudTd>
+
+        <MudTd>@context.CustomerName</MudTd>
+        <MudTd>@context.ShippingAddress</MudTd>
+        <MudTd>@context.ProductName</MudTd>
+        <MudTd>@context.BranchName</MudTd>
+        <MudTd Style="text-align:right">@context.Quantity</MudTd>
+
+        <MudTd>
+            <MudChip T="string" Color="@GetReservationStatusColor(context.Status)" Variant="Variant.Filled">
+                @context.Status
+            </MudChip>
+        </MudTd>
+        <MudTd>
+            <MudChip T="string" Color="@GetOrderStatusColor(context.OrderStatus)" Variant="Variant.Filled">
+                @context.OrderStatus
+            </MudChip>
+        </MudTd>
+
+        <MudTd>@context.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+
+        <MudTd>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                       Disabled="@(_userBranchId != context.BranchId || context.Status != "Active")"
+                       OnClick="() => FulfillReservation(context.OrderId, context.ReservationId)">
+                Fulfill
+            </MudButton>
+        </MudTd>
+    </RowTemplate>
+
+    <NoRecordsContent>
+        <MudText Typo="Typo.subtitle1" Class="pa-4 text-center" Color="Color.Secondary">
+            @if (_selectedBranchId is null)
+            {
+                <text>No reservations found.</text>
+            }
+            else
+            {
+                var branch = _branches.FirstOrDefault(b => b.Id == _selectedBranchId);
+                <text>No reservations for branch: <b>@(branch?.Name ?? "Unknown")</b>.</text>
+            }
+        </MudText>
+    </NoRecordsContent>
+
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    [Parameter] public int UserBranchId { get; set; }
+    [Parameter] public int? InitialBranchId { get; set; }
+
+    private MudTable<ReservationDto>? _table;
+    private List<BranchResponse> _branches = new();
+    private int? _selectedBranchId;
+    private string ImportanceFilter { get; set; } = "all";
+    private string? _search;
+    private int _userBranchId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _branches = await BranchesApi.GetBranchesAsync();
+        _selectedBranchId = InitialBranchId;
+        _userBranchId = UserBranchId;
+    }
+
+    private async Task<TableData<ReservationDto>> LoadReservations(TableState state, CancellationToken ct)
+    {
+        var label = string.IsNullOrWhiteSpace(state.SortLabel) ? "createdAt" : state.SortLabel;
+        var dir = state.SortDirection == SortDirection.Ascending ? "asc" : "desc";
+        var sort = $"{label},{dir}";
+        string? importance = ImportanceFilter;
+        if (string.Equals(importance, "all", StringComparison.OrdinalIgnoreCase))
+            importance = null;
+        var res = await ReservationsApi.GetReservationsPageAsync(
+            page: state.Page,
+            size: state.PageSize,
+            sort: sort,
+            search: _search,
+            branchId: InitialBranchId ?? _selectedBranchId,
+            importance: importance,
+            ct: ct);
+        
+        return new TableData<ReservationDto>
+        {
+            Items = res.Items,
+            TotalItems = res.TotalElements
+        };
+    }
+    
+    private async Task OnPriorityChanged(string filter)
+    {
+        ImportanceFilter = filter;
+        if (_table is not null)
+            await _table.ReloadServerData();
+    }
+
+    private async Task OnSearchChanged(string value)
+    {
+        _search = value;
+        if (_table is not null) await _table.ReloadServerData();
+    }
+
+    private async Task OnBranchChanged(int? newBranchId)
+    {
+        _selectedBranchId = newBranchId;
+        if (_table is not null) await _table.ReloadServerData();
+    }
+    
+    private async Task FulfillReservation(int orderId, int reservationId)
+    {
+        var ok = await ReservationsApi.FulfillReservationAsync(orderId, reservationId);
+        if (ok && _table is not null)
+            await _table.ReloadServerData();
+    }
+    
+    private static Color GetPriorityColor(string priority) => priority switch
+    {
+        "High" => Color.Error,
+        "Medium" => Color.Warning,
+        "Low" => Color.Success,
+        _ => Color.Default
+    };
+
+    private static Color GetReservationStatusColor(string status) => status switch
+    {
+        "Active" => Color.Info,
+        "Fulfilled" => Color.Success,
+        _ => Color.Default
+    };
+
+    private static Color GetOrderStatusColor(string status) => status switch
+    {
+        "Processing" => Color.Info,
+        "PartiallyFulfilled" => Color.Warning,
+        "Completed" => Color.Success,
+        "Pending" => Color.Default,
+        "Cancelled" => Color.Error,
+        _ => Color.Default
+    };
+
+    private string? GetBranchName(int? branchId)
+    {
+        if (branchId == null)
+            return "All branches";
+
+        var branch = _branches.FirstOrDefault(b => b.Id == branchId);
+        return branch?.Name ?? branchId.ToString();
+    }
+}

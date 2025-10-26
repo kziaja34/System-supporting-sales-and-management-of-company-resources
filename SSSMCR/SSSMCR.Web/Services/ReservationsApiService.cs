@@ -38,6 +38,67 @@ public class ReservationsApiService(IHttpClientFactory httpFactory, ILocalStorag
         }
     }
     
+    public async Task<PageResponse<ReservationDto>> GetReservationsPageAsync(
+        int page = 0,
+        int size = 20,
+        string sort = "createdAt,desc",
+        string? search = null,
+        int? branchId = null,
+        string? importance = null,
+        CancellationToken ct = default)
+    {
+        var http = _httpFactory.CreateClient("api");
+        await AttachBearerAsync(http);
+        
+        var url = $"/api/warehouse/reservations/paged?page={page}&size={size}&sort={sort}";
+
+        if (!string.IsNullOrWhiteSpace(search))
+            url += $"&search={Uri.EscapeDataString(search)}";
+
+        if (branchId.HasValue)
+            url += $"&branchId={branchId.Value}";
+
+        if (!string.IsNullOrWhiteSpace(importance) && importance != "all")
+            url += $"&importance={Uri.EscapeDataString(importance)}";
+
+        try
+        {
+            var res = await http.GetAsync(url);
+            if (!res.IsSuccessStatusCode)
+            {
+                var error = await ReadApiErrorAsync(res);
+                _logger.LogWarning("GetReservationsPageAsync failed: {Status} error: {Error}", res.StatusCode, Truncate(error, 1000));
+                return new PageResponse<ReservationDto>
+                {
+                    Items = [],
+                    Page = page,
+                    TotalElements = 0,
+                    TotalPages = 0
+                };
+            }
+
+            var dto = await ReadJsonAsync<PageResponse<ReservationDto>>(res.Content);
+            return dto ?? new PageResponse<ReservationDto>
+            {
+                Items = [],
+                Page = page,
+                TotalElements = 0,
+                TotalPages = 0
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetReservationsPageAsync: request exception");
+            return new PageResponse<ReservationDto>
+            {
+                Items = [],
+                Page = page,
+                TotalElements = 0,
+                TotalPages = 0
+            };
+        }
+    }
+    
     public async Task<bool> FulfillReservationAsync(int orderId, int reservationId)
     {
         var http = _httpFactory.CreateClient("api");
