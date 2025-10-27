@@ -161,6 +161,14 @@
         _userBranchId = UserBranchId;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            return;
+        
+        await _table.ReloadServerData();
+    }
+
     private async Task<TableData<ReservationDto>> LoadReservations(TableState state, CancellationToken ct)
     {
         var label = string.IsNullOrWhiteSpace(state.SortLabel) ? "createdAt" : state.SortLabel;
@@ -174,7 +182,7 @@
             size: state.PageSize,
             sort: sort,
             search: _search,
-            branchId: InitialBranchId ?? _selectedBranchId,
+            branchId: _selectedBranchId,
             importance: importance,
             ct: ct);
         
