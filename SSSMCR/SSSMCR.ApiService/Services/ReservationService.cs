@@ -169,7 +169,10 @@ public class ReservationService(AppDbContext context, IOrderService orderService
             Status = r.Status.ToString(),
             OrderStatus = o.Status.ToString(),
             CreatedAt = r.CreatedAt,
-            Importance = importance
+            Importance = importance,
+            ULow = o.MembershipLow,
+            UMedium = o.MembershipMedium,
+            UHigh = o.MembershipHigh
         };
     }
 }

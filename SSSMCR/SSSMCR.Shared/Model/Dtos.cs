@@ -70,6 +70,9 @@ public record OrderListItemDto
     public DateTime CreatedAt { get; init; }
     public string Status { get; init; } = string.Empty;
     public string Importance { get; init; } = string.Empty;
+    public double ULow { get; set; }
+    public double UHigh { get; set; }
+    public double UMedium { get; set; }
     public int ItemsCount { get; init; }
     public decimal TotalPrice { get; init; }
 }
@@ -244,6 +247,10 @@ public class ReservationDto
     public int BranchId { get; set; }
     public string OrderStatus { get; set; } = string.Empty;
     public string Importance { get; init; } = string.Empty;
+    
+    public double ULow { get; set; }
+    public double UHigh { get; set; }
+    public double UMedium { get; set; }
     public string CustomerName { get; set; } = string.Empty;
     public string ShippingAddress { get; set; } = string.Empty;
     public string? ProductName { get; set; } = string.Empty;

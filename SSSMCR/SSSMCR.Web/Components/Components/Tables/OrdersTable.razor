@@ -1,6 +1,8 @@
-﻿@using SSSMCR.Shared.Model
+﻿@using MudBlazor.Utilities
+@using SSSMCR.Shared.Model
 @using SSSMCR.Web.Services
 @inject OrdersApiService OrdersService
+@inject FuzzyService FuzzyService
 
 <MudTextField @bind-Value="_search"
               Placeholder="Search by name or email"
@@ -13,10 +15,10 @@
 
 <!--  FILTR IMPORTANCE -->
 <MudRadioGroup T="string" Value="@ImportanceFilter" ValueChanged="OnPriorityChanged">
-    <MudRadio T="string" Value="@("all")" Label="All" />
-    <MudRadio T="string" Value="@("low")" Label="Low" />
-    <MudRadio T="string" Value="@("medium")" Label="Medium" />
-    <MudRadio T="string" Value="@("high")" Label="High" />
+    <MudRadio T="string" Color="@FuzzyService.GetColor("all")" Value="@("all")" Label="All" />
+    <MudRadio T="string" Color="@FuzzyService.GetColor("low")" Value="@("low")" Label="Low" />
+    <MudRadio T="string" Color="@FuzzyService.GetColor("medium")" Value="@("medium")" Label="Medium" />
+    <MudRadio T="string" Color="@FuzzyService.GetColor("high")" Value="@("high")" Label="High" />
 </MudRadioGroup>
 
 <MudTable T="OrderListItemDto"
@@ -78,7 +80,7 @@
 
         <MudTd DataLabel="Importance">
             <MudChip T="string"
-                     Color="@GetImportanceColor(context.Importance)"
+                     Style="@FuzzyService.GetFuzzyGradient(context)"
                      Variant="Variant.Filled"
                      Size="Size.Small"
                      Class="px-2 fw-bold">
@@ -154,11 +156,11 @@
         "Cancelled" => Color.Error,
         _ => Color.Default
     };
-
-    private static Color GetImportanceColor(string importance) => importance switch
-    {
-        "High" => Color.Error,
-        "Medium" => Color.Warning,
-        _ => Color.Success
-    };
+    
+    // private static Color GetImportanceColor(string importance) => importance switch
+    // {
+    //     "High" => Color.Error,
+    //     "Medium" => Color.Warning,
+    //     _ => Color.Success
+    // };
 }

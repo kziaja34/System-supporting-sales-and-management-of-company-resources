@@ -13,7 +13,7 @@ public class FuzzyPriorityEvaluatorService
     public (double Low, double Medium, double High) Evaluate(double priority)
     {
         var low = (a: 0, b: 0, c: 30, d: 50);
-        var medium = (a: 40, b: 55, c: 70, d: 85);
+        var medium = (a: 30, b: 50, c: 70, d: 85);
         var high = (a: 70, b: 85, c: 100, d: 100);
         
         var uLow = Trapezoidal(priority, low.a, low.b, low.c, low.d);

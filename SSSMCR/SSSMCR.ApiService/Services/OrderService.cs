@@ -167,6 +167,9 @@ public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fu
             CreatedAt = order.CreatedAt,
             Status = order.Status.ToString(),
             Importance = importance,
+            ULow = order.MembershipLow,
+            UMedium = order.MembershipMedium,
+            UHigh = order.MembershipHigh,
             ItemsCount = order.Items.Count,
             TotalPrice = order.Items.Sum(i => i.TotalPrice)
         };

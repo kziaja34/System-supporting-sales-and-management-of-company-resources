@@ -2,6 +2,7 @@
 @using SSSMCR.Web.Services
 @inject ReservationsApiService ReservationsApi
 @inject BranchesApiService BranchesApi
+@inject FuzzyService FuzzyService
 
 <MudStack Row="true" Spacing="2" Class="mb-3 flex-wrap">
     <MudTextField @bind-Value="_search"
@@ -27,10 +28,10 @@
     
     <!--  FILTR IMPORTANCE -->
     <MudRadioGroup T="string" Value="@ImportanceFilter" ValueChanged="OnPriorityChanged">
-        <MudRadio T="string" Value="@("all")" Label="All" />
-        <MudRadio T="string" Value="@("low")" Label="Low" />
-        <MudRadio T="string" Value="@("medium")" Label="Medium" />
-        <MudRadio T="string" Value="@("high")" Label="High" />
+        <MudRadio T="string" Color="@FuzzyService.GetColor("all")" Value="@("all")" Label="All" />
+        <MudRadio T="string" Color="@FuzzyService.GetColor("low")" Value="@("low")" Label="Low" />
+        <MudRadio T="string" Color="@FuzzyService.GetColor("medium")" Value="@("medium")" Label="Medium" />
+        <MudRadio T="string" Color="@FuzzyService.GetColor("high")" Value="@("high")" Label="High" />
     </MudRadioGroup>
 </MudStack>
 
@@ -91,7 +92,11 @@
         <MudTd>#@context.OrderId</MudTd>
 
         <MudTd>
-            <MudChip T="string" Color="@GetPriorityColor(context.Importance)" Variant="Variant.Filled">
+            <MudChip T="string"
+                     Style="@FuzzyService.GetFuzzyGradient(context)"
+                     Variant="Variant.Filled"
+                     Size="Size.Small"
+                     Class="px-2 fw-bold">
                 @context.Importance
             </MudChip>
         </MudTd>
@@ -219,13 +224,13 @@
             await _table.ReloadServerData();
     }
     
-    private static Color GetPriorityColor(string priority) => priority switch
-    {
-        "High" => Color.Error,
-        "Medium" => Color.Warning,
-        "Low" => Color.Success,
-        _ => Color.Default
-    };
+    // private static Color GetPriorityColor(string priority) => priority switch
+    // {
+    //     "High" => Color.Error,
+    //     "Medium" => Color.Warning,
+    //     "Low" => Color.Success,
+    //     _ => Color.Default
+    // };
 
     private static Color GetReservationStatusColor(string status) => status switch
     {
