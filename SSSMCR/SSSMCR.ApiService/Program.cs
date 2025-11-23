@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using SSSMCR.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var enableSwagger = builder.Configuration.GetValue<bool>("Swagger:Enabled");
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 
@@ -111,9 +111,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-if (app.Environment.IsDevelopment())
+
+if (enableSwagger || app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -122,7 +122,15 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.MapGet("/", () => Results.Redirect("/swagger"));
+if (enableSwagger || app.Environment.IsDevelopment())
+{
+    app.MapGet("/", () => Results.Redirect("/swagger"));
+}
+else
+{
+    app.MapGet("/", () => Results.Ok("SSSMCR API running"));
+}
+
 
 app.MapDefaultEndpoints();
 app.UseHttpsRedirection();

@@ -27,8 +27,11 @@
                 <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
                 <div>
                     <MudText Typo="Typo.h6">@_me.FullName (@_me.Email)</MudText>
-                    <MudText Color="Color.Secondary" Typo="Typo.body2">
-                        Role: @_me.RoleName
+                    <MudText Color="Color.Primary" Typo="Typo.body2">
+                        Role: <MudText Inline="true" Typo="Typo.body2" Color="Color.Secondary">@_me.RoleName</MudText>
+                    </MudText>
+                    <MudText Color="Color.Primary" Typo="Typo.body2">
+                        Branch: <MudText Inline="true" Typo="Typo.body2" Color="Color.Secondary">@_me.BranchName</MudText>
                     </MudText>
                 </div>
             </MudStack>

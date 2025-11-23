@@ -7,6 +7,9 @@ using SSSMCR.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var apiBaseUrl = builder.Configuration["Api:BaseUrl"]
+                 ?? throw new Exception("Missing Api:BaseUrl in configuration");
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -26,9 +29,10 @@ builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddHttpClient("api", c =>
 {
-    c.BaseAddress = new Uri("http://localhost:5506/");
+    c.BaseAddress = new Uri(apiBaseUrl);
     c.DefaultRequestHeaders.Accept.Clear();
-    c.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+    c.DefaultRequestHeaders.Accept.Add(
+        new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
     c.Timeout = TimeSpan.FromSeconds(30);
 });
 

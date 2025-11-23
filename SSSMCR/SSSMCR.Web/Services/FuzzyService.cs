@@ -1,4 +1,5 @@
-﻿using MudBlazor;
+﻿using System.Globalization;
+using MudBlazor;
 using MudBlazor.Utilities;
 using SSSMCR.Shared.Model;
 
@@ -6,43 +7,55 @@ namespace SSSMCR.Web.Services;
 
 public class FuzzyService
 {
-    private string ULowColor = "#4caf50";
-    private string UMediumColor = "#ffb300";
-    private string UHighColor = "#f44336";
+    private const string ULowColor = "#388E3C";     // darker green
+    private const string UMediumColor = "#F57C00";  // darker amber/orange
+    private const string UHighColor = "#D32F2F";    // darker red
     public string GetFuzzyGradient(dynamic ctx)
     {
         var entries = new List<(string color, double w)>
         {
-            (ULowColor,  (double)ctx.ULow),
-            (UMediumColor,  (double)ctx.UMedium),
-            (UHighColor,  (double)ctx.UHigh)
+            (ULowColor,    (double)ctx.ULow),
+            (UMediumColor, (double)ctx.UMedium),
+            (UHighColor,   (double)ctx.UHigh)
         };
 
         const double EPS = 1e-9;
-        
         var nonZero = entries.Where(e => e.w > EPS).ToList();
-
+        
         if (nonZero.Count == 0)
             return "background: transparent; color: inherit;";
         
-        var sum = nonZero.Sum(e => e.w);
-        if (sum <= EPS) sum = 1.0;
-        var norm = nonZero.Select(e => (e.color, w: e.w / sum)).ToList();
+        if (nonZero.Count == 1)
+            return $"background: {nonZero[0].color}; color: white;";
         
-        if (norm.Count == 1)
-            return $"background: {norm[0].color}; color: white;";
-        
-        var stops = new List<string>();
-        double acc = 0.0;
-        for (int i = 0; i < norm.Count; i++)
-        {
-            var (color, w) = norm[i];
-            if (i == 0) stops.Add($"{color} 0%");
-            acc += w;
-            stops.Add($"{color} {acc * 100:F0}%");
-        }
+        if (nonZero.Count > 2)
+            nonZero = nonZero.OrderByDescending(e => e.w).Take(2).ToList();
 
-        return $"background: linear-gradient(90deg, {string.Join(", ", stops)}); color: white;";
+        var (color1, w1) = nonZero[0];
+        var (color2, w2) = nonZero[1];
+
+        var sum = w1 + w2;
+        if (sum <= EPS) sum = 1;
+        w1 /= sum; w2 /= sum;
+        
+        var split = w1 * 100.0;
+        
+        const double BLEND_WIDTH = 30.0;
+        var half = BLEND_WIDTH / 2.0;
+        
+        double Clamp(double v, double lo, double hi) => v < lo ? lo : (v > hi ? hi : v);
+
+        var startBlend = Clamp(split - half, 0, 100);
+        var endBlend   = Clamp(split + half, 0, 100);
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("background: linear-gradient(90deg, ");
+        sb.Append($"{color1} 0%, ");
+        sb.Append($"{color1} {startBlend.ToString("F2", CultureInfo.InvariantCulture)}%, ");
+        sb.Append($"{color2} {endBlend.ToString("F2", CultureInfo.InvariantCulture)}%, ");
+        sb.Append($"{color2} 100%); color: white;");
+
+        return sb.ToString();
     }
 
     public Color GetColor(string val) => val.ToLower() switch
