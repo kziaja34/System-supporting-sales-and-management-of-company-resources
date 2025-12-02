@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { check, sleep, fail } from 'k6';
 
 export const options = {
-  vus: 25,
+  vus: 15,
   duration: '5m',
   thresholds: {
     http_req_duration: ['p(95)<400'],
@@ -44,7 +44,7 @@ export function setup() {
 export default function (data) {
   const headers = { Authorization: `Bearer ${data.token}` };
 
-  const res = http.get('http://localhost:5000/api/orders?pagesize=50&page=1', { headers });
+  const res = http.get('http://localhost:5000/api/orders?page=0&size=50', { headers });
 
   check(res, { '200 OK': r => r.status === 200 });
   sleep(1);

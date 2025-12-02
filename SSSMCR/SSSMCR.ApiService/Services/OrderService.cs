@@ -13,11 +13,38 @@ public interface IOrderService : IGenericService<Order>
         int page, int size, string sort, string? search = null, string? importance = null, CancellationToken ct = default);
     
     Task<bool> UpdateStatusAsync(int id, string newStatus);
-    double CalculatePriority(Order order, IEnumerable<Order> allOrders);
+    double CalculatePriority(dynamic order, IEnumerable<dynamic> allOrders);
 }
 
 public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fuzzyService) : GenericService<Order>(context), IOrderService
 {
+    private static DateTime _fuzzyCacheTime = DateTime.MinValue;
+    private static List<OrderFuzzyStats>? _fuzzyCache;
+    
+    private async Task<List<OrderFuzzyStats>> GetFuzzyStatsCachedAsync(CancellationToken ct)
+    {
+        if (_fuzzyCache != null &&
+            DateTime.UtcNow - _fuzzyCacheTime < TimeSpan.FromSeconds(60))
+        {
+            return _fuzzyCache;
+        }
+
+        _fuzzyCache = await _dbSet
+            .Select(o => new OrderFuzzyStats
+            {
+                Id = o.Id,
+                CreatedAt = o.CreatedAt,
+                ItemsCount = o.Items.Count,
+                TotalPrice = o.Items.Sum(i => i.UnitPrice * i.Quantity)
+            })
+            .ToListAsync(ct);
+
+        _fuzzyCacheTime = DateTime.UtcNow;
+
+        return _fuzzyCache;
+    }
+
+
     public async Task<IEnumerable<Order>> GetAllAsync(string? status = null, string? email = null, CancellationToken ct = default)
     {
         var query = _dbSet
@@ -45,23 +72,38 @@ public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fu
         var order = await _dbSet
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
+            .Include(o => o.Branch)
             .FirstOrDefaultAsync(o => o.Id == id, ct);
+
+        if (order == null)
+            throw new KeyNotFoundException("Order not found.");
         
-        if (order == null) throw new KeyNotFoundException("Order not found.");
-        
-        order.Priority = CalculatePriority(order, await GetAllAsync(ct));
-        
+        var stats = await _dbSet
+            .Select(o => new
+            {
+                Age = (DateTime.UtcNow - o.CreatedAt).TotalDays,
+                TotalPrice = o.Items.Sum(i => i.UnitPrice * i.Quantity),
+                Items = o.Items.Count
+            })
+            .ToListAsync(ct);
+
+        order.Priority = CalculatePriorityForDetails(order, stats);
+
+        var fuzzy = fuzzyService.Evaluate(order.Priority);
+
+        order.MembershipLow = fuzzy.Low;
+        order.MembershipMedium = fuzzy.Medium;
+        order.MembershipHigh = fuzzy.High;
+
         return order;
     }
     
     public async Task<PageResponse<OrderListItemDto>> GetPagedAsync(
-        int page, int size, string sort, string? search = null, string? importance = null, CancellationToken ct = default)
+    int page, int size, string sort, string? search = null, string? importance = null,
+    CancellationToken ct = default)
     {
-        var query = _dbSet
-            .Include(o => o.Items)
-            .ThenInclude(i => i.Product)
-            .AsQueryable();
-        
+        var query = _dbSet.AsQueryable();
+
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(o =>
@@ -82,42 +124,66 @@ public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fu
             _ => query.OrderByDescending(o => o.CreatedAt)
         };
         
-        var orders = await query.ToListAsync(ct);
+        var total = await query.CountAsync(ct);
         
-        var allOrders = await GetAllAsync(ct);
-        foreach (var order in orders)
+        var pageItems = await query
+            .Skip(page * size)
+            .Take(size)
+            .Select(o => new OrderListItemDto
+            {
+                Id = o.Id,
+                CustomerName = o.CustomerName,
+                CustomerEmail = o.CustomerEmail,
+                CreatedAt = o.CreatedAt,
+                Status = o.Status.ToString(),
+                ItemsCount = o.ItemsCount,
+                TotalPrice = o.TotalPrice,
+                Importance = "",
+                ULow = 0,
+                UMedium = 0,
+                UHigh = 0
+            })
+            .ToListAsync(ct);
+        
+        var stats = await GetFuzzyStatsCachedAsync(ct);
+        
+        foreach (var dto in pageItems)
         {
-            order.Priority = CalculatePriority(order, allOrders);
+            var src = stats.First(x => x.Id == dto.Id);
 
-            var fuzzy = fuzzyService.Evaluate(order.Priority);
-            order.MembershipLow = fuzzy.Low;
-            order.MembershipMedium = fuzzy.Medium;
-            order.MembershipHigh = fuzzy.High;
+            var priority = CalculatePriority(src, stats);
+
+            var fuzzy = fuzzyService.Evaluate(priority);
+
+            dto.ULow = fuzzy.Low;
+            dto.UMedium = fuzzy.Medium;
+            dto.UHigh = fuzzy.High;
+
+            dto.Importance = dto.UHigh > 0.5 ? "High" :
+                             dto.UMedium > 0.5 ? "Medium" :
+                             "Low";
         }
         
         if (!string.IsNullOrEmpty(importance))
         {
-            orders = importance.ToLower() switch
+            var imp = importance.ToLower();
+            pageItems = imp switch
             {
-                "low" => orders.Where(o => o.MembershipLow > 0.5).ToList(),
-                "medium" => orders.Where(o => o.MembershipMedium > 0.5).ToList(),
-                "high" => orders.Where(o => o.MembershipHigh > 0.5).ToList(),
-                _ => orders
+                "low" => pageItems.Where(o => o.ULow > 0.5).ToList(),
+                "medium" => pageItems.Where(o => o.UMedium > 0.5).ToList(),
+                "high" => pageItems.Where(o => o.UHigh > 0.5).ToList(),
+                _ => pageItems
             };
         }
         
-        var total = orders.Count;
-        var items = orders.Skip(page * size).Take(size).ToList();
-
         return new PageResponse<OrderListItemDto>
         {
-            Items = items.Select(ToListItemDto),
+            Items = pageItems,
             Page = page,
             TotalElements = total,
             TotalPages = (int)Math.Ceiling(total / (double)size)
         };
     }
-
     
     public async Task<bool> UpdateStatusAsync(int id, string newStatus)
     {
@@ -134,22 +200,45 @@ public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fu
         return true;
     }
     
-    public double CalculatePriority(Order order, IEnumerable<Order> allOrders)
+    public double CalculatePriority(dynamic order, IEnumerable<dynamic> allOrders)
     {
         var maxAge = allOrders.Max(o => (DateTime.Now - o.CreatedAt).TotalDays);
-        var maxValue = allOrders.Max(o => o.Items.Sum(i => i.TotalPrice));
-        var maxItems = allOrders.Max(o => o.Items.Count);
-        
+        var maxValue = allOrders.Max(o => o.TotalPrice);
+        var maxItems = allOrders.Max(o => o.ItemsCount);
+
         var ageFactor = (DateTime.UtcNow - order.CreatedAt).TotalDays / maxAge;
-        var valueFactor = (double)order.Items.Sum(i => i.TotalPrice) / (double)maxValue;
-        var itemFactor = (double)order.Items.Count / maxItems;
+        var valueFactor = (double)order.TotalPrice / (double)maxValue;
+        var itemFactor = (double)order.ItemsCount / maxItems;
 
         const double wAge = 0.5;
         const double wValue = 0.4;
         const double wItem = 0.1;
-        
+
         var priority = wAge * ageFactor + wValue * valueFactor + wItem * itemFactor;
-        
+
+        return priority * 100.0;
+    }
+    
+    private double CalculatePriorityForDetails(Order order, IEnumerable<dynamic> stats)
+    {
+        var maxAge = stats.Max(o => o.Age);
+        var maxValue = stats.Max(o => o.TotalPrice);
+        var maxItems = stats.Max(o => o.Items);
+
+        var thisAge = (DateTime.UtcNow - order.CreatedAt).TotalDays;
+        var thisValue = order.Items.Sum(i => i.UnitPrice * i.Quantity);
+        var thisItems = order.Items.Count;
+
+        var ageFactor = thisAge / maxAge;
+        var valueFactor = (double)thisValue / (double)maxValue;
+        var itemFactor = thisItems / (double)maxItems;
+
+        const double wAge = 0.5;
+        const double wValue = 0.4;
+        const double wItem = 0.1;
+
+        var priority = wAge * ageFactor + wValue * valueFactor + wItem * itemFactor;
+
         return priority * 100.0;
     }
     

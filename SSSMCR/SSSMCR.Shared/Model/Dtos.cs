@@ -69,7 +69,7 @@ public record OrderListItemDto
     public string CustomerName { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
     public string Status { get; init; } = string.Empty;
-    public string Importance { get; init; } = string.Empty;
+    public string Importance { get; set; } = string.Empty;
     public double ULow { get; set; }
     public double UHigh { get; set; }
     public double UMedium { get; set; }
@@ -380,4 +380,13 @@ public class SupplierProductsUpdateRequest
 {
     [Required]
     public List<SupplierProductUpsertDto> Items { get; set; } = new();
+}
+
+// Cache
+public sealed class OrderFuzzyStats
+{
+    public int Id { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int ItemsCount { get; set; }
+    public decimal TotalPrice { get; set; }
 }

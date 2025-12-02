@@ -1,8 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Model;
 
+[Index(nameof(CreatedAt))]
+[Index(nameof(Id))]
 public class Order
 {
     [Key]
@@ -35,4 +38,6 @@ public class Order
     public Branch? Branch { get; set; }
     [MaxLength(100)]
     public required string ShippingAddress { get; set; }
+    public int ItemsCount { get; set; }
+    public decimal TotalPrice { get; set; }
 }

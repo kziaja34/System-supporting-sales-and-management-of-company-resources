@@ -7,9 +7,9 @@ namespace SSSMCR.Web.Services;
 
 public class FuzzyService
 {
-    private const string ULowColor = "#388E3C";     // darker green
-    private const string UMediumColor = "#F57C00";  // darker amber/orange
-    private const string UHighColor = "#D32F2F";    // darker red
+    private const string ULowColor = "#388E3C";
+    private const string UMediumColor = "#F57C00";
+    private const string UHighColor = "#D32F2F";
     public string GetFuzzyGradient(dynamic ctx)
     {
         var entries = new List<(string color, double w)>
