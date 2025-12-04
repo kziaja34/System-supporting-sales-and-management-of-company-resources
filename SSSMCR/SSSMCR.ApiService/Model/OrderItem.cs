@@ -22,6 +22,6 @@ public class OrderItem
         
         public decimal TotalPrice => UnitPrice * Quantity;
         
-        public Order? Order { get; set; }
-        public Product? Product { get; set; }
+        public required Order? Order { get; set; }
+        public required Product? Product { get; set; }
     }

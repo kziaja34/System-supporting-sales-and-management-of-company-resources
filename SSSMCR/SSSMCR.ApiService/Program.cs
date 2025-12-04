@@ -1,5 +1,4 @@
 using System.Text;
-using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -99,20 +98,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddPolicy("AuthPolicy", context =>
-        RateLimitPartition.GetTokenBucketLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "ip",
-            factory: _ => new TokenBucketRateLimiterOptions
-            {
-                TokenLimit = 10,
-                TokensPerPeriod = 10,
-                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
-            }));
-});
+
 
 var app = builder.Build();
 
@@ -150,7 +136,6 @@ app.MapDefaultEndpoints();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();

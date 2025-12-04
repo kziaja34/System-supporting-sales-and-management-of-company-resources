@@ -1,11 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using SSSMCR.ApiService.Services;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Controller;
 
-[EnableRateLimiting("AuthPolicy")]
 [ApiController]
 [Route("api/auth")]
 public sealed class AuthController(IAuthService auth) : ControllerBase
