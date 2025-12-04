@@ -146,13 +146,20 @@ public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fu
             .ToListAsync(ct);
         
         var stats = await GetFuzzyStatsCachedAsync(ct);
-        
+
         foreach (var dto in pageItems)
         {
-            var src = stats.First(x => x.Id == dto.Id);
+            var src = stats.FirstOrDefault(x => x.Id == dto.Id);
+            if (src == null)
+            {
+                dto.ULow = 0;
+                dto.UMedium = 1;
+                dto.UHigh = 0;
+                dto.Importance = "Medium";
+                continue;
+            }
 
             var priority = CalculatePriority(src, stats);
-
             var fuzzy = fuzzyService.Evaluate(priority);
 
             dto.ULow = fuzzy.Low;
@@ -160,9 +167,10 @@ public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fu
             dto.UHigh = fuzzy.High;
 
             dto.Importance = dto.UHigh > 0.5 ? "High" :
-                             dto.UMedium > 0.5 ? "Medium" :
-                             "Low";
+                dto.UMedium > 0.5 ? "Medium" :
+                "Low";
         }
+
         
         if (!string.IsNullOrEmpty(importance))
         {
