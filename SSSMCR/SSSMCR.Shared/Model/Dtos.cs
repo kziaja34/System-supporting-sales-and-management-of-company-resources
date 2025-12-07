@@ -30,7 +30,7 @@ public class CompanyRequest
 public class CompanyResponse
 {
     public int Id { get; set; }
-    public string CompanyName { get; set; } = string.Empty;
+    public string? CompanyName { get; set; } = string.Empty;
     public string? Address { get; set; }
     public string? City { get; set; }
     public string? PostalCode { get; set; }

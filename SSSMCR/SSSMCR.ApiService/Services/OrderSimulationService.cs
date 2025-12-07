@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
 using SSSMCR.Shared.Model;
@@ -67,7 +62,7 @@ namespace SSSMCR.ApiService.Services
                 };
                 
                 var productsCount = _rnd.Next(minProducts, maxProducts + 1);
-                var chosen = products.OrderBy(x => _rnd.Next()).Take(productsCount).ToList();
+                var chosen = products.OrderBy(_ => _rnd.Next()).Take(productsCount).ToList();
                 
                 var order = new Order
                 {

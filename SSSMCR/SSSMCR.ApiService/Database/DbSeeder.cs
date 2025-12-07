@@ -1,6 +1,5 @@
 ﻿using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Services;
-using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Database;
 

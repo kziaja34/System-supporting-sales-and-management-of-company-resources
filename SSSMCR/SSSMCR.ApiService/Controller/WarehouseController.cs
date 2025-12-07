@@ -194,34 +194,39 @@ public class WarehouseController(IWarehouseService svc, IReservationService rese
         }
     }
 
-    private ReservationDto ToResponse(StockReservation r)
+    private ReservationDto? ToResponse(StockReservation r)
     {
-        var priority = orderSvc.CalculatePriority(r.OrderItem.Order, orderSvc.GetAllAsync().Result);
-        
-        var fuzzy = fuzzyService.Evaluate(priority);
-        var importance = "";
-        
-        if (fuzzy.Low > 0.5)
-            importance = "Low";
-        else if (fuzzy.Medium > 0.5)
-            importance = "Medium";
-        else if (fuzzy.High > 0.5)
-            importance = "High";
-        
-        return new ReservationDto()
+        if (r.OrderItem.Order != null)
         {
-            ReservationId = r.Id,
-            OrderId = r.OrderItem.OrderId,
-            ProductName = r.ProductStock.Product?.Name,
-            BranchId = r.ProductStock.BranchId,
-            BranchName = r.ProductStock.Branch?.Name,
-            Quantity = r.Quantity,
-            Status = r.Status.ToString(),
-            CreatedAt = r.CreatedAt,
-            OrderStatus = r.OrderItem.Order.Status.ToString(),
-            Importance = importance,
-            CustomerName = r.OrderItem.Order.CustomerName,
-            ShippingAddress = r.OrderItem.Order.ShippingAddress
-        };
+            var priority = orderSvc.CalculatePriority(r.OrderItem.Order, orderSvc.GetAllAsync().Result);
+        
+            var fuzzy = fuzzyService.Evaluate(priority);
+            var importance = "";
+        
+            if (fuzzy.Low > 0.5)
+                importance = "Low";
+            else if (fuzzy.Medium > 0.5)
+                importance = "Medium";
+            else if (fuzzy.High > 0.5)
+                importance = "High";
+        
+            return new ReservationDto()
+            {
+                ReservationId = r.Id,
+                OrderId = r.OrderItem.OrderId,
+                ProductName = r.ProductStock.Product?.Name,
+                BranchId = r.ProductStock.BranchId,
+                BranchName = r.ProductStock.Branch?.Name,
+                Quantity = r.Quantity,
+                Status = r.Status.ToString(),
+                CreatedAt = r.CreatedAt,
+                OrderStatus = r.OrderItem.Order.Status.ToString(),
+                Importance = importance,
+                CustomerName = r.OrderItem.Order.CustomerName,
+                ShippingAddress = r.OrderItem.Order.ShippingAddress
+            };
+        }
+
+        return null;
     }
 }

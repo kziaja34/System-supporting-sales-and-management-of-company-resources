@@ -72,11 +72,11 @@ public class OrderController(IOrderService orderService, IOrderSimulationService
         {
             return BadRequest(new { message = ex.Message });
         }
-        catch (OrderSimulationException ex)
+        catch (OrderSimulationException)
         {
             return StatusCode(500, new { message = "Błąd podczas tworzenia symulowanego zamówienia." });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500, new { message = "Wystąpił nieoczekiwany błąd." });
         }

@@ -68,7 +68,7 @@ public class ReservationService(AppDbContext context, IOrderService orderService
             query = query.Where(r =>
                 r.OrderItem.Order.CustomerName.Contains(search) ||
                 r.OrderItem.Order.CustomerEmail.Contains(search) ||
-                r.OrderItem.Order.ShippingAddress!.Contains(search) ||
+                r.OrderItem.Order.ShippingAddress.Contains(search) ||
                 r.ProductStock.Product.Name.Contains(search) ||
                 r.ProductStock.Branch.Name.Contains(search));
         }

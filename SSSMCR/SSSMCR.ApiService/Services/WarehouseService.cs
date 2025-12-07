@@ -89,10 +89,10 @@ public class WarehouseService(AppDbContext context) : GenericService<ProductStoc
         .Select(g => new
         {
             BranchId = g.Key,
-            Branch = g.First().Branch,
+            g.First().Branch,
             Availability = g.ToDictionary(x => x.ProductId, x => x.Available),
-            Lat = g.First().Lat,
-            Lon = g.First().Lon
+            g.First().Lat,
+            g.First().Lon
         })
         .ToList();
 

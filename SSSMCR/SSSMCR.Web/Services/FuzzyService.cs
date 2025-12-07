@@ -1,7 +1,5 @@
 ﻿using System.Globalization;
 using MudBlazor;
-using MudBlazor.Utilities;
-using SSSMCR.Shared.Model;
 
 namespace SSSMCR.Web.Services;
 
@@ -36,7 +34,7 @@ public class FuzzyService
 
         var sum = w1 + w2;
         if (sum <= EPS) sum = 1;
-        w1 /= sum; w2 /= sum;
+        w1 /= sum;
         
         var split = w1 * 100.0;
         

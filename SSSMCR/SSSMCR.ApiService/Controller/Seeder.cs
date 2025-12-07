@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OpenTelemetry.Trace;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
 using SSSMCR.Shared.Model;
@@ -45,7 +44,7 @@ public class DevSeedController(AppDbContext db) : ControllerBase
 
             var items = new List<OrderItem>();
 
-            for (int j = 0; j < ItemsPerOrder; j++)
+            for (var j = 0; j < ItemsPerOrder; j++)
             {
                 var product = products[rnd.Next(products.Count)];
                 var qty = rnd.Next(1, 5);
@@ -63,7 +62,7 @@ public class DevSeedController(AppDbContext db) : ControllerBase
             }
             
             order.ItemsCount = items.Count;
-            order.TotalPrice = items.Sum(i => i.UnitPrice * i.Quantity);
+            order.TotalPrice = items.Sum(x => x.UnitPrice * x.Quantity);
 
         }
 

@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
-using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services;
 

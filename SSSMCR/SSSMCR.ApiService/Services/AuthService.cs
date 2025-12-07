@@ -24,3 +24,8 @@ public sealed class AuthService(IUserService users, IJwtTokenGenerator tokens) :
         return tokens.Generate(u.Id, u.Email, $"{u.FirstName} {u.LastName}", role.Name);
     }
 }
+
+
+
+
+

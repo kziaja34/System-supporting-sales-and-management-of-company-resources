@@ -207,7 +207,7 @@ public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fu
         var maxItems = allOrders.Max(o => o.ItemsCount);
 
         var ageFactor = (DateTime.UtcNow - order.CreatedAt).TotalDays / maxAge;
-        var valueFactor = (double)order.TotalPrice / (double)maxValue;
+        var valueFactor = (double)order.TotalPrice / (double)maxValue!;
         var itemFactor = (double)order.ItemsCount / maxItems;
 
         const double wAge = 0.5;
@@ -230,8 +230,8 @@ public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fu
         var thisItems = order.Items.Count;
 
         var ageFactor = thisAge / maxAge;
-        var valueFactor = (double)thisValue / (double)maxValue;
-        var itemFactor = thisItems / (double)maxItems;
+        var valueFactor = (double)thisValue / (double)maxValue!;
+        var itemFactor = thisItems / (double)maxItems!;
 
         const double wAge = 0.5;
         const double wValue = 0.4;
@@ -241,27 +241,4 @@ public class OrderService(AppDbContext context, FuzzyPriorityEvaluatorService fu
 
         return priority * 100.0;
     }
-    
-    private static OrderListItemDto ToListItemDto(Order order)
-    {
-        string importance = order.MembershipHigh > 0.5 ? "High"
-            : order.MembershipMedium > 0.5 ? "Medium"
-            : "Low";
-
-        return new OrderListItemDto()
-        {
-            Id = order.Id,
-            CustomerEmail = order.CustomerEmail,
-            CustomerName = order.CustomerName,
-            CreatedAt = order.CreatedAt,
-            Status = order.Status.ToString(),
-            Importance = importance,
-            ULow = order.MembershipLow,
-            UMedium = order.MembershipMedium,
-            UHigh = order.MembershipHigh,
-            ItemsCount = order.Items.Count,
-            TotalPrice = order.Items.Sum(i => i.TotalPrice)
-        };
-    }
-
 }

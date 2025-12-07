@@ -3,12 +3,10 @@ using MigraDoc.DocumentObjectModel.Tables;
 using MigraDoc.Rendering;
 using PdfSharp;
 using PdfSharp.Fonts;
-using PdfSharp.Pdf;
 using PdfSharp.Snippets.Font;
 using SSSMCR.ApiService.Model;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
-using PdfSharp.Pdf.IO;
 using SSSMCR.ApiService.Database;
 
 namespace SSSMCR.ApiService.Services

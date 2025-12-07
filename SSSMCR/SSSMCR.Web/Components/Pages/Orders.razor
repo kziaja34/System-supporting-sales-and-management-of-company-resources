@@ -44,7 +44,7 @@
     [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
     private OrdersTable _ordersTable;
     private string? user_role;
-    private bool IsBusy = false;
+    private bool IsBusy;
     private OrderSimulationResult? LastSimulation;
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -91,7 +91,7 @@
         finally
         {
             IsBusy = false;
-            await _ordersTable?._table?.ReloadServerData();
+            await _ordersTable?._table?.ReloadServerData()!;
             StateHasChanged();
         }
     }
