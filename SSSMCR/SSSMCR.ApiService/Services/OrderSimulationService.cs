@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Model;
 using SSSMCR.Shared.Model;
@@ -25,7 +25,7 @@ namespace SSSMCR.ApiService.Services
             int minQty = 1, int maxQty = 5);
     }
 
-    public class OrderSimulationService(AppDbContext db, ILogger<OrderSimulationService> logger)
+    public class OrderSimulationService(AppDbContext db, ILogger<OrderSimulationService> logger, IProductService productService)
         : IOrderSimulationService
     {
         private readonly Random _rnd = new Random();
@@ -43,12 +43,14 @@ namespace SSSMCR.ApiService.Services
 
             try
             {
-                var products = await db.Products
-                    .ToListAsync();
-
+                var products = await db.Products.ToListAsync();
                 if (products == null || products.Count == 0)
                     throw new NoProductsAvailableException("Brak dostępnych produktów do symulacji.");
-                
+
+                // optionally pick a random branch like seeder
+                var branches = await db.Branches.ToListAsync();
+                var branch = branches.Any() ? branches[_rnd.Next(branches.Count)] : null;
+
                 var firstName = RandomFrom(_firstNames);
                 var lastName = RandomFrom(_lastNames);
                 var email = $"{firstName.ToLower()}.{lastName.ToLower()}{_rnd.Next(10, 999)}@example.com";
@@ -60,7 +62,7 @@ namespace SSSMCR.ApiService.Services
                     PostalCode = $"{_rnd.Next(10, 99)}-{_rnd.Next(100, 999)}",
                     Country = RandomFrom(_countries)
                 };
-                
+
                 var productsCount = _rnd.Next(minProducts, maxProducts + 1);
                 var chosen = products.OrderBy(_ => _rnd.Next()).Take(productsCount).ToList();
                 
@@ -71,29 +73,36 @@ namespace SSSMCR.ApiService.Services
                     ShippingAddress = $"{address.PostalCode } { address.City } { address.Street}",
                     CreatedAt = DateTime.UtcNow,
                     Status = OrderStatus.Pending,
-                    Items = new List<OrderItem>()
+                    Items = new List<OrderItem>(),
+                    Branch = branch
                 };
 
                 foreach (var p in chosen)
                 {
                     var qty = _rnd.Next(minQty, maxQty + 1);
                     var unitPrice = p.UnitPrice;
-                    
+
                     var item = new OrderItem
                     {
                         ProductId = p.Id,
                         Quantity = qty,
-                        UnitPrice = unitPrice,
-                        Order = null,
-                        Product = null
+                        UnitPrice = unitPrice
+                        // NIE ustawiamy Order ani Product - EF ustawi relation po dodaniu do order.Items
                     };
                     order.Items.Add(item);
                 }
-                
+
+                // Ustaw agregaty tak jak robi to seeder
+                order.ItemsCount = order.Items.Count;
+                order.TotalPrice = order.Items.Sum(i => i.UnitPrice * i.Quantity);
+
                 await using var tx = await db.Database.BeginTransactionAsync();
                 try
                 {
                     db.Orders.Add(order);
+                    // opcjonalnie zarejestruj itemy explicite (bezpieczne):
+                    db.OrderItems.AddRange(order.Items);
+
                     await db.SaveChangesAsync();
                     await tx.CommitAsync();
                 }
@@ -104,7 +113,10 @@ namespace SSSMCR.ApiService.Services
                     throw new OrderSimulationException("Nie udało się zapisać symulowanego zamówienia.", ex);
                 }
 
-                logger.LogInformation("Utworzono symulowane zamówienie Id={OrderId}", order.Id);
+                // weryfikacja - załaduj itemy i zaloguj liczbę
+                await db.Entry(order).Collection(o => o.Items).LoadAsync();
+                logger.LogInformation("Utworzono symulowane zamówienie Id={OrderId} with {Items} items and total {Total}",
+                    order.Id, order.Items.Count, order.TotalPrice);
 
                 return new OrderSimulationResult
                 {
