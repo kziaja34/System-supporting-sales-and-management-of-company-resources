@@ -114,6 +114,7 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
@@ -147,7 +148,10 @@ else
 
 
 app.MapDefaultEndpoints();
-app.UseHttpsRedirection();
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();

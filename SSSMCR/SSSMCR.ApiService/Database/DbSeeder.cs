@@ -1,5 +1,6 @@
 ﻿using SSSMCR.ApiService.Model;
 using SSSMCR.ApiService.Services;
+using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Database;
 
@@ -125,6 +126,62 @@ public static class DbSeeder
             new SupplierProduct { Supplier = supplier1, Product = product2, Price = 1100m }
         };
         context.SupplierProducts.AddRange(supplierProducts);
+        
+        if (!context.Orders.Any())
+    {
+        var order1 = new Order
+        {
+            CustomerName = "Jan Kowalski",
+            CustomerEmail = "jan.kowalski@gmail.com",
+            CreatedAt = DateTime.UtcNow.AddDays(-2),
+            Status = OrderStatus.Processing,
+            Branch = branch1,
+            ShippingAddress = "Kraków, ul. Floriańska 10",
+            Items = new List<OrderItem>
+            {
+                new OrderItem { Product = product1, UnitPrice = product1.UnitPrice, Quantity = 1 },
+                new OrderItem { Product = product2, UnitPrice = product2.UnitPrice, Quantity = 2 }
+            }
+        };
+        // Ręczne wyliczenie sumarycznych pól z klasy Order
+        order1.ItemsCount = order1.Items.Sum(i => i.Quantity);
+        order1.TotalPrice = order1.Items.Sum(i => i.UnitPrice * i.Quantity);
+
+        var order2 = new Order
+        {
+            CustomerName = "Marta Nowak",
+            CustomerEmail = "m.nowak@firmowy.pl",
+            CreatedAt = DateTime.UtcNow.AddHours(-5),
+            Status = OrderStatus.Processing,
+            Branch = branch2,
+            ShippingAddress = "Gliwice, ul. Zwycięstwa 5",
+            Items = new List<OrderItem>
+            {
+                new OrderItem { Product = product3, UnitPrice = product3.UnitPrice, Quantity = 10 }
+            }
+        };
+        order2.ItemsCount = order2.Items.Sum(i => i.Quantity);
+        order2.TotalPrice = order2.Items.Sum(i => i.UnitPrice * i.Quantity);
+
+        var order3 = new Order
+        {
+            CustomerName = "Piotr Zieliński",
+            CustomerEmail = "p.zielinski@poczta.pl",
+            CreatedAt = DateTime.UtcNow.AddDays(-7),
+            Status = OrderStatus.Processing,
+            Branch = branch1,
+            ShippingAddress = "Katowice, ul. Mariacka 1",
+            Items = new List<OrderItem>
+            {
+                new OrderItem { Product = product1, UnitPrice = product1.UnitPrice, Quantity = 2 },
+                new OrderItem { Product = product3, UnitPrice = product3.UnitPrice, Quantity = 5 }
+            }
+        };
+        order3.ItemsCount = order3.Items.Sum(i => i.Quantity);
+        order3.TotalPrice = order3.Items.Sum(i => i.UnitPrice * i.Quantity);
+
+        context.Orders.AddRange(order1, order2, order3);
+    }
         
         context.SaveChanges();
         return Task.CompletedTask;
