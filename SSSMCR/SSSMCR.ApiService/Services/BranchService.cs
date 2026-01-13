@@ -23,7 +23,7 @@ public class BranchService(AppDbContext context) : GenericService<Branch>(contex
         var name = branch.Name.Trim();
         
         var exists = await _dbSet.AsNoTracking()
-            .AnyAsync(b => b.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase), ct);
+            .AnyAsync(b => b.Name.ToLower() == name.ToLower(), ct);
         
         if (exists)
             throw new InvalidOperationException("Branch with this name already exists");

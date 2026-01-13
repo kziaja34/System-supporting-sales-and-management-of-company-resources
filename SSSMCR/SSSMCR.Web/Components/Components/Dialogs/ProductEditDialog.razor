@@ -20,22 +20,38 @@
 
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
-    [Parameter] public ProductResponse Product { get; set; } = new();
+
+    // Zmieniamy na nullable, żeby obsłużyć null przekazany z tabeli
+    [Parameter] public ProductResponse? Product { get; set; }
+
     private bool valid;
     private MudForm form = default!;
     private ProductEditModel model = new();
-    private bool isNew => false;
     private string? error;
-    
+
+    // POPRAWKA 1: Dynamiczne sprawdzanie czy to nowy produkt
+    // Jeśli Product jest nullem LUB jego ID to 0, to znaczy, że dodajemy nowy.
+    private bool isNew => Product is null || Product.Id == 0;
+
     protected override void OnInitialized()
     {
-        model = new ProductEditModel()
+        // POPRAWKA 2: Bezpieczne mapowanie
+        if (Product is not null)
         {
-            Id = Product.Id,
-            Name = Product.Name,
-            Description = Product.Description,
-            UnitPrice = Product.UnitPrice
-        };
+            // Edycja - przepisujemy dane
+            model = new ProductEditModel()
+            {
+                Id = Product.Id,
+                Name = Product.Name,
+                Description = Product.Description,
+                UnitPrice = Product.UnitPrice
+            };
+        }
+        else
+        {
+            // Dodawanie - tworzymy czysty model
+            model = new ProductEditModel();
+        }
     }
     
     private async Task Save()
@@ -48,12 +64,13 @@
         {
             if (isNew)
             {
+                // Tutaj wejdzie tylko gdy isNew == true
                 var created = await ProductsApiService.CreateProductAsync(new ProductCreateRequest
                 {
                     Name = model.Name,
                     Description = model.Description,
                     UnitPrice = model.UnitPrice
-                }); 
+                });
                 MudDialog.Close(DialogResult.Ok(created));
             }
             else
@@ -81,11 +98,11 @@
     }
     
     private void Cancel() => MudDialog.Cancel();
-    
+
     class ProductEditModel
     {
         public int Id { get; set; }
-        public string?  Name { get; set; }
+        public string? Name { get; set; }
         public string? Description { get; set; }
         public decimal UnitPrice { get; set; }
     }

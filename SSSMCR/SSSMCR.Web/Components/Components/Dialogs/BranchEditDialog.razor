@@ -24,23 +24,34 @@
 
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
-    [Parameter] public BranchResponse Branch { get; set; } = new();
+    
+    // Zmieniamy typ na nullable (BranchResponse?), aby obsłużyć null przy dodawaniu
+    [Parameter] public BranchResponse? Branch { get; set; }
+    
     private bool valid;
     private MudForm form = default!;
     private BranchEditModel model = new();
-    private bool isNew => false;
-    private string? error;
     
+    // Dynamicznie sprawdzamy czy to nowy element (ID 0 oznacza nowy, niezatwierdzony obiekt)
+    private bool isNew => model.Id == 0;
+    
+    private string? error;
+
     protected override void OnInitialized()
     {
-        model = new BranchEditModel()
+        // Inicjalizujemy model danymi tylko wtedy, gdy edytujemy istniejący branch
+        if (Branch != null)
         {
-            Id = Branch.Id,
-            Name = Branch.Name,
-            Location = Branch.Location,
-            Latitude = Branch.Latitude,
-            Longitude = Branch.Longitude
-        };
+            model = new BranchEditModel()
+            {
+                Id = Branch.Id,
+                Name = Branch.Name,
+                Location = Branch.Location,
+                Latitude = Branch.Latitude,
+                Longitude = Branch.Longitude
+            };
+        }
+        // W przeciwnym razie model pozostaje pusty (domyślny) dla nowego wpisu
     }
 
     private async Task Save()
@@ -59,7 +70,7 @@
                     Location = model.Location,
                     Latitude = model.Latitude,
                     Longitude = model.Longitude
-                }); 
+                });
                 MudDialog.Close(DialogResult.Ok(created));
             }
             else
@@ -88,7 +99,6 @@
     }
 
     private void Cancel() => MudDialog.Cancel();
-
 
     class BranchEditModel
     {
