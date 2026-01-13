@@ -23,11 +23,14 @@
                     <MudTd>@i.Name</MudTd>
                     <MudTd>@i.Description</MudTd>
                     <MudTd>
-                        <MudNumericField T="decimal?"
-                                         @bind-Value="i.Price"
+                        <MudNumericField @bind-Value="i.Price"
                                          Disabled="@(!i.Selected)"
                                          Min="0"
-                                         Style="width: 100%;" />
+                                         Format="N2" 
+                                         Immediate="true"
+                                         Style="width: 100%;"
+                                         Error="@(i.Selected && i.Price == null)"
+                                         ErrorText="Price is required" />
                     </MudTd>
                 </RowTemplate>
             </MudTable>
@@ -66,6 +69,13 @@
 
     private async Task Save()
     {
+        // 1. Walidacja: Sprawdź czy są zaznaczone elementy bez ceny
+        if (_items.Any(i => i.Selected && i.Price == null))
+        {
+            Snackbar.Add("Please enter a price for all selected products.", Severity.Warning);
+            return; // Przerywamy zapis
+        }
+
         try
         {
             var items = _items
@@ -73,7 +83,9 @@
                 .Select(i => new SupplierProductUpsertDto
                 {
                     ProductId = i.ProductId,
-                    Price = i.Price
+                    // Skoro przeszło walidację wyżej, to Price na pewno ma wartość, 
+                    // ale rzutujemy (decimal) dla pewności lub używamy Value
+                    Price = i.Price!.Value 
                 })
                 .ToList();
 
@@ -99,7 +111,14 @@
             set
             {
                 _selected = value;
-                if (!_selected) Price = null;
+                if (!_selected) 
+                {
+                    Price = null; // Czyścimy przy odznaczeniu
+                }
+                else if (_selected && Price == null)
+                {
+                    Price = 0; // Opcjonalnie: Wstawiamy 0 przy zaznaczeniu
+                }
             }
         }
 
