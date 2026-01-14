@@ -122,7 +122,7 @@ app.UseExceptionHandler();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    DbSeeder.Seed(context, scope.ServiceProvider).Wait();
+    //DbSeeder.Seed(context, scope.ServiceProvider).Wait();
 }
 
 
