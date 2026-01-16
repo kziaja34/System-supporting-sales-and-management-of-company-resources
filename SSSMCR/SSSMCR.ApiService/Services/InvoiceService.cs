@@ -28,6 +28,8 @@ namespace SSSMCR.ApiService.Services
             var existing = await context.Invoices.FirstOrDefaultAsync(i => i.OrderId == orderId);
             if (existing != null)
                 return existing.FileData;
+            
+            ValidateCompanyData();
 
             var document = new Document();
             await BuildDocument(document, orderId);
@@ -75,7 +77,7 @@ namespace SSSMCR.ApiService.Services
 
             document.Info.Title = "VAT Invoice";
             document.Info.Subject = "Invoice for the purchase of goods/services";
-            document.Info.Author = "SSSMCR";
+            document.Info.Author = _company.CompanyName ?? "SSSMCR";
 
             DefineStyles(document);
 
@@ -87,7 +89,7 @@ namespace SSSMCR.ApiService.Services
             section.PageSetup.BottomMargin = Unit.FromCentimeter(2.0);
             
             var header = section.Headers.Primary.AddParagraph();
-            header.AddFormattedText("SSSMCR", TextFormat.Bold);
+            header.AddFormattedText(_company.CompanyName ?? "SSSMCR", TextFormat.Bold);
             header.AddLineBreak();
             header.AddText($"{_company.Address}, {_company.PostalCode} {_company.City} | NIP: {_company.TaxIdentificationNumber}");
             header.Format.Font.Size = 9;
@@ -132,7 +134,8 @@ namespace SSSMCR.ApiService.Services
 
             var r1 = parties.AddRow();
             var pSeller = r1.Cells[0].AddParagraph();
-            pSeller.AddFormattedText("SSSMCR", TextFormat.Bold);
+            // Używamy danych z obiektu _company, które przeszły walidację
+            pSeller.AddFormattedText(_company.CompanyName ?? "SSSMCR", TextFormat.Bold); 
             pSeller.AddLineBreak();
             pSeller.AddText($"{_company.Address}");
             pSeller.AddLineBreak();
@@ -271,6 +274,34 @@ namespace SSSMCR.ApiService.Services
             label.Font.Size = 10;
             label.ParagraphFormat.SpaceBefore = 3;
             label.ParagraphFormat.SpaceAfter = 3;
+        }
+        
+        // Metoda sprawdzająca, czy dane są domyślne
+        private void ValidateCompanyData()
+        {
+            // Lista par: (Wartość w bazie, Wartość domyślna z obrazka)
+            var checks = new Dictionary<string?, string>
+            {
+                { _company.CompanyName, "Company Name" },
+                { _company.TaxIdentificationNumber, "NIP" },
+                { _company.Address, "Address" },
+                { _company.City, "City" },
+                { _company.PostalCode, "Postal Code" },
+                { _company.BankAccountNumber, "Bank account Number" },
+                { _company.ContactEmail, "Contact Email" },
+                { _company.ContactPhone, "Contact Phone" }
+            };
+
+            foreach (var check in checks)
+            {
+                // Sprawdzamy czy wartość jest nullem, pusta LUB równa wartości domyślnej
+                if (string.IsNullOrWhiteSpace(check.Key) || check.Key.Trim() == check.Value)
+                {
+                    throw new InvalidOperationException(
+                        "Cannot generate invoice. Company data is not configured (default values detected). " +
+                        "Please update company details in settings.");
+                }
+            }
         }
 
         private static string Money(decimal value) => value.ToString("C", Pl);

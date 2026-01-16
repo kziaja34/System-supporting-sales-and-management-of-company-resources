@@ -91,19 +91,14 @@
 
         try
         {
-            var dataUrl = await InvoiceService.GetInvoiceDataUrlAsync(OrderId ?? 0);
-            if (string.IsNullOrEmpty(dataUrl))
-            {
-                ErrorMessage = "Failed to generate invoice.";
-            }
-            else
-            {
-                PdfDataUrl = dataUrl;
-            }
+            // Teraz ta metoda rzuci wyjątek, jeśli coś pójdzie nie tak
+            // Wyjątek będzie zawierał tekst "Cannot generate invoice... default values detected"
+            PdfDataUrl = await InvoiceService.GetInvoiceDataUrlAsync(OrderId ?? 0);
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Error: {ex.Message}";
+            // Tutaj łapiemy komunikat z serwisu i wyświetlamy go użytkownikowi
+            ErrorMessage = ex.Message;
         }
         finally
         {
