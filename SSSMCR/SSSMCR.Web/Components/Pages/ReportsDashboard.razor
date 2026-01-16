@@ -1,120 +1,225 @@
 ﻿@page "/reports"
 @using SSSMCR.Web.Services
+@using SSSMCR.Shared.Model 
 @inject ReportsApiService ReportsApi
 @inject ISnackbar Snackbar
 
-<MudContainer Class="pa-6 d-flex flex-column align-center">
-    <MudText Typo="Typo.h5" Class="mb-6">Sales Dashboard</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-6">
+    <MudText Typo="Typo.h4" Class="mb-2"><b>Sales Overview</b></MudText>
+    <MudText Typo="Typo.subtitle1" Class="mb-6 text-muted">Performance summary for the last 30 days</MudText>
 
     @if (_loading)
     {
-        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Medium" />
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 50vh;">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+            <MudText>Analizowanie danych...</MudText>
+        </MudStack>
     }
     else
     {
-        <MudCard Class="mb-6" Style="max-width: 800px; width: 100%;">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-4" Align="Align.Center">Sales by Branch (Last 30 Days)</MudText>
-                <MudChart ChartType="ChartType.Pie"
-                          InputData="@_branchData"
-                          InputLabels="@_branchLabels"
-                          ChartOptions="@_pieChartOptions"
-                          Width="100%"
-                          Height="400px"
-                          LegendPosition="Position.Right" />
+        <MudGrid Class="mb-6">
+            <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4 d-flex flex-column justify-center gap-2" Elevation="3">
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">TOTAL REVENUE</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Success" />
+                </div>
+                <MudText Typo="Typo.h4"><b>@_totalRevenue.ToString("N0") zł</b></MudText>
                 
-                <MudDivider Class="my-4" />
-                <MudGrid Justify="Justify.Center">
-                    @for (var i = 0; i < _branchLabels.Length; i++)
-                    {
-                        var index = i;
-                        <MudItem xs="12" sm="6" md="4">
-                            <MudText Typo="Typo.body2" Align="Align.Center">
-                                <strong>@_branchLabels[index]:</strong> @_branchData[index].ToString("N0") zł
-                            </MudText>
-                        </MudItem>
-                    }
-                </MudGrid>
-            </MudCardContent>
-        </MudCard>
+                @{ var revTrend = GetTrendInfo(_revChange); }
+                <MudText Typo="Typo.caption" Color="@revTrend.Color">
+                    <MudIcon Icon="@revTrend.Icon" Size="Size.Small" /> @revTrend.Text
+                </MudText>
+            </MudPaper>
+        </MudItem>
         
-        <MudCard Class="mb-4" Style="max-width: 900px; width: 100%; text-align:center;">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-4">Sales Trend (Last 30 Days) - Values in PLN</MudText>
-                <MudChart ChartType="ChartType.Line"
-                          ChartSeries="@_trendSeries"
-                          XAxisLabels="@_trendLabels"
-                          ChartOptions="@_chartOptions"
-                          AxisChartOptions="_axisChartOptions"
-                          Width="100%"
-                          Height="400px" />
-            </MudCardContent>
-        </MudCard>
+        <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4 d-flex flex-column justify-center gap-2" Elevation="3">
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">TOTAL ORDERS</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Primary" />
+                </div>
+                <MudText Typo="Typo.h4"><b>@_totalOrders</b></MudText>
+                
+                @{ var ordTrend = GetTrendInfo(_ordChange); }
+                <MudText Typo="Typo.caption" Color="@ordTrend.Color">
+                    <MudIcon Icon="@ordTrend.Icon" Size="Size.Small" /> @ordTrend.Text
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4 d-flex flex-column justify-center gap-2" Elevation="3">
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">AVG. ORDER VALUE</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Warning" />
+                </div>
+                <MudText Typo="Typo.h4"><b>@_avgOrderValue.ToString("N2") zł</b></MudText>
+                
+                @{ var avgTrend = GetTrendInfo(_avgChange); }
+                <MudText Typo="Typo.caption" Color="@avgTrend.Color">
+                    <MudIcon Icon="@avgTrend.Icon" Size="Size.Small" /> @avgTrend.Text
+                </MudText>
+            </MudPaper>
+        </MudItem>
+        </MudGrid>
+
+        <MudGrid Class="mb-6">
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-4" Elevation="3" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-4"><b>Sales Trend</b> (Daily)</MudText>
+                    <MudChart ChartType="ChartType.Line"
+                              ChartSeries="@_trendSeries"
+                              XAxisLabels="@_trendLabels"
+                              ChartOptions="@_lineChartOptions"
+                              Width="100%"
+                              Height="350px" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Elevation="3" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-4"><b>Share by Branch</b></MudText>
+                    <MudChart ChartType="ChartType.Donut"
+                              InputData="@_branchData"
+                              InputLabels="@_branchLabels"
+                              ChartOptions="@_pieChartOptions"
+                              Width="100%"
+                              Height="300px" 
+                              LegendPosition="Position.Bottom"/>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudGrid>
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText Typo="Typo.h6" Class="mb-4"><b>Top 5 Best Selling Products</b></MudText>
+                    <MudChart ChartType="ChartType.Bar" 
+                              ChartSeries="@_topProductsSeries" 
+                              XAxisLabels="@_topProductsLabels" 
+                              ChartOptions="@_barChartOptions"
+                              Width="100%" 
+                              Height="300px"></MudChart>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
     }
 </MudContainer>
 
 @code {
     private bool _loading = true;
-    
+
+    // --- KPI DATA (Nowe) ---
+    private decimal _totalRevenue = 0;
+    private int _totalOrders = 0;
+    private decimal _avgOrderValue = 0;
+
+    // --- BRANCH DATA ---
     private string[] _branchLabels = Array.Empty<string>();
     private double[] _branchData = Array.Empty<double>();
-    
+
+    // --- TREND DATA ---
     private string[] _trendLabels = Array.Empty<string>();
     private List<ChartSeries> _trendSeries = new();
-    
-    private ChartOptions _chartOptions = new()
+
+    // --- TOP PRODUCTS DATA (Nowe) ---
+    private string[] _topProductsLabels = Array.Empty<string>();
+    private List<ChartSeries> _topProductsSeries = new();
+
+
+    // --- OPCJE WYKRESÓW ---
+    private ChartOptions _lineChartOptions = new()
     {
-        LineStrokeWidth = 2,
-        InterpolationOption = InterpolationOption.Straight,
-        YAxisFormat = "#,##0 'zł'",
-        YAxisLines = true,
+        LineStrokeWidth = 3,
+        YAxisFormat = "N0",
+        InterpolationOption = InterpolationOption.NaturalSpline // Ładniejsze krzywe
     };
 
-    private AxisChartOptions _axisChartOptions = new()
-    {
-        XAxisLabelRotation = 30,
-        MatchBoundsToSize = true
-    };
-    
     private ChartOptions _pieChartOptions = new()
     {
-        ChartPalette = new[]
-        {
-            "#1976D2", // blue 700
-            "#43A047", // green 600
-            "#FB8C00", // orange 600
-            "#E53935", // red 600
-            "#8E24AA", // purple 600
-            "#00ACC1", // cyan 600
-            "#FDD835", // yellow 600
-            "#6D4C41"  // brown 600
-        },
-        YAxisFormat = "#,##0 'zł'",
+        ChartPalette = new[] { "#594AE2", "#00C853", "#FFAB00", "#D500F9", "#2962FF" }
+    };
+
+    private ChartOptions _barChartOptions = new()
+    {
+         ChartPalette = new[] { "#594AE2" }, // Jeden kolor dla słupków wygląda profesjonalniej
+         YAxisFormat = "N0"
     };
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            var branchSales = await ReportsApi.GetSalesByBranchAsync();
-            var trendSales = await ReportsApi.GetSalesTrendAsync();
+            _loading = true; // Warto upewnić się, że loading jest true na starcie
 
-            // === DANE DO PIE ===
+            // 1. Pobieranie danych (zostaje bez zmian)
+            var branchSalesTask = ReportsApi.GetSalesByBranchAsync();
+            var trendSalesTask = ReportsApi.GetSalesTrendAsync();
+            var statsTask = ReportsApi.GetDashboardStatsAsync();
+            var topProductsTask = ReportsApi.GetTopProductsAsync();
+
+            await Task.WhenAll(branchSalesTask, trendSalesTask, statsTask, topProductsTask);
+
+            var branchSales = branchSalesTask.Result;
+            var trendSales = trendSalesTask.Result;
+            var stats = statsTask.Result;
+            var topProducts = topProductsTask.Result;
+            
+            
+
+            // ... wewnątrz OnInitializedAsync, po pobraniu stats ...
+            _totalRevenue = stats.TotalRevenue;
+            _totalOrders = stats.TotalOrders;
+            _avgOrderValue = stats.AverageOrderValue;
+    
+            // Przypisanie nowych pól zmian
+            _revChange = stats.RevenueChange;
+            _ordChange = stats.OrdersChange;
+            _avgChange = stats.AvgValueChange;
+
+            // ... (przypisanie Branch Data bez zmian) ...
             _branchLabels = branchSales.Select(b => b.Branch).ToArray();
             _branchData = branchSales.Select(b => (double)b.Total).ToArray();
 
-            // === DANE DO LINE ===
+
+            // === TU JEST POPRAWKA ===
+            
+            // 1. Przygotuj dane
+            var trendData = trendSales.Select(t => (double)t.Total).ToArray();
             _trendLabels = trendSales.Select(t => t.Date.ToString("dd.MM")).ToArray();
+
+            // 2. Sprawdź, czy mamy dość danych na Spline (wymaga min. 4)
+            if (trendData.Length < 4)
+            {
+                _lineChartOptions.InterpolationOption = InterpolationOption.Straight;
+            }
+            else
+            {
+                _lineChartOptions.InterpolationOption = InterpolationOption.NaturalSpline;
+            }
+
+            // 3. Przypisz serię
             _trendSeries = new()
             {
                 new ChartSeries
                 {
-                    Name = "Sales Trend",
-                    Data = trendSales.Select(t => (double)t.Total).ToArray(),
-                    LineDisplayType = LineDisplayType.Line,
-                    ShowDataMarkers = true
+                    Name = "Total Sales (PLN)",
+                    Data = trendData
                 }
             };
+
+            // ... (Top Products bez zmian) ...
+            _topProductsLabels = topProducts.Select(p => p.ProductName).ToArray();
+            _topProductsSeries = new List<ChartSeries>()
+            {
+                new ChartSeries() 
+                { 
+                    Name = "Units Sold", 
+                    Data = topProducts.Select(p => (double)p.QuantitySold).ToArray() 
+                }
+            };
+
         }
         catch (Exception ex)
         {
@@ -123,7 +228,21 @@
         finally
         {
             _loading = false;
-            StateHasChanged();
+            // Wymuszenie odświeżenia interfejsu po załadowaniu
+            StateHasChanged(); 
         }
     }
+    // Pomocnik do ustalania koloru i ikony
+    private (string Icon, Color Color, string Text) GetTrendInfo(double change)
+    {
+        if (change >= 0)
+            return (Icons.Material.Filled.ArrowUpward, Color.Success, $"+{change:N1}% vs last month");
+        else
+            return (Icons.Material.Filled.ArrowDownward, Color.Error, $"{change:N1}% vs last month");
+    }
+    
+    // Zmienne do przechowywania zmian (dodaj do pól klasy)
+    private double _revChange;
+    private double _ordChange;
+    private double _avgChange;
 }

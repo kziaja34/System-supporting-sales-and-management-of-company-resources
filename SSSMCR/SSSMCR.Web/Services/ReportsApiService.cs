@@ -28,4 +28,23 @@ public class ReportsApiService(IHttpClientFactory httpFactory, ILocalStorageServ
 
         return await res.Content.ReadFromJsonAsync<List<SalesTrendDto>>() ?? new();
     }
+    
+    public async Task<DashboardStatsDto> GetDashboardStatsAsync()
+    {
+        var http = _httpFactory.CreateClient("api");
+        await AttachBearerAsync(http);
+
+        // Jeśli nie ma danych, zwracamy pusty obiekt (zamiast nulla), żeby uniknąć błędów
+        return await http.GetFromJsonAsync<DashboardStatsDto>("api/reports/dashboard-stats") 
+               ?? new DashboardStatsDto();
+    }
+
+    public async Task<List<TopProductDto>> GetTopProductsAsync()
+    {
+        var http = _httpFactory.CreateClient("api");
+        await AttachBearerAsync(http);
+
+        return await http.GetFromJsonAsync<List<TopProductDto>>("api/reports/top-products") 
+               ?? new List<TopProductDto>();
+    }
 }

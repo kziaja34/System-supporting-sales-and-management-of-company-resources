@@ -390,3 +390,22 @@ public sealed class OrderFuzzyStats
     public int ItemsCount { get; set; }
     public decimal TotalPrice { get; set; }
 }
+
+public class DashboardStatsDto
+{
+    public decimal TotalRevenue { get; set; }
+    public int TotalOrders { get; set; }
+    public decimal AverageOrderValue { get; set; }
+
+    // --- NOWE POLA ---
+    public double RevenueChange { get; set; }      // Np. 12.5 (oznacza +12.5%)
+    public double OrdersChange { get; set; }       // Np. -5.0 (oznacza -5%)
+    public double AvgValueChange { get; set; }
+}
+
+// Do wykresu słupkowego (Top Produkty)
+public class TopProductDto
+{
+    public string ProductName { get; set; } = string.Empty;
+    public int QuantitySold { get; set; }
+}
