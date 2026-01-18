@@ -1,18 +1,23 @@
 ﻿@page "/reports"
+@using Blazored.LocalStorage.StorageOptions
 @using SSSMCR.Web.Services
 @using SSSMCR.Shared.Model 
+@using NavigationContext = MudBlazor.NavigationContext
 @inject ReportsApiService ReportsApi
 @inject ISnackbar Snackbar
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IAuthService AuthService
+@inject NavigationManager Nav
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="pa-6">
     <MudText Typo="Typo.h4" Class="mb-2"><b>Sales Overview</b></MudText>
-    <MudText Typo="Typo.subtitle1" Class="mb-6 text-muted">Performance summary for the last 30 days</MudText>
+    <MudText Typo="Typo.subtitle1" Class="mb-6">Performance summary for the last 30 days</MudText>
 
     @if (_loading)
     {
         <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 50vh;">
             <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
-            <MudText>Analizowanie danych...</MudText>
+            <MudText>Analyzing data...</MudText>
         </MudStack>
     }
     else
@@ -146,6 +151,25 @@
          ChartPalette = new[] { "#594AE2" }, // Jeden kolor dla słupków wygląda profesjonalniej
          YAxisFormat = "N0"
     };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            var role = await LocalStorage.GetItemAsync<string>("user_role");
+            if (!AuthService.PermittedForManagement(role))
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {

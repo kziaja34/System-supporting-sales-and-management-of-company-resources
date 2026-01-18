@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SSSMCR.ApiService.Database;
 using SSSMCR.Shared.Model;
@@ -6,6 +7,7 @@ using SSSMCR.Shared.Model;
 namespace SSSMCR.ApiService.Controller;
 
 [ApiController]
+[Authorize (Roles = "Administrator, Manager")]
 [Route("api/reports")]
 public class ReportsController(AppDbContext context) : ControllerBase
 {
