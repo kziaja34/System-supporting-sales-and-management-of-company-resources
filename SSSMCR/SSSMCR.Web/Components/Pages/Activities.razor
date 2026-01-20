@@ -1,0 +1,80 @@
+@page "/activities"
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<PageTitle>Activities</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-4">
+    <MudCard Class="main-card mx-auto" Elevation="8">
+        <div class="accent-strip"></div>
+
+        <MudCardContent Class="pa-6">
+            <MudText Typo="Typo.h4" Align="Align.Center" Class="text-primary mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" Class="mr-2" />
+                Activities & Clubs
+            </MudText>
+
+            @if (activities == null)
+            {
+                <MudProgressCircular Indeterminate="true" />
+            }
+            else if (activities.Count == 0)
+            {
+                <MudText Typo="Typo.body1" Align="Align.Center">No activities available at the moment.</MudText>
+            }
+            else
+            {
+                <MudGrid>
+                    @foreach (var activity in activities)
+                    {
+                        <MudItem xs="12" md="6">
+                            <MudCard Elevation="3" Class="mb-3">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h5" Class="mb-2">
+                                        @activity.Name
+                                    </MudText>
+                                    <MudText Typo="Typo.body1" Class="mb-2">
+                                        @activity.Description
+                                    </MudText>
+                                    <MudDivider Class="my-2" />
+                                    <MudText Typo="Typo.body2" Class="mt-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
+                                        <strong>Schedule:</strong> @activity.Schedule
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="mr-1" />
+                                        <strong>Max Attendance:</strong> @activity.MaxAttendance people
+                                    </MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private List<Activity>? activities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            activities = await Http.GetFromJsonAsync<List<Activity>>("data/activities.json");
+        }
+        catch (Exception)
+        {
+            activities = new List<Activity>();
+        }
+    }
+
+    public class Activity
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Schedule { get; set; } = string.Empty;
+        public int MaxAttendance { get; set; }
+    }
+}

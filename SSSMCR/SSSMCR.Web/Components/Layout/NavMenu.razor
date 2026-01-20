@@ -33,6 +33,9 @@
             </MudListItem>
         }
     </MudList>
+        <MudNavLink Href="/activities" Icon="@Icons.Material.Filled.Groups">
+            Activities
+        </MudNavLink>
         @if (Auth.PermittedForManagement(user_role))
         {
             <MudNavGroup Title="System management" Icon="@Icons.Material.Filled.Settings" >
