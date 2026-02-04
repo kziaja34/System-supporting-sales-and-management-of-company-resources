@@ -29,4 +29,10 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="Model\Shipping.cs">
+        <DependentUpon>Order.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

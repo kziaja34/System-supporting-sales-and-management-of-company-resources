@@ -58,9 +58,9 @@ namespace SSSMCR.ApiService.Services
                 var address = new
                 {
                     Street = $"{RandomFrom(_streets)} {_rnd.Next(1, 200)}",
-                    City = RandomFrom(_cities),
-                    PostalCode = $"{_rnd.Next(10, 99)}-{_rnd.Next(100, 999)}",
-                    Country = RandomFrom(_countries)
+                    City = "Będzin",
+                    PostalCode = "42-500",
+                    Country = "Polska"
                 };
 
                 var productsCount = _rnd.Next(minProducts, maxProducts + 1);
@@ -74,7 +74,15 @@ namespace SSSMCR.ApiService.Services
                     CreatedAt = DateTime.UtcNow,
                     Status = OrderStatus.Pending,
                     Items = new List<OrderItem>(),
-                    Branch = branch
+                    Branch = branch,
+                    
+                    Shipping = new Shipping
+                    {
+                        TargetPoint = "BED05M",
+                        IsLabelGenerated = false,
+                        ExternalShipmentId = null,
+                        TrackingNumber = null
+                    }
                 };
 
                 foreach (var p in chosen)
@@ -115,6 +123,7 @@ namespace SSSMCR.ApiService.Services
 
                 // weryfikacja - załaduj itemy i zaloguj liczbę
                 await db.Entry(order).Collection(o => o.Items).LoadAsync();
+                await db.Entry(order).Reference(o => o.Shipping).LoadAsync();
                 logger.LogInformation("Utworzono symulowane zamówienie Id={OrderId} with {Items} items and total {Total}",
                     order.Id, order.Items.Count, order.TotalPrice);
 

@@ -9,7 +9,7 @@ namespace SSSMCR.ApiService.Controller;
 [ApiController]
 [Route("api/orders")]
 [Authorize (Roles = "Administrator, Seller, Manager")]
-public class OrderController(IOrderService orderService, IOrderSimulationService orderSimulationService) : ControllerBase
+public class OrderController(IOrderService orderService, IOrderSimulationService orderSimulationService, IInPostService inPostService) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<PageResponse<OrderListItemDto>>> GetOrders(
@@ -105,5 +105,32 @@ public class OrderController(IOrderService orderService, IOrderSimulationService
             TotalPrice = order.Items.Sum(i => i.TotalPrice),
             ShippingAddress = order.ShippingAddress
         };
+    }
+    
+    [HttpPost("{id}/ship")]
+    [Authorize(Roles = "Manager,Seller,Administrator")]
+    public async Task<IActionResult> GenerateLabel(int id, [FromServices] IInPostService inPostService)
+    {
+        try
+        {
+            // Cała "ciężka" praca dzieje się tutaj:
+            var result = await inPostService.ProcessAndGenerateLabelAsync(id);
+
+            // Kontroler tylko zwraca plik
+            return File(result.FileContent, "application/pdf", $"Etykieta_{result.TrackingNumber}.pdf");
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            // Logowanie błędu nastąpiło już w serwisie lub globalnym handlerze, tu zwracamy 500
+            return StatusCode(500, new { message = "Wystąpił błąd podczas generowania etykiety: " + ex.Message });
+        }
     }
 }

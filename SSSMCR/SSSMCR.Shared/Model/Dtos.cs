@@ -44,6 +44,7 @@ public class CompanyResponse
 
 public enum OrderStatus
 {
+    Sent,
     Pending,
     Processing,
     PartiallyFulfilled,

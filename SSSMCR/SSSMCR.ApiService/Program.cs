@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using SSSMCR.ApiService.Services.Chatbot;
 using SSSMCR.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +40,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWarehouseService, WarehouseService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IInPostService, InPostService>();
+builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 
 var jwt = builder.Configuration.GetSection("Jwt");
 var keyBytes = Encoding.UTF8.GetBytes(jwt["Key"]!);
@@ -122,7 +125,7 @@ app.UseExceptionHandler();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //DbSeeder.Seed(context, scope.ServiceProvider).Wait();
+    DbSeeder.Seed(context, scope.ServiceProvider).Wait();
 }
 
 

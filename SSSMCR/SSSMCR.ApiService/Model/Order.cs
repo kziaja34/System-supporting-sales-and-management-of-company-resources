@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using SSSMCR.Shared.Model;
 
@@ -27,8 +28,8 @@ public class Order
     [Required]
     public OrderStatus Status { get; set; }
 
+    // Fuzzy Priority
     public double Priority { get; set; }
-    
     public double MembershipLow { get; set; }
     public double MembershipMedium { get; set; }
     public double MembershipHigh { get; set; }
@@ -40,4 +41,9 @@ public class Order
     public required string ShippingAddress { get; set; }
     public int ItemsCount { get; set; }
     public decimal TotalPrice { get; set; }
+    
+    // Shipping
+    public int? ShippingId { get; set; }
+    [ForeignKey(nameof(ShippingId))]
+    public virtual Shipping? Shipping { get; set; }
 }
