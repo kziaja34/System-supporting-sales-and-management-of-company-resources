@@ -1,0 +1,236 @@
+﻿@using SSSMCR.Shared.Model
+@using Markdig
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<button class="chat-fab @(isOpen ? "hide" : "")" @onclick="ToggleChat">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-chat-dots-fill" viewBox="0 0 16 16">
+        <path d="M16 8c0 3.866-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7zM5 8a1 1 0 1 0-2 0 1 1 0 2 0zm4 0a1 1 0 1 0-2 0 1 1 0 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+    </svg>
+</button>
+
+<div class="chat-window shadow-lg @(isOpen ? "show" : "")">
+    <div class="chat-header">
+        <div class="d-flex align-items-center gap-2">
+            <strong>Asystent AI</strong>
+            <span class="badge bg-light text-dark" style="font-size: 0.7em">@CurrentContext</span>
+        </div>
+        <button class="btn-close btn-close-white" @onclick="ToggleChat"></button>
+    </div>
+
+    <div class="chat-body" id="chat-scroll-container">
+        @if (messages.Count == 0)
+        {
+            <div class="text-center text-muted mt-4">
+                <small>W czym mogę pomóc w sekcji <b>@CurrentContext</b>?</small>
+            </div>
+        }
+
+        @foreach (var msg in messages)
+        {
+            <div class="message-row @(msg.IsUser ? "user" : "ai")">
+                <div class="message-bubble">
+                    @if (msg.IsUser)
+                    {
+                        @msg.Text
+                    }
+                    else
+                    {
+                        @((MarkupString)Markdown.ToHtml(msg.Text))
+                    }
+                </div>
+            </div>
+        }
+
+        @if (isThinking)
+        {
+            <div class="message-row ai">
+                <div class="message-bubble typing">
+                    <span>.</span><span>.</span><span>.</span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="chat-footer">
+        <input @bind="userInput" 
+               @bind:event="oninput" 
+               @onkeyup="HandleKeyUp" 
+               class="form-control" 
+               placeholder="Zadaj pytanie..." 
+               disabled="@isThinking" />
+        <button class="btn btn-primary send-btn" @onclick="SendMessage" disabled="@isThinking">
+            ➤
+        </button>
+    </div>
+</div>
+
+@code {
+    private bool isOpen = false;
+    private string userInput = "";
+    private bool isThinking = false;
+    private List<Message> messages = new();
+
+    // Klasa pomocnicza dla wiadomości
+    class Message { public string Text { get; set; } public bool IsUser { get; set; } }
+
+    // Wyliczanie kontekstu na podstawie URL
+    private string CurrentContext => GetContextFromUrl(Navigation.Uri);
+
+    private void ToggleChat()
+    {
+        isOpen = !isOpen;
+        if (isOpen) ScrollToBottom();
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SendMessage();
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(userInput)) return;
+
+        var currentMsg = userInput;
+        userInput = "";
+        
+        // Dodaj wiadomość użytkownika
+        messages.Add(new Message { Text = currentMsg, IsUser = true });
+        isThinking = true;
+        StateHasChanged();
+        await ScrollToBottom();
+
+        try
+        {
+            // Przygotuj request
+            var request = new ChatRequest 
+            { 
+                UserMessage = currentMsg, 
+                ContextKey = CurrentContext // Dynamiczny kontekst
+            };
+
+            // Wywołanie API (dopasuj ścieżkę do swojego kontrolera)
+            var response = await Http.PostAsJsonAsync("https://localhost:5001/api/Chat", request);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatResponse>();
+                messages.Add(new Message { Text = result?.AiResponse ?? "Brak odpowiedzi.", IsUser = false });
+            }
+            else
+            {
+                messages.Add(new Message { Text = "Błąd serwera. Spróbuj później.", IsUser = false });
+            }
+        }
+        catch (Exception ex)
+        {
+            messages.Add(new Message { Text = $"Błąd połączenia: {ex.Message}", IsUser = false });
+        }
+        finally
+        {
+            isThinking = false;
+            StateHasChanged();
+            await ScrollToBottom();
+        }
+    }
+
+    // Prosta logika przewijania w dół (wymaga JS)
+    private async Task ScrollToBottom()
+    {
+        await Task.Delay(50); // Mały delay dla renderowania DOM
+        await JSRuntime.InvokeVoidAsync("scrollToBottom", "chat-scroll-container");
+    }
+
+    private string GetContextFromUrl(string url)
+    {
+        url = url.ToLower();
+        if (url.Contains("invoice") || url.Contains("faktur")) return "invoices";
+        if (url.Contains("warehouse") || url.Contains("stock") || url.Contains("supply")) return "warehouse";
+        if (url.Contains("order") || url.Contains("client") || url.Contains("sale")) return "sales";
+        if (url.Contains("user") || url.Contains("role") || url.Contains("branch")) return "admin";
+        return "general";
+    }
+}
+
+<style>
+    /* Style Widgetu */
+    .chat-fab {
+        position: fixed; bottom: 20px; right: 20px;
+        width: 60px; height: 60px;
+        border-radius: 50%;
+        background-color: #0d6efd; color: white;
+        border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 1050; transition: transform 0.2s;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .chat-fab:hover { transform: scale(1.05); background-color: #0b5ed7; }
+    .chat-fab.hide { display: none; }
+
+    .chat-window {
+        position: fixed; bottom: 20px; right: 20px;
+        width: 400px; height: 550px;
+        background: white;
+        border-radius: 15px;
+        display: flex; flex-direction: column;
+        z-index: 1050;
+        opacity: 0; pointer-events: none; transform: translateY(20px);
+        transition: all 0.3s ease-in-out;
+        border: 1px solid #dee2e6;
+    }
+    .chat-window.show { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+    .chat-header {
+        background: #0d6efd; color: white;
+        padding: 15px;
+        border-top-left-radius: 15px; border-top-right-radius: 15px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .chat-body {
+        flex: 1; padding: 15px; overflow-y: auto;
+        background-color: #f8f9fa;
+        display: flex; flex-direction: column; gap: 10px;
+    }
+
+    /* Dymki wiadomości */
+    .message-row { display: flex; width: 100%; }
+    .message-row.user { justify-content: flex-end; }
+    .message-row.ai { justify-content: flex-start; }
+
+    .message-bubble {
+        max-width: 85%; padding: 10px 15px; border-radius: 15px;
+        font-size: 0.9rem; word-wrap: break-word;
+    }
+    
+    .user .message-bubble {
+        background-color: #0d6efd; color: white;
+        border-bottom-right-radius: 2px;
+    }
+
+    .ai .message-bubble {
+        background-color: white; color: #212529;
+        border: 1px solid #dee2e6;
+        border-bottom-left-radius: 2px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    /* Markdown Styling wewnątrz dymku */
+    .ai .message-bubble table { width: 100%; border-collapse: collapse; font-size: 0.8em; margin-top: 5px; }
+    .ai .message-bubble th, .ai .message-bubble td { border: 1px solid #ddd; padding: 4px; }
+    .ai .message-bubble th { background-color: #f1f1f1; }
+    .ai .message-bubble p { margin-bottom: 0.5rem; }
+
+    .chat-footer {
+        padding: 10px; border-top: 1px solid #dee2e6;
+        display: flex; gap: 10px; background: white;
+        border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;
+    }
+
+    /* Animacja pisania */
+    .typing span { animation: blink 1.4s infinite both; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @@keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+</style>

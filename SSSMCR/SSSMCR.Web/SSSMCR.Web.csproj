@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+      <PackageReference Include="Markdig" Version="0.44.0" />
       <PackageReference Include="MudBlazor" Version="8.11.0" />
       <PackageReference Include="MudBlazor.ThemeManager" Version="3.0.0" />
       <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.2" />
