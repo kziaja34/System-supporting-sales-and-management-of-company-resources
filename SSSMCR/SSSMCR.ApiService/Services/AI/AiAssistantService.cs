@@ -1,6 +1,9 @@
 ﻿using System.ClientModel;
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using OpenAI;
 using OpenAI.Chat;
+using SSSMCR.ApiService.Services.AI;
 using SSSMCR.Shared.Model;
 
 namespace SSSMCR.ApiService.Services;
@@ -10,11 +13,13 @@ public interface IAiAssistantService
     Task<string> GetAnswerAsync(ChatRequest request);
 }
 
+[Experimental("SKEXP0001")]
 public class AiAssistantService : IAiAssistantService
 {
     private readonly ChatClient _chatClient;
+    private readonly RagService _ragService;
     private readonly string _modelName;
-    private readonly Dictionary<string, string> _systemPrompts = new()
+    private readonly Dictionary<string, string> _rolePrompts = new()
     {
         { 
             "general", 
@@ -91,8 +96,10 @@ public class AiAssistantService : IAiAssistantService
         }
     };
     
-    public AiAssistantService(IConfiguration configuration)
+    public AiAssistantService(IConfiguration configuration, RagService ragService)
     {
+        _ragService = ragService;
+        
         var apiKey = configuration["Groq:ApiKey"];
         var endpoint = configuration["Groq:Endpoint"];
         _modelName = configuration["Groq:Model"] ?? "llama3-70b-8192";
@@ -109,28 +116,44 @@ public class AiAssistantService : IAiAssistantService
 
     public async Task<string> GetAnswerAsync(ChatRequest request)
     {
-        // 1. System prompt
-        var systemPrompt = _systemPrompts.ContainsKey(request.ContextKey)
-            ? _systemPrompts[request.ContextKey]
-            : _systemPrompts["general"];
+        // 1. Najpierw szukamy informacji w dokumentacji (RAG)
+        string knowledge = await _ragService.SearchAsync(request.UserMessage);
 
-        // 2. Chat completion
+        // 2. Wybieramy rolę
+        string baseRole = _rolePrompts.ContainsKey(request.ContextKey) 
+            ? _rolePrompts[request.ContextKey] 
+            : _rolePrompts["general"];
+
+        // 3. Budujemy System Prompt (Rola + Wiedza z PDF)
+        var sb = new StringBuilder();
+        sb.AppendLine(baseRole);
+        
+        if (!string.IsNullOrEmpty(knowledge))
+        {
+            sb.AppendLine("\n### KONTEKST Z DOKUMENTACJI TECHNICZNEJ (PRACA INŻYNIERSKA):");
+            sb.AppendLine("Użyj poniższych informacji, aby precyzyjnie odpowiedzieć na pytanie użytkownika. Jeśli odpowiedź jest w tekście, zacytuj ją.");
+            sb.AppendLine(knowledge);
+        }
+        else
+        {
+            sb.AppendLine("\n(Brak informacji w dokumentacji technicznej - korzystaj z wiedzy ogólnej).");
+        }
+
+        // 4. Wysyłamy do AI
         List<ChatMessage> messages = new()
         {
-            new SystemChatMessage(systemPrompt),
+            new SystemChatMessage((string)sb.ToString()),
             new UserChatMessage(request.UserMessage)
         };
 
         try
         {
             ChatCompletion completion = await _chatClient.CompleteChatAsync(messages);
-
             return completion.Content[0].Text;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            return "Sorry, an error occurred.";
+            return $"Błąd AI: {ex.Message}";
         }
-        
     }
 }

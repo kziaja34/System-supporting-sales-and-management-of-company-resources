@@ -6,7 +6,9 @@ using Microsoft.OpenApi.Models;
 using SSSMCR.ApiService.Database;
 using SSSMCR.ApiService.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using SSSMCR.ApiService.Services.AI;
 using SSSMCR.ServiceDefaults;
+#pragma warning disable SKEXP0001
 
 var builder = WebApplication.CreateBuilder(args);
 var enableSwagger = builder.Configuration.GetValue<bool>("Swagger:Enabled");
@@ -40,6 +42,8 @@ builder.Services.AddScoped<IWarehouseService, WarehouseService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IAiAssistantService, AiAssistantService>();
+builder.Services.AddSingleton<RagService>();
+
 
 var jwt = builder.Configuration.GetSection("Jwt");
 var keyBytes = Encoding.UTF8.GetBytes(jwt["Key"]!);
@@ -123,7 +127,23 @@ app.UseExceptionHandler();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //DbSeeder.Seed(context, scope.ServiceProvider).Wait();
+    var ragService = scope.ServiceProvider.GetRequiredService<RagService>();
+    
+    // Zakładamy, że plik jest w głównym folderze projektu (tam gdzie .csproj)
+    // lub skopiowany do folderu wyjściowego (bin/Debug/...)
+    var pdfFileName = "RAU-INZ-306786-2026.pdf";
+    var pdfPath = Path.Combine(AppContext.BaseDirectory, pdfFileName);
+
+    // Jeśli nie znajdzie w bin, szukamy w folderze źródłowym (dla wygody w VS)
+    if (!File.Exists(pdfPath))
+    {
+        pdfPath = Path.Combine(Directory.GetCurrentDirectory(), pdfFileName);
+    }
+
+    // Uruchamiamy indeksowanie (czekamy, aż skończy, zanim puścimy ruch)
+#pragma warning disable SKEXP0050
+    await ragService.InitializeAsync(pdfPath).ConfigureAwait(false);
+#pragma warning restore SKEXP0050
 }
 
 
@@ -159,3 +179,4 @@ app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();
+#pragma warning restore SKEXP0001
